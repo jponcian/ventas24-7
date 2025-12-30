@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>
+      const fondosPaisaje = [
+        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80',
+        'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1500&q=80',
+        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1500&q=80',
+        'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1500&q=80',
+        'https://images.unsplash.com/photo-1444065381814-865dc9da92c0?auto=format&fit=crop&w=1500&q=80'
+      ];
+      document.addEventListener('DOMContentLoaded', function() {
+        var fondoAleatorio = fondosPaisaje[Math.floor(Math.random() * fondosPaisaje.length)];
+        document.body.style.backgroundImage = 'url(' + fondoAleatorio + ')';
+      });
+    </script>
+    <style>
+    .titulo-resaltado {
+      background: rgba(255,255,255,0.85);
+      color: #0d6efd;
+      font-weight: bold;
+      padding: 0.7em 0.5em;
+      border-radius: 0.5em;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      display: inline-block;
+    .titulo-resaltado h2 {
+      font-size: 2.2rem;
+      margin: 0;
+    }
+    }
+      body.bg-light {
+        background: #eaf6fb no-repeat center center fixed;
+        background-size: cover;
+        transition: background-image 1s ease;
+      }
+      .card.shadow, .p-3.rounded.shadow.bg-white {
+        background: rgba(255,255,255,0.92);
+        box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      }
+      .usuario-datos img{max-width:120px;max-height:80px;}
+    </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registro de Usuario</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Bootstrap Icons -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+  <style>.usuario-datos img{max-width:120px;max-height:80px;}</style>
+  </head>
+  <body class="bg-light">
+    <div class="container mt-4">
+      <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+          <a href="index.php" class="btn btn-secondary mb-3 w-100">
+            <i class="bi bi-arrow-left"></i> Volver
+          </a>
+          <div class="text-center mb-4">
+            <div class="titulo-resaltado"><h2><i class="bi bi-person-plus"></i> Registro de Usuario</h2></div>
+          </div>
+          <form
+            action="registro.php"
+            method="post"
+            enctype="multipart/form-data"
+            class="p-3 rounded shadow bg-white"
+          >
+            <div class="mb-3">
+              <label for="cedula" class="form-label"
+                ><i class="bi bi-card-text"></i> Cedula:</label
+              >
+              <input
+                type="number"
+                name="cedula"
+                id="cedula"
+                class="form-control"
+                required
+                min="1"
+                step="1"
+                inputmode="numeric"
+                pattern="[0-9]*"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="nombre" class="form-label"
+                ><i class="bi bi-person"></i> Nombre y Apellido:</label
+              >
+              <input
+                type="text"
+                name="nombre"
+                id="nombre"
+                class="form-control"
+                required
+                autocomplete="off"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="telefono" class="form-label"
+                ><i class="bi bi-telephone"></i> Teléfono:</label
+              >
+              <input
+                type="tel"
+                name="telefono"
+                id="telefono"
+                class="form-control"
+                required
+                pattern="[0-9]{10,15}"
+                maxlength="15"
+                autocomplete="off"
+                placeholder="Ej: 04141234567"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="foto" class="form-label"
+                ><i class="bi bi-image"></i> Foto de Cedula:</label
+              >
+              <input
+                type="file"
+                name="foto"
+                id="foto"
+                class="form-control"
+                accept=".jpg,.jpeg,image/jpeg,image/jpg"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-save"></i> Registrar
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <footer class="text-center text-muted mt-4 mb-2">versión 1.3</footer>
+    <div id="usuario-existente" class="alert alert-warning mt-3 d-none"></div>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      $(document).ready(function() {
+        let alertaMostrada = false;
+        $('#cedula').on('input', function() {
+          var cedula = $(this).val();
+          if (cedula.length > 5) {
+            $.get('buscar_usuario.php', {cedula: cedula}, function(data) {
+              if (data.existe) {
+                if (!alertaMostrada) {
+                  let html = '<strong>Nombre:</strong> ' + data.usuario.nombre + '<br>' +
+                    '<strong>Cédula:</strong> ' + data.usuario.cedula + '<br>' +
+                    '<strong>Teléfono:</strong> ' + (data.usuario.telefono ? data.usuario.telefono : '(no registrado)') + '<br>' +
+                    (data.usuario.foto ? '<img src="' + data.usuario.foto + '" alt="Foto" style="max-width:120px;max-height:80px;">' : '') +
+                    '<br><br>¿Desea editar este usuario?';
+                  Swal.fire({
+                    icon: 'question',
+                    title: 'Usuario ya registrado',
+                    html: html,
+                    showCancelButton: true,
+                    confirmButtonText: 'Editar',
+                    cancelButtonText: 'Cancelar'
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                      // Redirigir a una página de edición (ajusta el nombre si tienes otra ruta)
+                      window.location.href = 'editar_usuario.php?cedula=' + encodeURIComponent(data.usuario.cedula);
+                    } else {
+                      // Limpiar los campos si cancela
+                      $('#cedula').val('');
+                      $('#nombre').val('');
+                      $('#telefono').val('');
+                    }
+                  });
+                  alertaMostrada = true;
+                }
+              } else {
+                $('#nombre').val('');
+                $('#telefono').val('');
+                alertaMostrada = false;
+              }
+            }, 'json');
+          } else {
+            $('#nombre').val('');
+            $('#telefono').val('');
+            alertaMostrada = false;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

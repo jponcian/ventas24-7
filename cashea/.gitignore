@@ -1,0 +1,6 @@
+# Ignore local config
+config.php
+
+# Ignore uploads and runtime files
+uploads/
+*.log
