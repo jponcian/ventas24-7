@@ -617,7 +617,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         const Icon(Icons.shopping_cart, color: Colors.white),
                         const SizedBox(width: 10),
                         Text(
-                          '${_totalItems} Items',
+                          '$_totalItems Items',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

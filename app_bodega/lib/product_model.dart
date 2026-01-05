@@ -52,8 +52,9 @@ class Product {
 
   double get precioReal {
     // Prioridad: Unitario > Venta normal
-    if (precioVentaUnidad != null && precioVentaUnidad! > 0)
+    if (precioVentaUnidad != null && precioVentaUnidad! > 0) {
       return precioVentaUnidad!;
+    }
     return precioVenta ?? 0.0;
   }
 }

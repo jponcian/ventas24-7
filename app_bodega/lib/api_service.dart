@@ -1,24 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart'; // import para kIsWeb
 import 'product_model.dart';
 
 class ApiService {
   // Configuración de URL base
-  static String get baseUrl {
-    // A petición del usuario: Usar SIEMPRE producción, incluso en Web (Chrome)
-    // Nota: Esto requiere que el servidor de producción tenga habilitado CORS.
-    return 'https://ponciano.zz.com.ve/bodega/api';
-
-    /* 
-    Configuración anterior:
-    if (kIsWeb) {
-      return 'http://localhost/ponciano/bodega/api';
-    } else {
-      return 'https://ponciano.zz.com.ve/bodega/api';
-    }
-    */
-  }
+  static const String baseUrl = 'https://ponciano.zz.com.ve/bodega/api';
 
   // Obtener tasa de cambio
   Future<double> getTasa() async {
