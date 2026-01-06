@@ -192,17 +192,33 @@ class _CalcScreenState extends State<CalcScreen> {
                     onChanged: _onBsChanged,
                     inputFormatters: [SlidingDecimalFormatter()],
                     onTap: () => _selectAll(_bsCtrl),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       prefixText: 'Bs   ',
-                      prefixStyle: TextStyle(
+                      prefixStyle: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
-                      enabledBorder: UnderlineInputBorder(
+                      suffixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.copy,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: _bsCtrl.text));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Valor copiado al portapapeles'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                      enabledBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Colors.grey),
                       ),
-                      focusedBorder: UnderlineInputBorder(
+                      focusedBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Colors.white),
                       ),
                     ),
