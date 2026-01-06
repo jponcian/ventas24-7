@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class CalcScreen extends StatefulWidget {
   final double tasa;
@@ -13,49 +14,72 @@ class CalcScreen extends StatefulWidget {
 class _CalcScreenState extends State<CalcScreen> {
   late TextEditingController _usdCtrl;
   late TextEditingController _bsCtrl;
-
-  // Formato para mostrar hasta 2 decimales limpiamente
-  final NumberFormat _fmt = NumberFormat('##0.00', 'en_US');
+  final FocusNode _usdFocus = FocusNode();
+  final FocusNode _bsFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
+
+    // Iniciar con valores formateados
     _usdCtrl = TextEditingController(text: '1.00');
     _bsCtrl = TextEditingController(text: widget.tasa.toStringAsFixed(2));
+
+    // Escuchar cambios de foco para seleccionar todo
+    _usdFocus.addListener(() {
+      if (_usdFocus.hasFocus) {
+        _selectAll(_usdCtrl);
+      }
+    });
+    _bsFocus.addListener(() {
+      if (_bsFocus.hasFocus) {
+        _selectAll(_bsCtrl);
+      }
+    });
   }
 
   @override
   void dispose() {
     _usdCtrl.dispose();
     _bsCtrl.dispose();
+    _usdFocus.dispose();
+    _bsFocus.dispose();
     super.dispose();
   }
 
   void _onUsdChanged(String value) {
-    if (value.isEmpty) {
-      _bsCtrl.text = '';
-      return;
-    }
+    if (value.isEmpty) return;
     double? usd = double.tryParse(value);
     if (usd != null) {
       double bs = usd * widget.tasa;
-      // Actualizamos Bs sin disparar su listener (evitar bucle infinito si usáramos listeners directos)
-      // Como usamos onChanged, es seguro actualizar el texto del OTRO controlador.
-      // Pero para evitar conflicto de cursor, es mejor si el usuario está escribiendo aquí.
-      _bsCtrl.text = bs.toStringAsFixed(2);
+      // Solo actualizamos el otro campo si es diferente para evitar ciclos
+      String newBs = bs.toStringAsFixed(2);
+      if (_bsCtrl.text != newBs) {
+        _bsCtrl.text = newBs;
+      }
     }
   }
 
   void _onBsChanged(String value) {
-    if (value.isEmpty) {
-      _usdCtrl.text = '';
-      return;
-    }
+    if (value.isEmpty) return;
     double? bs = double.tryParse(value);
     if (bs != null && widget.tasa > 0) {
       double usd = bs / widget.tasa;
-      _usdCtrl.text = usd.toStringAsFixed(2);
+      String newUsd = usd.toStringAsFixed(2);
+      if (_usdCtrl.text != newUsd) {
+        _usdCtrl.text = newUsd;
+      }
     }
+  }
+
+  void _selectAll(TextEditingController ctrl) {
+    // Usamos un pequeño delay para que Flutter termine de procesar el tap antes de seleccionar
+    Future.delayed(Duration.zero, () {
+      ctrl.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: ctrl.text.length,
+      );
+    });
   }
 
   @override
@@ -65,11 +89,10 @@ class _CalcScreenState extends State<CalcScreen> {
       'EEEE, dd/MM/yyyy',
       'es_ES',
     ).format(DateTime.now());
-    // Capitalizar primera letra
     fechaHoy = fechaHoy[0].toUpperCase() + fechaHoy.substring(1);
 
     return Scaffold(
-      backgroundColor: Colors.white, // O Color(0xFF1E1E1E) para dark mode
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -87,7 +110,6 @@ class _CalcScreenState extends State<CalcScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Logo o Título Visual
             const Icon(Icons.currency_exchange, size: 60, color: Colors.blue),
             const SizedBox(height: 10),
             const Text(
@@ -103,14 +125,11 @@ class _CalcScreenState extends State<CalcScreen> {
                 color: Colors.blue,
               ),
             ),
-
             const SizedBox(height: 40),
-
-            // Card Principal de Cálculo
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF2C2C2C), // Fondo oscuro estilo la foto
+                color: const Color(0xFF2C2C2C),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
                   BoxShadow(
@@ -122,14 +141,13 @@ class _CalcScreenState extends State<CalcScreen> {
               ),
               child: Column(
                 children: [
-                  // Chip de Título
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF66BB6A), // Verde brillante
+                      color: const Color(0xFF66BB6A),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: const Text(
@@ -142,15 +160,14 @@ class _CalcScreenState extends State<CalcScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-
-                  // Input USD
                   TextField(
                     controller: _usdCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
+                    focusNode: _usdFocus,
+                    keyboardType: TextInputType.number,
                     style: const TextStyle(color: Colors.white, fontSize: 24),
                     onChanged: _onUsdChanged,
+                    inputFormatters: [SlidingDecimalFormatter()],
+                    onTap: () => _selectAll(_usdCtrl),
                     decoration: const InputDecoration(
                       prefixText: '\$   ',
                       prefixStyle: TextStyle(
@@ -166,17 +183,15 @@ class _CalcScreenState extends State<CalcScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Input BS
                   TextField(
                     controller: _bsCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
+                    focusNode: _bsFocus,
+                    keyboardType: TextInputType.number,
                     style: const TextStyle(color: Colors.white, fontSize: 24),
                     onChanged: _onBsChanged,
+                    inputFormatters: [SlidingDecimalFormatter()],
+                    onTap: () => _selectAll(_bsCtrl),
                     decoration: const InputDecoration(
                       prefixText: 'Bs   ',
                       prefixStyle: TextStyle(
@@ -192,10 +207,7 @@ class _CalcScreenState extends State<CalcScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
-                  // Flechas indicadoras visuales
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -212,10 +224,7 @@ class _CalcScreenState extends State<CalcScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 30),
-
-            // Card de Fecha
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -240,6 +249,36 @@ class _CalcScreenState extends State<CalcScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class SlidingDecimalFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Si se borra todo, dejar en 0.00
+    if (newValue.text.isEmpty) {
+      return const TextEditingValue(
+        text: '0.00',
+        selection: TextSelection.collapsed(offset: 4),
+      );
+    }
+    // Solo dígitos
+    String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) {
+      return const TextEditingValue(
+        text: '0.00',
+        selection: TextSelection.collapsed(offset: 4),
+      );
+    }
+    double value = double.parse(digits) / 100;
+    String newText = value.toStringAsFixed(2);
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
     );
   }
 }
