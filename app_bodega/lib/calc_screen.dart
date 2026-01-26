@@ -128,7 +128,94 @@ class _CalcScreenState extends State<CalcScreen> {
               ),
               child: Column(
                 children: [
+<<<<<<< HEAD
                   Row(
+=======
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF66BB6A),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Text(
+                      'Dólar BCV',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  TextField(
+                    controller: _usdCtrl,
+                    focusNode: _usdFocus,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(color: Colors.white, fontSize: 24),
+                    onChanged: _onUsdChanged,
+                    inputFormatters: [SlidingDecimalFormatter()],
+                    onTap: () => _selectAll(_usdCtrl),
+                    decoration: const InputDecoration(
+                      prefixText: '\$   ',
+                      prefixStyle: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _bsCtrl,
+                    focusNode: _bsFocus,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(color: Colors.white, fontSize: 24),
+                    onChanged: _onBsChanged,
+                    inputFormatters: [SlidingDecimalFormatter()],
+                    onTap: () => _selectAll(_bsCtrl),
+                    decoration: InputDecoration(
+                      prefixText: 'Bs   ',
+                      prefixStyle: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.copy,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: _bsCtrl.text));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Valor copiado al portapapeles'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                      enabledBorder: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: const UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  const Row(
+>>>>>>> 55dc2826b0ed8a61b5dc2f74b547d2b55a83c2b3
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.bolt, color: Colors.amber, size: 20),
