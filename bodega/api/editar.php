@@ -32,9 +32,10 @@ $precio_venta_unidad = isset($body['precio_venta_unidad']) && $body['precio_vent
 $proveedor = isset($body['proveedor']) ? trim($body['proveedor']) : '';
 $vende_media = isset($body['vende_media']) ? intval($body['vende_media']) : 0;
 $bajo_inventario = isset($body['bajo_inventario']) ? intval($body['bajo_inventario']) : 0;
+$stock = isset($body['stock']) ? floatval($body['stock']) : null;
 
 try {
-    $ok = editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $moneda_compra, $bajo_inventario, $vende_media, $codigo_barras);
+    $ok = editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $moneda_compra, $bajo_inventario, $vende_media, $codigo_barras, $stock);
     echo json_encode(['ok' => (bool)$ok]);
 } catch (Exception $e) {
     http_response_code(500);

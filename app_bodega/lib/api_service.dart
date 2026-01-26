@@ -7,9 +7,11 @@ class ApiService {
   static const String baseUrl = 'https://ponciano.zz.com.ve/bodega/api';
 
   // Obtener tasa de cambio
-  Future<double> getTasa() async {
+  Future<double> getTasa({String? fecha}) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/tasa.php'));
+      String url = '$baseUrl/tasa.php';
+      if (fecha != null) url += '?fecha=$fecha';
+      final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['ok'] == true) {
@@ -93,5 +95,42 @@ class ApiService {
       return result['ok'] ?? false;
     }
     return false;
+  }
+
+  // Obtener lista de proveedores
+  Future<List<String>> getProviders() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/proveedores.php'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          final List<dynamic> list = data['proveedores'];
+          return list.map((e) => e.toString()).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error obteniendo proveedores: $e');
+      return [];
+    }
+  }
+
+  // Registrar una venta y descontar inventario
+  Future<bool> registrarVenta(Map<String, dynamic> ventaData) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/vender.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(ventaData),
+      );
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return result['ok'] ?? false;
+      }
+      return false;
+    } catch (e) {
+      print('Error registrando venta: $e');
+      return false;
+    }
   }
 }

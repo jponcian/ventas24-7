@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 import 'product_model.dart';
 import 'api_service.dart';
-import 'scanner_screen.dart'; // Usar el nuevo archivo extraído
+import 'scanner_screen.dart';
+import 'utils.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? product;
@@ -28,9 +30,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _precioVentaPaqueteCtrl;
   late TextEditingController _precioVentaUnidadCtrl;
   late TextEditingController _tamPaqueteCtrl;
+  late TextEditingController _stockCtrl;
 
   bool _isLoading = false;
   String _monedaCompra = 'USD';
+  List<String> _providers = [];
 
   @override
   void initState() {
@@ -66,7 +70,23 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _tamPaqueteCtrl = TextEditingController(
       text: widget.product?.tamPaquete?.toString() ?? '1',
     );
+    _stockCtrl = TextEditingController(
+      text: widget.product?.stock?.toString() ?? '0',
+    );
     _monedaCompra = widget.product?.monedaCompra ?? 'USD';
+
+    _loadProviders();
+  }
+
+  Future<void> _loadProviders() async {
+    try {
+      final list = await _apiService.getProviders();
+      setState(() {
+        _providers = list;
+      });
+    } catch (e) {
+      print('Error al cargar proveedores: $e');
+    }
   }
 
   @override
@@ -123,6 +143,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       'bajo_inventario': int.tryParse(_stockBajoCtrl.text) ?? 0,
       'moneda_compra': _monedaCompra,
       'vende_media': 0,
+      'stock': double.tryParse(_stockCtrl.text) ?? 0.0,
     };
 
     bool success;
@@ -206,7 +227,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ),
               const SizedBox(height: 32),
               _buildSectionTitle('PRECIOS Y CONFIGURACIÓN'),
-
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -219,110 +239,215 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Row(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   children: [
-                    const Icon(
-                      Icons.currency_exchange,
-                      color: Color(0xFF1E3A8A),
-                      size: 20,
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.currency_exchange,
+                          color: Color(0xFF1E3A8A),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Moneda Compra:',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        const Spacer(),
+                        DropdownButton<String>(
+                          value: _monedaCompra,
+                          underline: const SizedBox(),
+                          items: ['USD', 'BS'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(
+                                value,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null)
+                              setState(() => _monedaCompra = val);
+                          },
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Moneda Compra:',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                    const Divider(),
+                    _buildTextField(
+                      controller: _precioCompraCtrl,
+                      label: 'Costo por Paquete ($_monedaCompra)',
+                      icon: Icons.shopping_bag_outlined,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [SlidingDecimalFormatter()],
+                      onChanged: (_) => setState(() {}),
                     ),
-                    const Spacer(),
-                    DropdownButton<String>(
-                      value: _monedaCompra,
-                      underline: const SizedBox(),
-                      items: ['USD', 'BS'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(
-                            value,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _tamPaqueteCtrl,
+                            label: 'Unidades x Paquete',
+                            icon: Icons.numbers,
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setState(() {}),
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _monedaCompra = val);
-                      },
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Costo Unitario',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                '${((double.tryParse(_precioCompraCtrl.text) ?? 0) / (double.tryParse(_tamPaqueteCtrl.text) ?? 1)).toStringAsFixed(2)} $_monedaCompra',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               Row(
                 children: [
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _precioCompraCtrl,
-                      label: 'Costo ($_monedaCompra)',
-                      icon: Icons.download,
-                      keyboardType: TextInputType.number,
-                    ),
+                  const Text(
+                    '¿Vende por Paquete?',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _precioVentaCtrl,
-                      label: 'Venta (Total)',
-                      icon: Icons.upload,
-                      keyboardType: TextInputType.number,
-                    ),
+                  const Spacer(),
+                  Switch(
+                    value: _unidadMedidaCtrl.text == 'paquete',
+                    onChanged: (val) {
+                      setState(() {
+                        _unidadMedidaCtrl.text = val ? 'paquete' : 'unidad';
+                      });
+                    },
+                    activeColor: const Color(0xFF1E3A8A),
                   ),
                 ],
               ),
 
+              if (_unidadMedidaCtrl.text == 'paquete') ...[
+                const SizedBox(height: 16),
+                _buildPriceCalculationSection(
+                  title: 'PRECIO VENTA PAQUETE',
+                  controller: _precioVentaPaqueteCtrl,
+                  basePrice: double.tryParse(_precioCompraCtrl.text) ?? 0,
+                ),
+              ],
+
               const SizedBox(height: 16),
-              _buildTextField(
+              _buildPriceCalculationSection(
+                title: 'PRECIO VENTA DETAL (UNITARIO)',
                 controller: _precioVentaUnidadCtrl,
-                label: 'Precio Venta Unitario (USD)',
-                icon: Icons.person_outline,
-                keyboardType: TextInputType.number,
-                validator: (v) => v!.isEmpty ? 'Requerido' : null,
-              ),
-
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _tamPaqueteCtrl,
-                      label: 'Tam. Paquete',
-                      icon: Icons.apps,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildTextField(
-                      controller: _precioVentaPaqueteCtrl,
-                      label: 'Precio Paquete',
-                      icon: Icons.inventory_2,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
+                basePrice:
+                    (double.tryParse(_precioCompraCtrl.text) ?? 0) /
+                    (double.tryParse(_tamPaqueteCtrl.text) ?? 1),
               ),
 
               const SizedBox(height: 32),
               _buildSectionTitle('OTROS DATOS'),
-              _buildTextField(
-                controller: _proveedorCtrl,
-                label: 'Proveedor',
-                icon: Icons.business_outlined,
+              Autocomplete<String>(
+                optionsBuilder: (TextEditingValue textEditingValue) {
+                  if (textEditingValue.text.isEmpty) {
+                    return _providers;
+                  }
+                  return _providers.where((String option) {
+                    return option.toLowerCase().contains(
+                      textEditingValue.text.toLowerCase(),
+                    );
+                  });
+                },
+                onSelected: (String selection) {
+                  _proveedorCtrl.text = selection;
+                },
+                fieldViewBuilder:
+                    (context, controller, focusNode, onFieldSubmitted) {
+                      // Sincronizar con el controlador principal
+                      if (controller.text != _proveedorCtrl.text &&
+                          _proveedorCtrl.text.isNotEmpty &&
+                          controller.text.isEmpty) {
+                        controller.text = _proveedorCtrl.text;
+                      }
+                      controller.addListener(() {
+                        _proveedorCtrl.text = controller.text;
+                      });
+                      return _buildTextField(
+                        controller: controller,
+                        label: 'Proveedor',
+                        icon: Icons.business_outlined,
+                      );
+                    },
+                optionsViewBuilder: (context, onSelected, options) {
+                  return Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: MediaQuery.of(context).size.width - 48,
+                        constraints: const BoxConstraints(maxHeight: 250),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: ListView.separated(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: options.length,
+                          separatorBuilder: (context, index) =>
+                              const Divider(height: 1),
+                          itemBuilder: (BuildContext context, int index) {
+                            final String option = options.elementAt(index);
+                            return ListTile(
+                              title: Text(
+                                option,
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF1E3A8A),
+                                ),
+                              ),
+                              onTap: () => onSelected(option),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 16),
               _buildTextField(
                 controller: _stockBajoCtrl,
-                label: 'Alerta Stock Bajo (0 o 1)',
-                icon: Icons.warning_amber_rounded,
+                label: 'Alerta Stock Bajo (Quedan...)',
+                icon: Icons.notifications_active_outlined,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _stockCtrl,
+                label: 'Stock Actual (Inventario)',
+                icon: Icons.inventory,
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 48),
@@ -357,6 +482,80 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
   }
 
+  Widget _buildPriceCalculationSection({
+    required String title,
+    required TextEditingController controller,
+    required double basePrice,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E3A8A).withOpacity(0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF1E3A8A).withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1E3A8A),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            controller: controller,
+            label: 'Precio de Venta',
+            icon: Icons.sell_outlined,
+            keyboardType: TextInputType.number,
+            inputFormatters: [SlidingDecimalFormatter()],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _marginBtn(controller, basePrice, 10),
+              _marginBtn(controller, basePrice, 15),
+              _marginBtn(controller, basePrice, 20),
+              _marginBtn(controller, basePrice, 30),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _marginBtn(TextEditingController ctrl, double base, int percent) {
+    return GestureDetector(
+      onTap: () {
+        if (base <= 0) return;
+        double price = base * (1 + (percent / 100));
+        setState(() {
+          ctrl.text = price.toStringAsFixed(2);
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF1E3A8A).withOpacity(0.2)),
+        ),
+        child: Text(
+          '+$percent%',
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E3A8A),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16, left: 4),
@@ -379,6 +578,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
     Widget? suffixIcon,
+    List<TextInputFormatter>? inputFormatters,
+    Function(String)? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -396,6 +597,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         controller: controller,
         keyboardType: keyboardType,
         validator: validator,
+        inputFormatters: inputFormatters,
+        onChanged: onChanged,
         style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: label,

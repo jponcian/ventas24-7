@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'api_service.dart';
@@ -31,6 +32,12 @@ class MyApp extends StatelessWidget {
         textTheme: GoogleFonts.outfitTextTheme(),
       ),
       home: const ProductListScreen(),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('es', 'ES'), Locale('en', 'US')],
     );
   }
 }
@@ -92,6 +99,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             tamPaquete: p.tamPaquete,
             precioVentaPaquete: p.precioVentaPaquete,
             precioVentaUnidad: p.precioVentaUnidad,
+            stock: p.stock,
             qty: 0,
           ),
         );
@@ -114,6 +122,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               tamPaquete: p.tamPaquete,
               precioVentaPaquete: p.precioVentaPaquete,
               precioVentaUnidad: p.precioVentaUnidad,
+              stock: p.stock,
               qty: 0,
             ),
           );
@@ -405,7 +414,64 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             width: double.infinity,
                             height: 60,
                             child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () async {
+                                final items = selected.map((p) {
+                                  double precio = p.precioVenta ?? 0;
+                                  bool esDolar = p.monedaCompra != 'BS';
+                                  double precioBs = esDolar
+                                      ? precio * _tasa
+                                      : precio;
+                                  double cantDescuento = (p.id < 0)
+                                      ? p.qty * (p.tamPaquete ?? 1.0)
+                                      : p.qty.toDouble();
+
+                                  return {
+                                    'id': p.id.abs(),
+                                    'cantidad': cantDescuento,
+                                    'precio_bs': precioBs,
+                                  };
+                                }).toList();
+
+                                final ventaData = {
+                                  'total_bs': _totalBs,
+                                  'total_usd': _totalUsd,
+                                  'tasa': _tasa,
+                                  'detalles': items,
+                                };
+
+                                Navigator.pop(context); // Cerrar bottom sheet
+
+                                setState(() => _loading = true);
+                                bool ok = await _apiService.registrarVenta(
+                                  ventaData,
+                                );
+                                if (ok) {
+                                  setState(() {
+                                    for (var p in _allProducts) {
+                                      p.qty = 0;
+                                    }
+                                  });
+                                  _loadData(); // Refrescar stock de productos
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Venta registrada con éxito',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                } else {
+                                  setState(() => _loading = false);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Error al procesar la venta',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF1E3A8A),
                                 foregroundColor: Colors.white,
@@ -415,7 +481,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 elevation: 0,
                               ),
                               child: const Text(
-                                'CONTINUAR COMPRA',
+                                'FINALIZAR VENTA',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -631,80 +697,85 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
           if (_totalItems > 0)
             Positioned(
-              bottom: 24,
+              bottom: 0,
               left: 20,
               right: 20,
-              child: GestureDetector(
-                onTap: _showTicket,
-                child: Container(
-                  height: 70,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A8A),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1E3A8A).withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: GestureDetector(
+                    onTap: _showTicket,
+                    child: Container(
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E3A8A),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF1E3A8A).withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.shopping_bag,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$_totalItems productos',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
                             ),
-                            Text(
-                              '${_totalBs.toStringAsFixed(2)} Bs',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
+                            child: const Icon(
+                              Icons.shopping_bag,
+                              color: Colors.white,
                             ),
-                          ],
-                        ),
-                      ),
-                      const Text(
-                        'VER DETALLE',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white,
-                        size: 14,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$_totalItems productos',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  '${_totalBs.toStringAsFixed(2)} Bs',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Text(
+                            'VER DETALLE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                        ],
+                      ), // Row
+                    ), // Container
+                  ), // GestureDetector
+                ), // Padding
+              ), // SafeArea
+            ), // Positioned
         ],
       ),
     );
@@ -775,6 +846,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               color: Color(0xFF1E3A8A),
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            'Stock: ${p.stock?.toStringAsFixed(p.stock! % 1 == 0 ? 0 : 2) ?? "0"}',
+                            style: TextStyle(
+                              color: esBajo ? Colors.red : Colors.green[700],
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
                             ),
                           ),
                           if (p.proveedor != null && p.proveedor!.isNotEmpty)

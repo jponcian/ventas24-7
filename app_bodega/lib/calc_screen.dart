@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
+import 'utils.dart';
+import 'api_service.dart';
 
 class CalcScreen extends StatefulWidget {
   final double tasa;
@@ -17,13 +19,18 @@ class _CalcScreenState extends State<CalcScreen> {
   late TextEditingController _bsCtrl;
   final FocusNode _usdFocus = FocusNode();
   final FocusNode _bsFocus = FocusNode();
+  final ApiService _apiService = ApiService();
+
+  late double _tasaActual;
+  DateTime _selectedDate = DateTime.now();
+  bool _isLoadingRate = false;
 
   @override
   void initState() {
     super.initState();
-
+    _tasaActual = widget.tasa;
     _usdCtrl = TextEditingController(text: '1.00');
-    _bsCtrl = TextEditingController(text: widget.tasa.toStringAsFixed(2));
+    _bsCtrl = TextEditingController(text: _tasaActual.toStringAsFixed(2));
 
     _usdFocus.addListener(() {
       if (_usdFocus.hasFocus) {
@@ -46,11 +53,45 @@ class _CalcScreenState extends State<CalcScreen> {
     super.dispose();
   }
 
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      locale: const Locale('es', 'ES'),
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _isLoadingRate = true;
+      });
+
+      try {
+        String fechaStr = DateFormat('yyyy-MM-dd').format(picked);
+        double nuevaTasa = await _apiService.getTasa(fecha: fechaStr);
+        if (nuevaTasa > 0) {
+          setState(() {
+            _tasaActual = nuevaTasa;
+            _onUsdChanged(_usdCtrl.text);
+          });
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error obteniendo tasa: $e')));
+      } finally {
+        setState(() => _isLoadingRate = false);
+      }
+    }
+  }
+
   void _onUsdChanged(String value) {
     if (value.isEmpty) return;
     double? usd = double.tryParse(value);
     if (usd != null) {
-      double bs = usd * widget.tasa;
+      double bs = usd * _tasaActual;
       String newBs = bs.toStringAsFixed(2);
       if (_bsCtrl.text != newBs) {
         _bsCtrl.text = newBs;
@@ -61,8 +102,8 @@ class _CalcScreenState extends State<CalcScreen> {
   void _onBsChanged(String value) {
     if (value.isEmpty) return;
     double? bs = double.tryParse(value);
-    if (bs != null && widget.tasa > 0) {
-      double usd = bs / widget.tasa;
+    if (bs != null && _tasaActual > 0) {
+      double usd = bs / _tasaActual;
       String newUsd = usd.toStringAsFixed(2);
       if (_usdCtrl.text != newUsd) {
         _usdCtrl.text = newUsd;
@@ -84,7 +125,7 @@ class _CalcScreenState extends State<CalcScreen> {
     String fechaHoy = DateFormat(
       'EEEE, dd/MM/yyyy',
       'es_ES',
-    ).format(DateTime.now());
+    ).format(_selectedDate);
     fechaHoy = fechaHoy[0].toUpperCase() + fechaHoy.substring(1);
 
     return Scaffold(
@@ -128,100 +169,13 @@ class _CalcScreenState extends State<CalcScreen> {
               ),
               child: Column(
                 children: [
-<<<<<<< HEAD
                   Row(
-=======
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF66BB6A),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: const Text(
-                      'Dólar BCV',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  TextField(
-                    controller: _usdCtrl,
-                    focusNode: _usdFocus,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(color: Colors.white, fontSize: 24),
-                    onChanged: _onUsdChanged,
-                    inputFormatters: [SlidingDecimalFormatter()],
-                    onTap: () => _selectAll(_usdCtrl),
-                    decoration: const InputDecoration(
-                      prefixText: '\$   ',
-                      prefixStyle: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _bsCtrl,
-                    focusNode: _bsFocus,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(color: Colors.white, fontSize: 24),
-                    onChanged: _onBsChanged,
-                    inputFormatters: [SlidingDecimalFormatter()],
-                    onTap: () => _selectAll(_bsCtrl),
-                    decoration: InputDecoration(
-                      prefixText: 'Bs   ',
-                      prefixStyle: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: const Icon(
-                          Icons.copy,
-                          color: Colors.grey,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: _bsCtrl.text));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Valor copiado al portapapeles'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                      ),
-                      enabledBorder: const UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      focusedBorder: const UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  const Row(
->>>>>>> 55dc2826b0ed8a61b5dc2f74b547d2b55a83c2b3
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.bolt, color: Colors.amber, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'TASA DEL DÍA',
+                        'TASA DE CAMBIO',
                         style: GoogleFonts.outfit(
                           color: Colors.white70,
                           fontWeight: FontWeight.bold,
@@ -232,14 +186,23 @@ class _CalcScreenState extends State<CalcScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    '${widget.tasa.toStringAsFixed(2)} BS/USD',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  _isLoadingRate
+                      ? const SizedBox(
+                          height: 48,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          '${_tasaActual.toStringAsFixed(2)} BS/USD',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ],
               ),
             ),
@@ -262,28 +225,35 @@ class _CalcScreenState extends State<CalcScreen> {
               color: Colors.blue,
             ),
             const SizedBox(height: 40),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_month, color: Color(0xFF1E3A8A)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      fechaHoy,
-                      style: GoogleFonts.outfit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
+            GestureDetector(
+              onTap: _selectDate,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 24,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_month, color: Color(0xFF1E3A8A)),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        fechaHoy,
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    const Icon(Icons.edit, size: 18, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
           ],
@@ -338,6 +308,7 @@ class _CalcScreenState extends State<CalcScreen> {
             keyboardType: TextInputType.number,
             onChanged: onChanged,
             onTap: () => _selectAll(controller),
+            inputFormatters: [SlidingDecimalFormatter()],
             style: GoogleFonts.outfit(
               fontSize: 32,
               fontWeight: FontWeight.bold,

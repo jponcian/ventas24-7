@@ -31,6 +31,7 @@ class Product {
     this.monedaCompra,
     this.codigoBarras,
     this.proveedor,
+    this.stock,
     this.qty = 0,
   });
 
@@ -55,8 +56,11 @@ class Product {
       monedaCompra: json['moneda_compra'],
       codigoBarras: json['codigo_barras'],
       proveedor: json['proveedor'],
+      stock: double.tryParse(json['stock']?.toString() ?? '0'),
     );
   }
+
+  final double? stock;
 
   // Helpers para lógica de negocio
   bool get isPaquete => unidadMedida == 'paquete';

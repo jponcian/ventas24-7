@@ -33,7 +33,7 @@ try {
 
 
 // --- Productos ---
-function agregarProducto($nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null)
+function agregarProducto($nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = 0)
 {
     global $db;
     $legacyVenta = $precio_venta;
@@ -46,12 +46,12 @@ function agregarProducto($nombre, $descripcion, $unidad_medida, $tam_paquete, $p
     if ($legacyVenta === null) {
         $legacyVenta = 0.0;
     }
-    $stmt = $db->prepare("INSERT INTO productos (nombre, codigo_barras, descripcion, unidad_medida, tam_paquete, precio_compra, precio_venta, precio_venta_paquete, precio_venta_mediopaquete, precio_venta_unidad, proveedor, moneda_compra, bajo_inventario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario]);
+    $stmt = $db->prepare("INSERT INTO productos (nombre, codigo_barras, descripcion, unidad_medida, tam_paquete, precio_compra, precio_venta, precio_venta_paquete, precio_venta_mediopaquete, precio_venta_unidad, proveedor, moneda_compra, bajo_inventario, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario, $stock]);
     return $db->lastInsertId();
 }
 
-function editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null)
+function editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = null)
 {
     global $db;
     $legacyVenta = $precio_venta;
@@ -64,8 +64,20 @@ function editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete
     if ($legacyVenta === null) {
         $legacyVenta = 0.0;
     }
-    $stmt = $db->prepare("UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, precio_compra = ?, precio_venta = ?, precio_venta_paquete = ?, precio_venta_mediopaquete = ?, precio_venta_unidad = ?, proveedor = ?, moneda_compra = ?, bajo_inventario = ? WHERE id = ?");
-    return $stmt->execute([$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario, $id]);
+
+    $sql = "UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, precio_compra = ?, precio_venta = ?, precio_venta_paquete = ?, precio_venta_mediopaquete = ?, precio_venta_unidad = ?, proveedor = ?, moneda_compra = ?, bajo_inventario = ?";
+    $params = [$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario];
+
+    if ($stock !== null) {
+        $sql .= ", stock = ?";
+        $params[] = $stock;
+    }
+
+    $sql .= " WHERE id = ?";
+    $params[] = $id;
+
+    $stmt = $db->prepare($sql);
+    return $stmt->execute($params);
 }
 
 function eliminarProducto($id)
@@ -118,6 +130,44 @@ function encontrarUsuarioPorUsername($username)
 function eliminarPago($compra_id, $cuota_num)
 {
     global $db;
-    $stmt = $db->prepare("DELETE FROM pagos WHERE compra_id = ? AND cuota_num = ?");
     return $stmt->execute([$compra_id, $cuota_num]);
+}
+
+// --- Ventas ---
+function registrarVenta($total_bs, $total_usd, $tasa, $detalles)
+{
+    global $db;
+    try {
+        $db->beginTransaction();
+
+        $stmt = $db->prepare("INSERT INTO ventas (total_bs, total_usd, tasa) VALUES (?, ?, ?)");
+        $stmt->execute([$total_bs, $total_usd, $tasa]);
+        $venta_id = $db->lastInsertId();
+
+        $stmtDetalle = $db->prepare("INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio_unitario_bs) VALUES (?, ?, ?, ?)");
+        $stmtUpdateStock = $db->prepare("UPDATE productos SET stock = stock - ? WHERE id = ?");
+
+        foreach ($detalles as $item) {
+            $stmtDetalle->execute([
+                $venta_id,
+                $item['id'],
+                $item['cantidad'],
+                $item['precio_bs']
+            ]);
+
+            $stmtUpdateStock->execute([
+                $item['cantidad'],
+                $item['id']
+            ]);
+        }
+
+        $db->commit();
+        return true;
+    } catch (Exception $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        error_log("Error en registrarVenta: " . $e->getMessage());
+        return false;
+    }
 }
