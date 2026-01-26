@@ -3,23 +3,25 @@ require_once __DIR__ . '/cors.php';
 require __DIR__ . '/../db.php';
 header('Content-Type: application/json; charset=utf-8');
 
-$q = isset($_GET['q']) ? trim($_GET['q']) : null;
+$negocio_id = isset($_GET['negocio_id']) ? intval($_GET['negocio_id']) : 0;
 $id = isset($_GET['id']) ? intval($_GET['id']) : null;
+$q = isset($_GET['q']) ? $_GET['q'] : null;
+
+if ($negocio_id <= 0) {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'error' => 'Falta negocio_id']);
+    exit;
+}
 
 try {
     if ($id) {
-        $p = getProducto($id);
-        if (!$p) {
-            http_response_code(404);
-            echo json_encode(['ok' => false, 'error' => 'No encontrado']);
-            exit;
-        }
-        echo json_encode($p);
-        exit;
+        $p = getProducto($id, $negocio_id);
+        echo json_encode($p ?: ['ok' => false, 'error' => 'No encontrado']);
+    } else {
+        $lista = obtenerProductos($negocio_id, $q);
+        echo json_encode($lista);
     }
-    $productos = obtenerProductos($q);
-    echo json_encode($productos);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => 'Error al obtener productos']);
+    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
 }

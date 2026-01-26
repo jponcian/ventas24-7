@@ -29,6 +29,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _codigoBarrasCtrl;
   late TextEditingController _precioVentaPaqueteCtrl;
   late TextEditingController _precioVentaUnidadCtrl;
+  late TextEditingController _precioCompraUnidadCtrl;
   late TextEditingController _tamPaqueteCtrl;
   late TextEditingController _stockCtrl;
 
@@ -67,6 +68,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _precioVentaUnidadCtrl = TextEditingController(
       text: widget.product?.precioVentaUnidad?.toString() ?? '',
     );
+    double cp = widget.product?.precioCompra ?? 0;
+    double tp = widget.product?.tamPaquete ?? 1;
+    _precioCompraUnidadCtrl = TextEditingController(
+      text: (cp / tp).toStringAsFixed(2),
+    );
     _tamPaqueteCtrl = TextEditingController(
       text: widget.product?.tamPaquete?.toString() ?? '1',
     );
@@ -101,8 +107,29 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _stockBajoCtrl.dispose();
     _precioVentaPaqueteCtrl.dispose();
     _precioVentaUnidadCtrl.dispose();
+    _precioCompraUnidadCtrl.dispose();
     _tamPaqueteCtrl.dispose();
+    _stockCtrl.dispose();
     super.dispose();
+  }
+
+  void _updatePricesFromPackage() {
+    double cp = double.tryParse(_precioCompraCtrl.text) ?? 0;
+    double tp = double.tryParse(_tamPaqueteCtrl.text) ?? 1;
+    if (tp == 0) tp = 1;
+    String val = (cp / tp).toStringAsFixed(2);
+    if (_precioCompraUnidadCtrl.text != val) {
+      _precioCompraUnidadCtrl.text = val;
+    }
+  }
+
+  void _updatePricesFromUnit() {
+    double cu = double.tryParse(_precioCompraUnidadCtrl.text) ?? 0;
+    double tp = double.tryParse(_tamPaqueteCtrl.text) ?? 1;
+    String val = (cu * tp).toStringAsFixed(2);
+    if (_precioCompraCtrl.text != val) {
+      _precioCompraCtrl.text = val;
+    }
   }
 
   Future<void> _scanBarcode() async {
@@ -283,7 +310,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       icon: Icons.shopping_bag_outlined,
                       keyboardType: TextInputType.number,
                       inputFormatters: [SlidingDecimalFormatter()],
-                      onChanged: (_) => setState(() {}),
+                      onChanged: (_) {
+                        _updatePricesFromPackage();
+                        setState(() {});
+                      },
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -294,30 +324,24 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             label: 'Unidades x Paquete',
                             icon: Icons.numbers,
                             keyboardType: TextInputType.number,
-                            onChanged: (_) => setState(() {}),
+                            onChanged: (_) {
+                              _updatePricesFromPackage();
+                              setState(() {});
+                            },
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Costo Unitario',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              Text(
-                                '${((double.tryParse(_precioCompraCtrl.text) ?? 0) / (double.tryParse(_tamPaqueteCtrl.text) ?? 1)).toStringAsFixed(2)} $_monedaCompra',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ],
+                          child: _buildTextField(
+                            controller: _precioCompraUnidadCtrl,
+                            label: 'Costo Unitario ($_monedaCompra)',
+                            icon: Icons.monetization_on_outlined,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [SlidingDecimalFormatter()],
+                            onChanged: (_) {
+                              _updatePricesFromUnit();
+                              setState(() {});
+                            },
                           ),
                         ),
                       ],
@@ -359,9 +383,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               _buildPriceCalculationSection(
                 title: 'PRECIO VENTA DETAL (UNITARIO)',
                 controller: _precioVentaUnidadCtrl,
-                basePrice:
-                    (double.tryParse(_precioCompraCtrl.text) ?? 0) /
-                    (double.tryParse(_tamPaqueteCtrl.text) ?? 1),
+                basePrice: double.tryParse(_precioCompraUnidadCtrl.text) ?? 0,
               ),
 
               const SizedBox(height: 32),

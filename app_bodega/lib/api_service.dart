@@ -1,12 +1,46 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'product_model.dart';
 
 class ApiService {
-  // Configuración de URL base
   static const String baseUrl = 'https://ponciano.zz.com.ve/bodega/api';
 
-  // Obtener tasa de cambio
+  Future<int> getNegocioId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('negocio_id') ?? 1;
+  }
+
+  Future<Map<String, dynamic>> login(String cedula, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/login.php'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'cedula': cedula, 'password': password}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['ok'] == true) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('negocio_id', data['user']['negocio_id']);
+        await prefs.setString('negocio_nombre', data['user']['negocio_nombre']);
+        await prefs.setString('user_name', data['user']['nombre']);
+        await prefs.setBool('is_logged_in', true);
+        return {'ok': true, 'user': data['user']};
+      }
+      return {'ok': false, 'error': data['error'] ?? 'Error desconocido'};
+    } catch (e) {
+      return {'ok': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
+
   Future<double> getTasa({String? fecha}) async {
     try {
       String url = '$baseUrl/tasa.php';
@@ -20,87 +54,67 @@ class ApiService {
       }
       return 0.0;
     } catch (e) {
-      print('Error obteniendo tasa: $e');
       return 0.0;
     }
   }
 
-  // Obtener todos los productos
   Future<List<Product>> getProducts() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/ver.php'));
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/ver.php?negocio_id=$nid'),
+      );
 
       if (response.statusCode == 200) {
         List<dynamic> body = jsonDecode(response.body);
-        List<Product> products = body
-            .map((dynamic item) => Product.fromJson(item))
-            .toList();
-        return products;
-      } else {
-        throw Exception('Fallo al cargar productos: ${response.statusCode}');
+        return body.map((dynamic item) => Product.fromJson(item)).toList();
       }
+      return [];
     } catch (e) {
-      throw Exception('Error de conexión: $e');
+      return [];
     }
   }
 
-  // Obtener producto único
-  Future<Product> getProduct(int id) async {
-    final response = await http.get(Uri.parse('$baseUrl/ver.php?id=$id'));
-    if (response.statusCode == 200) {
-      return Product.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('No se encontró el producto');
-    }
-  }
-
-  // Crear producto
   Future<bool> createProduct(Map<String, dynamic> data) async {
+    data['negocio_id'] = await getNegocioId();
     final response = await http.post(
       Uri.parse('$baseUrl/crear.php'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
     );
-    if (response.statusCode == 200) {
-      final result = jsonDecode(response.body);
-      return result['ok'] ?? false;
-    }
-    return false;
+    return response.statusCode == 200 &&
+        jsonDecode(response.body)['ok'] == true;
   }
 
-  // Actualizar producto
   Future<bool> updateProduct(int id, Map<String, dynamic> data) async {
-    data['id'] = id; // Asegurar que el ID vaya en el body
+    data['id'] = id;
+    data['negocio_id'] = await getNegocioId();
     final response = await http.post(
       Uri.parse('$baseUrl/editar.php'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
     );
-    if (response.statusCode == 200) {
-      final result = jsonDecode(response.body);
-      return result['ok'] ?? false;
-    }
-    return false;
+    return response.statusCode == 200 &&
+        jsonDecode(response.body)['ok'] == true;
   }
 
-  // Eliminar producto
-  Future<bool> deleteProduct(int id) async {
+  Future<bool> registrarVenta(Map<String, dynamic> ventaData) async {
+    ventaData['negocio_id'] = await getNegocioId();
     final response = await http.post(
-      Uri.parse('$baseUrl/eliminar.php'),
+      Uri.parse('$baseUrl/vender.php'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'id': id}),
+      body: jsonEncode(ventaData),
     );
-    if (response.statusCode == 200) {
-      final result = jsonDecode(response.body);
-      return result['ok'] ?? false;
-    }
-    return false;
+    return response.statusCode == 200 &&
+        jsonDecode(response.body)['ok'] == true;
   }
 
-  // Obtener lista de proveedores
   Future<List<String>> getProviders() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/proveedores.php'));
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/proveedores.php?negocio_id=$nid'),
+      );
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data['ok'] == true) {
@@ -110,27 +124,7 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Error obteniendo proveedores: $e');
       return [];
-    }
-  }
-
-  // Registrar una venta y descontar inventario
-  Future<bool> registrarVenta(Map<String, dynamic> ventaData) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/vender.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(ventaData),
-      );
-      if (response.statusCode == 200) {
-        final result = jsonDecode(response.body);
-        return result['ok'] ?? false;
-      }
-      return false;
-    } catch (e) {
-      print('Error registrando venta: $e');
-      return false;
     }
   }
 }
