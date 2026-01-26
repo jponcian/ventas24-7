@@ -33,7 +33,7 @@ try {
 
 
 // --- Productos ---
-function agregarProducto($nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0)
+function agregarProducto($nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null)
 {
     global $db;
     $legacyVenta = $precio_venta;
@@ -46,12 +46,12 @@ function agregarProducto($nombre, $descripcion, $unidad_medida, $tam_paquete, $p
     if ($legacyVenta === null) {
         $legacyVenta = 0.0;
     }
-    $stmt = $db->prepare("INSERT INTO productos (nombre, descripcion, unidad_medida, tam_paquete, precio_compra, precio_venta, precio_venta_paquete, precio_venta_mediopaquete, precio_venta_unidad, proveedor, moneda_compra, bajo_inventario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario]);
+    $stmt = $db->prepare("INSERT INTO productos (nombre, codigo_barras, descripcion, unidad_medida, tam_paquete, precio_compra, precio_venta, precio_venta_paquete, precio_venta_mediopaquete, precio_venta_unidad, proveedor, moneda_compra, bajo_inventario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario]);
     return $db->lastInsertId();
 }
 
-function editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0)
+function editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null)
 {
     global $db;
     $legacyVenta = $precio_venta;
@@ -64,8 +64,8 @@ function editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete
     if ($legacyVenta === null) {
         $legacyVenta = 0.0;
     }
-    $stmt = $db->prepare("UPDATE productos SET nombre = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, precio_compra = ?, precio_venta = ?, precio_venta_paquete = ?, precio_venta_mediopaquete = ?, precio_venta_unidad = ?, proveedor = ?, moneda_compra = ?, bajo_inventario = ? WHERE id = ?");
-    return $stmt->execute([$nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario, $id]);
+    $stmt = $db->prepare("UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, precio_compra = ?, precio_venta = ?, precio_venta_paquete = ?, precio_venta_mediopaquete = ?, precio_venta_unidad = ?, proveedor = ?, moneda_compra = ?, bajo_inventario = ? WHERE id = ?");
+    return $stmt->execute([$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario, $id]);
 }
 
 function eliminarProducto($id)
@@ -83,8 +83,8 @@ function obtenerProductos($q = null)
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     $like = '%' . $q . '%';
-    $stmt = $db->prepare("SELECT * FROM productos WHERE nombre LIKE ? OR descripcion LIKE ? OR proveedor LIKE ? OR unidad_medida LIKE ? OR CAST(precio_compra AS CHAR) LIKE ? OR CAST(precio_venta AS CHAR) LIKE ? ORDER BY nombre ASC");
-    $stmt->execute([$like, $like, $like, $like, $like, $like]);
+    $stmt = $db->prepare("SELECT * FROM productos WHERE nombre LIKE ? OR codigo_barras = ? OR descripcion LIKE ? OR proveedor LIKE ? OR unidad_medida LIKE ? OR CAST(precio_compra AS CHAR) LIKE ? OR CAST(precio_venta AS CHAR) LIKE ? ORDER BY nombre ASC");
+    $stmt->execute([$like, $q, $like, $like, $like, $like, $like]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

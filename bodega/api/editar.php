@@ -3,7 +3,14 @@ require_once __DIR__ . '/cors.php';
 require __DIR__ . '/../db.php';
 header('Content-Type: application/json; charset=utf-8');
 
-$body = $_POST;
+// Soporte para JSON o POST tradicional
+if (empty($_POST)) {
+    $json = file_get_contents('php://input');
+    $body = json_decode($json, true) ?? [];
+} else {
+    $body = $_POST;
+}
+
 if (!isset($body['id']) || !is_numeric($body['id'])) {
     http_response_code(400);
     echo json_encode(['ok' => false, 'error' => 'Falta id']);
@@ -12,6 +19,7 @@ if (!isset($body['id']) || !is_numeric($body['id'])) {
 
 $id = intval($body['id']);
 $nombre = isset($body['nombre']) ? trim($body['nombre']) : '';
+$codigo_barras = isset($body['codigo_barras']) ? trim($body['codigo_barras']) : null;
 $descripcion = isset($body['descripcion']) && trim($body['descripcion']) !== '' ? trim($body['descripcion']) : null;
 $unidad_medida = isset($body['unidad_medida']) ? trim($body['unidad_medida']) : 'unidad';
 $tam_paquete = isset($body['tam_paquete']) && $body['tam_paquete'] !== '' ? floatval($body['tam_paquete']) : null;
@@ -23,9 +31,10 @@ $precio_venta_mediopaquete = isset($body['precio_venta_mediopaquete']) && strlen
 $precio_venta_unidad = isset($body['precio_venta_unidad']) && $body['precio_venta_unidad'] !== '' ? floatval($body['precio_venta_unidad']) : null;
 $proveedor = isset($body['proveedor']) ? trim($body['proveedor']) : '';
 $vende_media = isset($body['vende_media']) ? intval($body['vende_media']) : 0;
+$bajo_inventario = isset($body['bajo_inventario']) ? intval($body['bajo_inventario']) : 0;
 
 try {
-    $ok = editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $moneda_compra, 0, $vende_media);
+    $ok = editarProducto($id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $moneda_compra, $bajo_inventario, $vende_media, $codigo_barras);
     echo json_encode(['ok' => (bool)$ok]);
 } catch (Exception $e) {
     http_response_code(500);

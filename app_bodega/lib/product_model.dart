@@ -9,9 +9,12 @@ class Product {
 
   final double? precioVentaPaquete;
   final double? precioVentaUnidad;
+  final double? tamPaquete;
   final String? monedaCompra;
+  final String? codigoBarras;
+  final String? proveedor;
 
-  // Campo local para la app (no viene de API directamente, o se inicializa en 0)
+  // Campo local para la app
   int qty = 0;
 
   Product({
@@ -24,7 +27,10 @@ class Product {
     this.bajoInventario,
     this.precioVentaPaquete,
     this.precioVentaUnidad,
+    this.tamPaquete,
     this.monedaCompra,
+    this.codigoBarras,
+    this.proveedor,
     this.qty = 0,
   });
 
@@ -38,12 +44,17 @@ class Product {
       precioCompra: double.tryParse(json['precio_compra'].toString()),
       bajoInventario: int.tryParse(json['bajo_inventario'].toString()),
       precioVentaPaquete: double.tryParse(
-        json['precio_venta_paquete'].toString(),
+        json['precio_venta_paquete']?.toString() ?? '',
       ),
       precioVentaUnidad: double.tryParse(
-        json['precio_venta_unidad'].toString(),
+        json['precio_venta_unitario']?.toString() ??
+            json['precio_venta_unidad']?.toString() ??
+            '',
       ),
+      tamPaquete: double.tryParse(json['tam_paquete']?.toString() ?? '1'),
       monedaCompra: json['moneda_compra'],
+      codigoBarras: json['codigo_barras'],
+      proveedor: json['proveedor'],
     );
   }
 

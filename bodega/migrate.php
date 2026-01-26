@@ -96,6 +96,10 @@ if (!columnExists($pdo, $dbname, $table, 'precio_venta_unidad')) {
 if (!columnExists($pdo, $dbname, $table, 'moneda_compra')) {
     $changes[] = "ADD COLUMN `moneda_compra` VARCHAR(8) NOT NULL DEFAULT 'USD'";
 }
+// Añadir codigo_barras
+if (!columnExists($pdo, $dbname, $table, 'codigo_barras')) {
+    $changes[] = "ADD COLUMN `codigo_barras` VARCHAR(64) NULL AFTER `nombre` ";
+}
 // Eliminar cantidad
 $dropCantidad = false;
 if (columnExists($pdo, $dbname, $table, 'cantidad')) {
