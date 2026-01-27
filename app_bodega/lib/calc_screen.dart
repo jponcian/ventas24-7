@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'utils.dart';
@@ -222,6 +223,15 @@ class _CalcScreenState extends State<CalcScreen> {
               onChanged: _onBsChanged,
               icon: Icons.currency_exchange,
               color: Colors.blue,
+              onCopy: () {
+                Clipboard.setData(ClipboardData(text: _bsCtrl.text));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Monto copiado al portapapeles'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 40),
             GestureDetector(
@@ -268,6 +278,7 @@ class _CalcScreenState extends State<CalcScreen> {
     required Function(String) onChanged,
     required IconData icon,
     required Color color,
+    VoidCallback? onCopy,
   }) {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -287,17 +298,28 @@ class _CalcScreenState extends State<CalcScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
+              Row(
+                children: [
+                  Icon(icon, color: color, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
+              if (onCopy != null)
+                IconButton(
+                  icon: const Icon(Icons.copy, color: Colors.grey),
+                  onPressed: onCopy,
+                  tooltip: 'Copiar monto',
+                ),
             ],
           ),
           const SizedBox(height: 8),

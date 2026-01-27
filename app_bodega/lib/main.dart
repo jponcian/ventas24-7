@@ -14,6 +14,7 @@ import 'low_stock_screen.dart';
 import 'report_purchases_screen.dart';
 import 'purchase_screen.dart';
 import 'market_mode_screen.dart';
+import 'history_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -494,6 +495,80 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
+  Future<void> _generarEtiquetasPDF() async {
+    // Get all product IDs from current filtered list
+    final productIds = _filteredProducts
+        .where((p) => p.id > 0) // Only real products, not package variants
+        .map((p) => p.id)
+        .toList();
+
+    if (productIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay productos para generar etiquetas'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final pdfUrl = await _apiService.generarEtiquetasPDF(productIds);
+      if (pdfUrl != null && mounted) {
+        // Show dialog with URL to open in browser
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Etiquetas PDF'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Las etiquetas están listas.'),
+                const SizedBox(height: 16),
+                Text(
+                  pdfUrl,
+                  style: const TextStyle(fontSize: 12, color: Colors.blue),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cerrar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  // Copy URL to clipboard or open in browser
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Abre este enlace en tu navegador:\n$pdfUrl',
+                      ),
+                      duration: const Duration(seconds: 5),
+                    ),
+                  );
+                },
+                child: const Text('Copiar'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al generar etiquetas'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double totalBs = 0;
@@ -585,6 +660,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.history, color: Colors.blueGrey),
+              title: const Text('Historial Cargas'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HistoryScreen(),
+                  ),
+                );
+              },
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
@@ -637,6 +725,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
               context,
               MaterialPageRoute(builder: (context) => CalcScreen(tasa: _tasa)),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.print_outlined, color: Color(0xFFEF4444)),
+            tooltip: 'Generar Etiquetas PDF',
+            onPressed: () => _generarEtiquetasPDF(),
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),

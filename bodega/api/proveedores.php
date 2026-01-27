@@ -1,22 +1,39 @@
 <?php
 require_once __DIR__ . '/cors.php';
-header('Content-Type: application/json');
-require_once __DIR__ . '/../db.php';
+require __DIR__ . '/../db.php';
+header('Content-Type: application/json; charset=utf-8');
 
-$negocio_id = isset($_GET['negocio_id']) ? intval($_GET['negocio_id']) : 0;
+$method = $_SERVER['REQUEST_METHOD'];
+$nid = isset($_GET['negocio_id']) ? intval($_GET['negocio_id']) : 0;
 
-if ($negocio_id <= 0) {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'error' => 'Falta negocio_id']);
-    exit;
-}
-
-try {
-    global $db;
-    $stmt = $db->prepare("SELECT DISTINCT proveedor FROM productos WHERE negocio_id = ? AND proveedor IS NOT NULL AND proveedor != '' ORDER BY proveedor ASC");
-    $stmt->execute([$negocio_id]);
-    $proveedores = $stmt->fetchAll(PDO::FETCH_COLUMN);
+if ($method === 'GET') {
+    if ($nid <= 0) {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => 'Id Negocio requerido']);
+        exit;
+    }
+    
+    $stmt = $db->prepare("SELECT * FROM proveedores WHERE negocio_id = ? ORDER BY nombre ASC");
+    $stmt->execute([$nid]);
+    $proveedores = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode(['ok' => true, 'proveedores' => $proveedores]);
-} catch (Exception $e) {
-    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+    
+} elseif ($method === 'POST') {
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true) ?? [];
+    
+    $nid = isset($data['negocio_id']) ? intval($data['negocio_id']) : 0;
+    $nombre = trim($data['nombre'] ?? '');
+    
+    if ($nid <= 0 || empty($nombre)) {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => 'Datos incompletos']);
+        exit;
+    }
+    
+    $stmt = $db->prepare("INSERT INTO proveedores (negocio_id, nombre, contacto, telefono) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$nid, $nombre, $data['contacto'] ?? null, $data['telefono'] ?? null]);
+    
+    echo json_encode(['ok' => true, 'id' => $db->lastInsertId()]);
 }
+?>

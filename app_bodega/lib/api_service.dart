@@ -143,10 +143,59 @@ class ApiService {
     }
   }
 
-  Future<bool> cargarCompra(List<Map<String, dynamic>> items) async {
+  Future<List<Map<String, dynamic>>> getProveedoresList() async {
     try {
       final nid = await getNegocioId();
-      final body = {'negocio_id': nid, 'items': items};
+      final response = await http.get(
+        Uri.parse('$baseUrl/proveedores.php?negocio_id=$nid'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return List<Map<String, dynamic>>.from(data['proveedores']);
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> addProveedor(String nombre, String contacto, String tel) async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.post(
+        Uri.parse('$baseUrl/proveedores.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'negocio_id': nid,
+          'nombre': nombre,
+          'contacto': contacto,
+          'telefono': tel,
+        }),
+      );
+      return response.statusCode == 200 &&
+          jsonDecode(response.body)['ok'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> cargarCompra(
+    List<Map<String, dynamic>> items, {
+    int? proveedorId,
+    String? moneda,
+    double? tasa,
+  }) async {
+    try {
+      final nid = await getNegocioId();
+      final body = {
+        'negocio_id': nid,
+        'items': items,
+        'proveedor_id': proveedorId,
+        'moneda': moneda ?? 'USD',
+        'tasa': tasa ?? 1.0,
+      };
 
       final response = await http.post(
         Uri.parse('$baseUrl/comprar.php'),
@@ -172,6 +221,58 @@ class ApiService {
       return {'ok': false, 'error': 'Error ${response.statusCode}'};
     } catch (e) {
       return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getHistorialCompras() async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/compras_historial.php?negocio_id=$nid'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return List<Map<String, dynamic>>.from(data['compras']);
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> anularCompra(int compraId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/anular_compra.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'compra_id': compraId}),
+      );
+      return response.statusCode == 200 &&
+          jsonDecode(response.body)['ok'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> generarEtiquetasPDF(List<int> productIds) async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.post(
+        Uri.parse('$baseUrl/generar_etiquetas.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'negocio_id': nid, 'ids': productIds}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return data['pdf_url'];
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }

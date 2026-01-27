@@ -40,12 +40,10 @@ if ($ids) {
         return in_array($p['id'], $ids);
     });
 } else {
-    // Solo 27 artículos ordenados por created_at descendente
-    $todos = obtenerProductos();
-    usort($todos, function ($a, $b) {
-        return strtotime($b['created_at']) - strtotime($a['created_at']);
-    });
-    $productos = array_slice($todos, 0, 24);
+    // Si no hay selección, mostrar los últimos 12 productos modificados (updated_at)
+    // Esto es útil para imprimir etiquetas solo de lo que cambió de precio.
+    $stmt = $db->query("SELECT * FROM productos ORDER BY updated_at DESC LIMIT 12");
+    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 $pdf = new FPDF_CellFit('P', 'mm', 'Letter'); // Carta
@@ -76,7 +74,7 @@ foreach ($productos as $idx => $p) {
     $fmt = function ($n) {
         return (fmod($n, 1) == 0) ? number_format($n, 0) : number_format($n, 2);
     };
-    if ($p['moneda_compra'] === 'BS') {
+    if ($p['moneda_base'] === 'BS') {
         if ($tieneUnidad && $tienePaquete) {
             $precios[] = 'c/u: ' . $fmt($p['precio_venta_unidad']) . ' Bs';
             $precios[] = 'Paq: ' . $fmt($p['precio_venta_paquete']) . ' Bs';
@@ -112,6 +110,14 @@ foreach ($productos as $idx => $p) {
     // Dibuja recuadro
     $pdf->SetDrawColor(100, 100, 100);
     $pdf->Rect($x, $y, $etiquetaAncho, $etiquetaAlto);
+    
+    // Código de Barras (Texto pequeño abajo a la derecha)
+    if (!empty($p['codigo_barras'])) {
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->SetTextColor(150, 150, 150);
+        $pdf->SetXY($x + $etiquetaAncho - 40, $y + $etiquetaAlto - 5);
+        $pdf->Cell(38, 4, utf8_decode($p['codigo_barras']), 0, 0, 'R');
+    }
 
     $maxFont = 45;
     $minFont = 27;
