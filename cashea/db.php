@@ -36,7 +36,7 @@ if (session_status() === PHP_SESSION_NONE) {
 function agregarCompra($producto, $precio, $inicial, $cuotas, $fecha_compra, $usuario, $telefono = null)
 {
     global $db;
-    $stmt = $db->prepare("INSERT INTO compras (producto, precio, inicial, cuotas, fecha_compra, usuario, telefono, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $db->prepare("INSERT INTO cashea_compras (producto, precio, inicial, cuotas, fecha_compra, usuario, telefono, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     $owner_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
     $stmt->execute([$producto, $precio, $inicial, $cuotas, $fecha_compra, $usuario, $telefono, $owner_id]);
 }
@@ -44,14 +44,14 @@ function agregarCompra($producto, $precio, $inicial, $cuotas, $fecha_compra, $us
 function eliminarCompra($compra_id)
 {
     global $db;
-    $stmt = $db->prepare("DELETE FROM compras WHERE id = ?");
+    $stmt = $db->prepare("DELETE FROM cashea_compras WHERE id = ?");
     $stmt->execute([$compra_id]);
 }
 
 function editarCompra($compra_id, $producto, $precio, $inicial, $cuotas, $fecha_compra, $usuario, $telefono = null)
 {
     global $db;
-    $stmt = $db->prepare("UPDATE compras SET producto = ?, precio = ?, inicial = ?, cuotas = ?, fecha_compra = ?, usuario = ?, telefono = ? WHERE id = ?");
+    $stmt = $db->prepare("UPDATE cashea_compras SET producto = ?, precio = ?, inicial = ?, cuotas = ?, fecha_compra = ?, usuario = ?, telefono = ? WHERE id = ?");
     $stmt->execute([$producto, $precio, $inicial, $cuotas, $fecha_compra, $usuario, $telefono, $compra_id]);
 }
 
@@ -59,10 +59,10 @@ function obtenerCompras($owner_id = null)
 {
     global $db;
     if ($owner_id === null) {
-        $stmt = $db->query("SELECT * FROM compras");
+        $stmt = $db->query("SELECT * FROM cashea_compras");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    $stmt = $db->prepare("SELECT * FROM compras WHERE owner_id = ?");
+    $stmt = $db->prepare("SELECT * FROM cashea_compras WHERE owner_id = ?");
     $stmt->execute([$owner_id]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -70,14 +70,14 @@ function obtenerCompras($owner_id = null)
 function registrarPago($compra_id, $cuota_num, $fecha_pago, $monto)
 {
     global $db;
-    $stmt = $db->prepare("INSERT INTO pagos (compra_id, cuota_num, fecha_pago, monto) VALUES (?, ?, ?, ?)");
+    $stmt = $db->prepare("INSERT INTO cashea_pagos (compra_id, cuota_num, fecha_pago, monto) VALUES (?, ?, ?, ?)");
     $stmt->execute([$compra_id, $cuota_num, $fecha_pago, $monto]);
 }
 
 function obtenerPagos()
 {
     global $db;
-    $stmt = $db->query("SELECT * FROM pagos");
+    $stmt = $db->query("SELECT * FROM cashea_pagos");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -85,7 +85,7 @@ function obtenerPagosPorOwner($owner_id = null)
 {
     global $db;
     if ($owner_id === null) return obtenerPagos();
-    $stmt = $db->prepare("SELECT pagos.* FROM pagos JOIN compras ON pagos.compra_id = compras.id WHERE compras.owner_id = ?");
+    $stmt = $db->prepare("SELECT cashea_pagos.* FROM cashea_pagos JOIN cashea_compras ON cashea_pagos.compra_id = cashea_compras.id WHERE cashea_compras.owner_id = ?");
     $stmt->execute([$owner_id]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -93,7 +93,7 @@ function obtenerPagosPorOwner($owner_id = null)
 function compraPertenece($compra_id, $owner_id)
 {
     global $db;
-    $stmt = $db->prepare("SELECT owner_id FROM compras WHERE id = ?");
+    $stmt = $db->prepare("SELECT owner_id FROM cashea_compras WHERE id = ?");
     $stmt->execute([$compra_id]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$row) return false;
@@ -121,6 +121,6 @@ function encontrarUsuarioPorUsername($username)
 function eliminarPago($compra_id, $cuota_num)
 {
     global $db;
-    $stmt = $db->prepare("DELETE FROM pagos WHERE compra_id = ? AND cuota_num = ?");
+    $stmt = $db->prepare("DELETE FROM cashea_pagos WHERE compra_id = ? AND cuota_num = ?");
     $stmt->execute([$compra_id, $cuota_num]);
 }

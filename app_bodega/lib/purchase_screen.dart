@@ -18,6 +18,9 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
   List<Product> _filteredProducts = [];
   bool _loading = true;
 
+  // Carrito de compras: items locales antes de enviar
+  final List<Map<String, dynamic>> _cart = [];
+
   @override
   void initState() {
     super.initState();
@@ -28,7 +31,6 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
     setState(() => _loading = true);
     try {
       final list = await _apiService.getProducts();
-      // Filter out packages (negative IDs) as we usually buy units
       final units = list.where((p) => p.id > 0).toList();
       setState(() {
         _allProducts = units;
@@ -60,92 +62,273 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
       text: p.precioCompra != null ? p.precioCompra.toString() : '',
     );
 
+    // Estado local para el diálogo
+    String modoCarga = 'unidad'; // 'unidad' o 'paquete'
+    double tamPaquete = p.tamPaquete ?? 1;
+
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Cargar al Inventario: ${p.nombre}',
-          style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: qtyCtrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Cantidad a agregar',
-                hintText: 'Ej: 10',
-                border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text(
+              'Agregar: ${p.nombre}',
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: costCtrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Nuevo Costo (Opcional)',
-                hintText: 'Ej: 5.50',
-                border: OutlineInputBorder(),
-              ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (tamPaquete > 1) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: const Text(
+                            'Unidad',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          value: 'unidad',
+                          groupValue: modoCarga,
+                          contentPadding: EdgeInsets.zero,
+                          onChanged: (v) =>
+                              setDialogState(() => modoCarga = v!),
+                        ),
+                      ),
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: Text(
+                            'Paquete ($tamPaquete)',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          value: 'paquete',
+                          groupValue: modoCarga,
+                          contentPadding: EdgeInsets.zero,
+                          onChanged: (v) =>
+                              setDialogState(() => modoCarga = v!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                TextField(
+                  controller: qtyCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: modoCarga == 'paquete'
+                        ? 'Cant. Paquetes'
+                        : 'Cant. Unidades',
+                    hintText: 'Ej: 10',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.inventory_2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: costCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: modoCarga == 'paquete'
+                        ? 'Costo por Paquete'
+                        : 'Costo Unitario',
+                    hintText: 'Ej: 5.50',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.attach_money),
+                  ),
+                ),
+                if (modoCarga == 'paquete') ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Total unidades: ${(double.tryParse(qtyCtrl.text) ?? 0) * tamPaquete}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final qty = double.tryParse(qtyCtrl.text);
-              if (qty == null || qty <= 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Cantidad inválida')),
-                );
-                return;
-              }
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  final rawQty = double.tryParse(qtyCtrl.text);
+                  if (rawQty == null || rawQty <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Cantidad inválida')),
+                    );
+                    return;
+                  }
+                  final rawCost = double.tryParse(costCtrl.text);
 
-              final cost = double.tryParse(costCtrl.text);
+                  double finalQty = rawQty;
+                  double? finalUnitCost = rawCost;
 
-              Navigator.pop(context);
+                  if (modoCarga == 'paquete') {
+                    finalQty = rawQty * tamPaquete;
+                    if (rawCost != null) {
+                      finalUnitCost = rawCost / tamPaquete;
+                    }
+                  }
 
-              // Show loading overlay or snackbar
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Procesando...')));
+                  setState(() {
+                    _cart.add({
+                      'producto_id': p.id,
+                      'nombre': p.nombre,
+                      'cantidad': finalQty,
+                      'costo_nuevo': finalUnitCost,
+                      'es_paquete': modoCarga == 'paquete',
+                      'cant_original': rawQty,
+                      'costo_original': rawCost,
+                    });
+                  });
 
-              final ok = await _apiService.cargarCompra(p.id, qty, cost);
-
-              if (mounted) {
-                if (ok) {
+                  Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Inventario actualizado'),
-                      backgroundColor: Colors.green,
+                    SnackBar(
+                      content: Text(
+                        'Agregado: ${p.nombre} ($finalQty unidades)',
+                      ),
+                      duration: const Duration(seconds: 1),
                     ),
                   );
-                  _loadData(); // Reload list
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Error al actualizar'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Guardar'),
-          ),
-        ],
+                },
+                child: const Text('Agregar'),
+              ),
+            ],
+          );
+        },
       ),
     );
+  }
+
+  void _showCart() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Resumen de Carga',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_sweep, color: Colors.red),
+                      onPressed: () {
+                        setState(() => _cart.clear());
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _cart.isEmpty
+                    ? const Center(child: Text('La lista está vacía'))
+                    : ListView.builder(
+                        controller: controller,
+                        itemCount: _cart.length,
+                        itemBuilder: (context, idx) {
+                          final it = _cart[idx];
+                          final bool esPaq = it['es_paquete'] ?? false;
+                          return ListTile(
+                            title: Text(it['nombre']),
+                            subtitle: Text(
+                              esPaq
+                                  ? 'Carga: ${it['cant_original']} Paq. (${it['cantidad']} unid) \nCosto Paq: \$${it['costo_original']}'
+                                  : 'Carga: ${it['cantidad']} Unid. \nCosto Unid: \$${it['costo_nuevo']}',
+                            ),
+                            isThreeLine: true,
+                            trailing: IconButton(
+                              icon: const Icon(Icons.remove_circle_outline),
+                              onPressed: () {
+                                setState(() => _cart.removeAt(idx));
+                                if (_cart.isEmpty) {
+                                  Navigator.pop(context);
+                                } else {
+                                  // Refresh the sheet
+                                  Navigator.pop(context);
+                                  _showCart();
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              if (_cart.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: const Color(0xFF1E3A8A),
+                      ),
+                      onPressed: _finalizePurchase,
+                      child: const Text('PROCESAR COMPRA'),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _finalizePurchase() async {
+    Navigator.pop(context); // Close sheet
+    setState(() => _loading = true);
+
+    final ok = await _apiService.cargarCompra(_cart);
+
+    if (mounted) {
+      setState(() => _loading = false);
+      if (ok) {
+        setState(() => _cart.clear());
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Compra procesada con éxito'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _loadData();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al procesar la compra'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -224,6 +407,14 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
           ),
         ],
       ),
+      floatingActionButton: _cart.isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _showCart,
+              label: Text('Finalizar (${_cart.length})'),
+              icon: const Icon(Icons.shopping_cart),
+              backgroundColor: const Color(0xFF1E3A8A),
+            ),
     );
   }
 }

@@ -21,7 +21,7 @@ try {
         exit;
     }
     // Eliminar pagos asociados primero (integridad)
-    $db->prepare("DELETE FROM pagos WHERE compra_id = ?")->execute([$compra_id]);
+    $db->prepare("DELETE FROM cashea_pagos WHERE compra_id = ?")->execute([$compra_id]);
     eliminarCompra($compra_id);
     echo json_encode(['ok' => true]);
 } catch (Exception $e) {

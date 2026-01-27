@@ -1,148 +1,172 @@
 /*
- Navicat Premium Data Transfer
+ Navicat Premium Dump SQL
 
- Source Server         : ZZ - ponciano
+ Source Server         : Local
  Source Server Type    : MySQL
- Source Server Version : 101114
- Source Host           : zz.com.ve:3306
+ Source Server Version : 50617 (5.6.17)
+ Source Host           : localhost:3306
  Source Schema         : javier_ponciano_4
 
  Target Server Type    : MySQL
- Target Server Version : 101114
+ Target Server Version : 50617 (5.6.17)
  File Encoding         : 65001
 
- Date: 26/01/2026 18:47:46
+ Date: 27/01/2026 09:08:42
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
--- Table structure for compras
+-- Table structure for cashea_compras
 -- ----------------------------
-DROP TABLE IF EXISTS `compras`;
-CREATE TABLE `compras`  (
-  `id` int NOT NULL AUTO_INCREMENT,
+DROP TABLE IF EXISTS `cashea_compras`;
+CREATE TABLE `cashea_compras`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `producto` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL,
   `precio` double NULL DEFAULT NULL,
   `inicial` double NULL DEFAULT NULL,
-  `cuotas` int NULL DEFAULT NULL,
+  `cuotas` int(11) NULL DEFAULT NULL,
   `fecha_compra` date NULL DEFAULT NULL,
   `usuario` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `telefono` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-  `owner_id` int NULL DEFAULT NULL,
+  `owner_id` int(11) NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = MyISAM AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of cashea_compras
+-- ----------------------------
+INSERT INTO `cashea_compras` VALUES (1, 'BICI GABRIEL', 140, 56, 3, '2025-11-15', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (2, 'MACUTO', 39, 16, 3, '2025-12-01', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (3, 'PINTURAS', 53.8, 21.52, 3, '2025-12-02', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (4, 'MACUTO', 59.99, 12, 3, '2025-12-08', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (5, 'SASTRERIA EL CARMEN', 50, 20, 3, '2025-12-08', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (6, 'FORTUNA', 38.93, 18.93, 2, '2025-12-12', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (7, 'PINTURA SATINADO', 44.79, 17.92, 3, '2025-12-16', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (8, 'Aceite', 55, 11, 3, '2025-12-23', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (9, 'Pinturas', 44.79, 17.92, 3, '2025-12-23', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (10, 'Pintura azul', 28.3, 11.32, 3, '2026-01-05', 'JAVIER', '+584144679693', 1);
+INSERT INTO `cashea_compras` VALUES (11, 'Game Pass', 30, 12, 3, '2026-01-20', 'JAVIER', '+584144679693', 1);
+
+-- ----------------------------
+-- Table structure for cashea_pagos
+-- ----------------------------
+DROP TABLE IF EXISTS `cashea_pagos`;
+CREATE TABLE `cashea_pagos`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `compra_id` int(11) NULL DEFAULT NULL,
+  `cuota_num` int(11) NULL DEFAULT NULL,
+  `fecha_pago` date NULL DEFAULT NULL,
+  `monto` double NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_cashea_compra`(`compra_id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 25 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+
+-- ----------------------------
+-- Records of cashea_pagos
+-- ----------------------------
+INSERT INTO `cashea_pagos` VALUES (1, 1, 1, '2025-12-17', 28);
+INSERT INTO `cashea_pagos` VALUES (2, 1, 2, '2025-12-17', 28);
+INSERT INTO `cashea_pagos` VALUES (3, 2, 1, '2025-12-17', 7.67);
+INSERT INTO `cashea_pagos` VALUES (4, 3, 1, '2025-12-17', 10.76);
+INSERT INTO `cashea_pagos` VALUES (5, 4, 1, '2025-12-20', 16);
+INSERT INTO `cashea_pagos` VALUES (6, 5, 1, '2025-12-22', 10);
+INSERT INTO `cashea_pagos` VALUES (7, 1, 3, '2025-12-24', 28);
+INSERT INTO `cashea_pagos` VALUES (8, 6, 1, '2025-12-25', 10);
+INSERT INTO `cashea_pagos` VALUES (9, 3, 2, '2025-12-29', 10.76);
+INSERT INTO `cashea_pagos` VALUES (10, 7, 1, '2025-12-29', 8.96);
+INSERT INTO `cashea_pagos` VALUES (11, 2, 2, '2025-12-30', 7.67);
+INSERT INTO `cashea_pagos` VALUES (12, 4, 2, '2026-01-05', 16);
+INSERT INTO `cashea_pagos` VALUES (13, 5, 2, '2026-01-05', 10);
+INSERT INTO `cashea_pagos` VALUES (14, 8, 1, '2026-01-06', 14.67);
+INSERT INTO `cashea_pagos` VALUES (15, 9, 1, '2026-01-06', 8.96);
+INSERT INTO `cashea_pagos` VALUES (16, 6, 2, '2026-01-06', 10);
+INSERT INTO `cashea_pagos` VALUES (17, 2, 3, '2026-01-12', 7.67);
+INSERT INTO `cashea_pagos` VALUES (18, 3, 3, '2026-01-13', 10.76);
+INSERT INTO `cashea_pagos` VALUES (19, 7, 2, '2026-01-13', 8.96);
+INSERT INTO `cashea_pagos` VALUES (20, 4, 3, '2026-01-17', 16);
+INSERT INTO `cashea_pagos` VALUES (21, 5, 3, '2026-01-17', 10);
+INSERT INTO `cashea_pagos` VALUES (22, 10, 1, '2026-01-17', 5.66);
+INSERT INTO `cashea_pagos` VALUES (23, 8, 2, '2026-01-19', 14.67);
+INSERT INTO `cashea_pagos` VALUES (24, 9, 2, '2026-01-19', 8.96);
+
+-- ----------------------------
+-- Table structure for compras
+-- ----------------------------
+DROP TABLE IF EXISTS `compras`;
+CREATE TABLE `compras`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `negocio_id` int(11) NOT NULL,
+  `producto_id` int(11) NOT NULL,
+  `cantidad` decimal(10, 2) NOT NULL,
+  `costo_unitario` decimal(10, 2) NOT NULL,
+  `fecha` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_bodega_negocio`(`negocio_id`) USING BTREE,
+  INDEX `idx_bodega_producto`(`producto_id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Fixed;
+
+-- ----------------------------
 -- Records of compras
 -- ----------------------------
-INSERT INTO `compras` VALUES (1, 'BICI GABRIEL', 140, 56, 3, '2025-11-15', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (2, 'MACUTO', 39, 16, 3, '2025-12-01', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (3, 'PINTURAS', 53.8, 21.52, 3, '2025-12-02', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (4, 'MACUTO', 59.99, 12, 3, '2025-12-08', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (5, 'SASTRERIA EL CARMEN', 50, 20, 3, '2025-12-08', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (6, 'FORTUNA', 38.93, 18.93, 2, '2025-12-12', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (7, 'PINTURA SATINADO', 44.79, 17.92, 3, '2025-12-16', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (8, 'Aceite', 55, 11, 3, '2025-12-23', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (9, 'Pinturas', 44.79, 17.92, 3, '2025-12-23', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (10, 'Pintura azul', 28.3, 11.32, 3, '2026-01-05', 'JAVIER', '+584144679693', 1);
-INSERT INTO `compras` VALUES (11, 'Game Pass', 30, 12, 3, '2026-01-20', 'JAVIER', '+584144679693', 1);
 
 -- ----------------------------
 -- Table structure for detalle_ventas
 -- ----------------------------
 DROP TABLE IF EXISTS `detalle_ventas`;
 CREATE TABLE `detalle_ventas`  (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `venta_id` int NOT NULL,
-  `producto_id` int NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `venta_id` int(11) NOT NULL,
+  `producto_id` int(11) NOT NULL,
   `cantidad` decimal(10, 2) NOT NULL,
   `precio_unitario_bs` decimal(10, 2) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `venta_id`(`venta_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+) ENGINE = MyISAM AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
 
 -- ----------------------------
 -- Records of detalle_ventas
 -- ----------------------------
 INSERT INTO `detalle_ventas` VALUES (1, 1, 233, 1.00, 1503.99);
+INSERT INTO `detalle_ventas` VALUES (2, 2, 234, 1.00, 764.44);
+INSERT INTO `detalle_ventas` VALUES (3, 3, 202, 1.00, 213.33);
+INSERT INTO `detalle_ventas` VALUES (4, 3, 183, 1.00, 760.88);
 
 -- ----------------------------
 -- Table structure for negocios
 -- ----------------------------
 DROP TABLE IF EXISTS `negocios`;
 CREATE TABLE `negocios`  (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `rif` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `activo` tinyint(1) NULL DEFAULT 1,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of negocios
 -- ----------------------------
 INSERT INTO `negocios` VALUES (1, 'Bodega', NULL, 1);
-
--- ----------------------------
--- Table structure for pagos
--- ----------------------------
-DROP TABLE IF EXISTS `pagos`;
-CREATE TABLE `pagos`  (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `compra_id` int NULL DEFAULT NULL,
-  `cuota_num` int NULL DEFAULT NULL,
-  `fecha_pago` date NULL DEFAULT NULL,
-  `monto` double NULL DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `compra_id`(`compra_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 25 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
-
--- ----------------------------
--- Records of pagos
--- ----------------------------
-INSERT INTO `pagos` VALUES (1, 1, 1, '2025-12-17', 28);
-INSERT INTO `pagos` VALUES (2, 1, 2, '2025-12-17', 28);
-INSERT INTO `pagos` VALUES (3, 2, 1, '2025-12-17', 7.67);
-INSERT INTO `pagos` VALUES (4, 3, 1, '2025-12-17', 10.76);
-INSERT INTO `pagos` VALUES (5, 4, 1, '2025-12-20', 16);
-INSERT INTO `pagos` VALUES (6, 5, 1, '2025-12-22', 10);
-INSERT INTO `pagos` VALUES (7, 1, 3, '2025-12-24', 28);
-INSERT INTO `pagos` VALUES (8, 6, 1, '2025-12-25', 10);
-INSERT INTO `pagos` VALUES (9, 3, 2, '2025-12-29', 10.76);
-INSERT INTO `pagos` VALUES (10, 7, 1, '2025-12-29', 8.96);
-INSERT INTO `pagos` VALUES (11, 2, 2, '2025-12-30', 7.67);
-INSERT INTO `pagos` VALUES (12, 4, 2, '2026-01-05', 16);
-INSERT INTO `pagos` VALUES (13, 5, 2, '2026-01-05', 10);
-INSERT INTO `pagos` VALUES (14, 8, 1, '2026-01-06', 14.67);
-INSERT INTO `pagos` VALUES (15, 9, 1, '2026-01-06', 8.96);
-INSERT INTO `pagos` VALUES (16, 6, 2, '2026-01-06', 10);
-INSERT INTO `pagos` VALUES (17, 2, 3, '2026-01-12', 7.67);
-INSERT INTO `pagos` VALUES (18, 3, 3, '2026-01-13', 10.76);
-INSERT INTO `pagos` VALUES (19, 7, 2, '2026-01-13', 8.96);
-INSERT INTO `pagos` VALUES (20, 4, 3, '2026-01-17', 16);
-INSERT INTO `pagos` VALUES (21, 5, 3, '2026-01-17', 10);
-INSERT INTO `pagos` VALUES (22, 10, 1, '2026-01-17', 5.66);
-INSERT INTO `pagos` VALUES (23, 8, 2, '2026-01-19', 14.67);
-INSERT INTO `pagos` VALUES (24, 9, 2, '2026-01-19', 8.96);
+INSERT INTO `negocios` VALUES (2, 'NegocioPrueba', NULL, 1);
 
 -- ----------------------------
 -- Table structure for productos
 -- ----------------------------
 DROP TABLE IF EXISTS `productos`;
 CREATE TABLE `productos`  (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `negocio_id` int NOT NULL DEFAULT 1,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `negocio_id` int(11) NOT NULL DEFAULT 1,
   `nombre` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `codigo_barras` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `descripcion` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL,
   `precio_compra` decimal(10, 2) NULL DEFAULT 0.00,
   `precio_venta` decimal(10, 2) NULL DEFAULT 0.00,
   `proveedor` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `unidad_medida` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'unidad',
-  `tam_paquete` int NULL DEFAULT NULL,
+  `tam_paquete` int(11) NULL DEFAULT NULL,
   `precio_venta_paquete` decimal(10, 2) NULL DEFAULT NULL,
   `precio_venta_unidad` decimal(10, 2) NULL DEFAULT NULL,
   `moneda_compra` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'USD',
@@ -201,7 +225,7 @@ INSERT INTO `productos` VALUES (46, 1, 'METOCLOPRAMIDA', NULL, '', 0.00, 0.35, '
 INSERT INTO `productos` VALUES (47, 1, 'IBUPROFENO', NULL, NULL, 1.21, 0.20, 'FARMALUNA', '2025-12-20 10:29:28', 'paquete', 10, NULL, 0.20, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (48, 1, 'LORATADINA', NULL, NULL, 1.45, 0.25, 'FARMALUNA', '2026-01-23 00:36:50', 'paquete', 10, NULL, 0.25, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (49, 1, 'CETIRIZINA', NULL, NULL, 1.00, 0.15, 'FARMALUNA', '2026-01-23 00:37:00', 'paquete', 20, NULL, 0.15, 'USD', 0.00, 0, 0.00);
-INSERT INTO `productos` VALUES (50, 1, 'ACETAMINOFÉN', NULL, NULL, 1.00, 0.15, 'FARMALUNA', '2026-01-23 00:37:12', 'paquete', 20, NULL, 0.15, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (50, 1, 'ACETAMINOFÉN', NULL, NULL, 1.00, 0.15, 'FARMALUNA', '2026-01-27 00:52:24', 'paquete', 20, NULL, 0.15, 'USD', 0.00, 0, 10.00);
 INSERT INTO `productos` VALUES (51, 1, 'OMEPRAZOL', NULL, NULL, 3.04, 0.20, 'FARMALUNA', '2025-10-01 19:20:01', 'paquete', 28, NULL, 0.20, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (52, 1, 'AMOXICILINA', NULL, NULL, 2.15, 0.30, 'FARMALUNA', '2025-12-20 01:03:58', 'paquete', 10, NULL, 0.30, 'USD', 0.00, 1, 0.00);
 INSERT INTO `productos` VALUES (53, 1, 'METRONIDAZOL', NULL, '', 0.00, 0.20, 'FARMALUNA', '2025-09-28 15:18:33', 'unidad', NULL, NULL, 0.20, 'USD', NULL, 0, 0.00);
@@ -324,7 +348,7 @@ INSERT INTO `productos` VALUES (179, 1, 'SALSA PAMPERO GR', NULL, NULL, 0.00, 2.
 INSERT INTO `productos` VALUES (180, 1, 'SALSA PAMPERO PEQ', NULL, NULL, 0.00, 1.45, 'POLAR', '2025-09-06 20:46:50', 'unidad', NULL, NULL, 1.45, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (181, 1, 'SALSA TIQUIRE GR', NULL, NULL, 0.00, 2.10, 'COMARCA', '2025-09-06 20:46:57', 'unidad', NULL, NULL, 2.10, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (182, 1, 'SALSA TIQUIRE PEQ', NULL, NULL, 0.00, 1.45, 'COMARCA', '2025-09-06 20:47:03', 'unidad', NULL, NULL, 1.45, 'USD', 0.00, 0, 0.00);
-INSERT INTO `productos` VALUES (183, 1, 'SALSA DOÑA TITA GR', NULL, NULL, 41.10, 2.14, 'GADUCA', '2026-01-20 20:03:21', 'paquete', 24, NULL, 2.14, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (183, 1, 'SALSA DOÑA TITA GR', NULL, NULL, 41.10, 2.14, 'GADUCA', '2026-01-26 23:50:06', 'paquete', 24, NULL, 2.14, 'USD', 0.00, 0, -1.00);
 INSERT INTO `productos` VALUES (184, 1, 'MAYONESA MAVESA PEQUEÑA', NULL, NULL, 49.00, 2.55, 'POLAR', '2026-01-13 16:31:05', 'paquete', 24, NULL, 2.55, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (185, 1, 'MAYONESA KRAFF 175GR', NULL, NULL, 2.30, 2.76, 'TINITO', '2026-01-08 03:03:47', 'unidad', NULL, NULL, 2.76, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (187, 1, 'DIABLITOS 115GR', NULL, NULL, 2.71, 3.25, 'TINITO', '2026-01-08 02:59:40', 'unidad', NULL, NULL, 3.25, 'USD', 0.00, 0, 0.00);
@@ -341,7 +365,7 @@ INSERT INTO `productos` VALUES (198, 1, 'PASTA LARGA HORIZONTE', NULL, NULL, 25.
 INSERT INTO `productos` VALUES (199, 1, 'PASTA HORIZONTE CORTA', NULL, NULL, 29.10, 3.15, 'LEO', '2026-01-13 16:26:44', 'paquete', 12, NULL, 3.15, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (200, 1, 'HARINA DE TRIGO', NULL, NULL, 11.60, 1.52, 'LEO', '2026-01-17 12:05:00', 'paquete', 10, NULL, 1.52, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (201, 1, 'AZÚCAR', '7597304223943', NULL, 30.00, 2.00, 'COMARCA', '2026-01-17 12:54:25', 'paquete', 20, NULL, 2.00, 'USD', 0.00, 0, 0.00);
-INSERT INTO `productos` VALUES (202, 1, 'SAL', NULL, NULL, 8.50, 0.60, 'CUEVITA', '2026-01-13 19:07:23', 'paquete', 25, NULL, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (202, 1, 'SAL', NULL, NULL, 8.50, 0.60, 'CUEVITA', '2026-01-26 23:50:06', 'paquete', 25, NULL, 0.60, 'USD', 0.00, 0, -1.00);
 INSERT INTO `productos` VALUES (203, 1, 'DELINE DE 250GRS', NULL, '', 0.00, 1.50, 'LEO', '2025-08-25 16:06:22', 'unidad', NULL, NULL, 1.50, 'USD', NULL, 0, 0.00);
 INSERT INTO `productos` VALUES (204, 1, 'NELLY DE 250GRS', NULL, NULL, 28.08, 1.60, 'POLAR', '2026-01-17 12:06:12', 'paquete', 24, NULL, 1.60, 'USD', 0.00, 1, 0.00);
 INSERT INTO `productos` VALUES (205, 1, 'NELLY DE 500GRS', NULL, NULL, 0.00, 2.70, 'POLAR', '2026-01-17 12:06:13', 'unidad', NULL, NULL, 2.70, 'USD', 0.00, 1, 0.00);
@@ -373,7 +397,7 @@ INSERT INTO `productos` VALUES (229, 1, 'JABÓN HUGME', NULL, NULL, 0.00, 0.65, 
 INSERT INTO `productos` VALUES (231, 1, 'JABÓN LAK', NULL, NULL, 4.10, 1.50, 'LEO', '2026-01-17 12:53:25', 'paquete', 4, NULL, 1.50, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (232, 1, 'GELATINA CABELLO PEQ', NULL, NULL, 43.90, 2.40, 'LEO', '2025-10-26 14:21:27', 'paquete', 24, NULL, 2.40, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (233, 1, 'ACE ALIVE 1KG', '', NULL, 39.00, 4.23, 'CUEVITA', '2026-01-26 17:57:09', 'unidad', 12, 0.00, 4.23, 'USD', 0.00, 1, -1.00);
-INSERT INTO `productos` VALUES (234, 1, 'ACE ALIVE 500GRS', NULL, NULL, 39.00, 2.15, 'CUEVITA', '2026-01-26 02:31:12', 'unidad', NULL, NULL, NULL, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (234, 1, 'ACE ALIVE 500GRS', NULL, NULL, 39.00, 2.15, 'CUEVITA', '2026-01-26 23:26:59', 'unidad', NULL, NULL, NULL, 'USD', 0.00, 1, -1.00);
 INSERT INTO `productos` VALUES (235, 1, 'ACE OSO BLANCO 400GRS', NULL, NULL, 28.00, 1.82, 'CUEVITA', '2026-01-13 16:24:35', 'paquete', 20, NULL, 1.82, 'USD', 0.00, 0, 0.00);
 INSERT INTO `productos` VALUES (236, 1, 'SUAVITEL', NULL, NULL, 7.90, 0.86, 'LEO', '2026-01-17 12:07:37', 'paquete', 12, NULL, 0.86, 'USD', 0.00, 1, 0.00);
 INSERT INTO `productos` VALUES (237, 1, 'CLORO LOFO 1LT', NULL, NULL, 12.00, 1.30, 'LEO', '2025-11-17 23:16:42', 'paquete', 12, NULL, 1.30, 'USD', 0.00, 0, 0.00);
@@ -475,10 +499,10 @@ INSERT INTO `productos` VALUES (350, 1, 'CREMA ALIDENT', NULL, NULL, 18.00, 1.95
 -- ----------------------------
 DROP TABLE IF EXISTS `tasas_cambio`;
 CREATE TABLE `tasas_cambio`  (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `fecha` date NOT NULL,
   `valor` decimal(18, 8) NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `fecha`(`fecha`) USING BTREE
 ) ENGINE = MyISAM AUTO_INCREMENT = 103 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
@@ -594,11 +618,11 @@ INSERT INTO `tasas_cambio` VALUES (102, '2026-01-26', 355.55280000, '2026-01-25 
 -- ----------------------------
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users`  (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `negocio_id` int NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `negocio_id` int(11) NOT NULL,
   `cedula` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
-  `created_at` datetime NULL DEFAULT current_timestamp,
+  `created_at` datetime NULL DEFAULT CURRENT_TIMESTAMP,
   `nombre_completo` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'Usuario',
   `rol` enum('superadmin','admin','vendedor') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'admin',
   `activo` tinyint(1) NULL DEFAULT 1,
@@ -606,21 +630,23 @@ CREATE TABLE `users`  (
   UNIQUE INDEX `username`(`cedula`) USING BTREE,
   UNIQUE INDEX `cedula`(`cedula`) USING BTREE,
   INDEX `fk_user_negocio`(`negocio_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of users
 -- ----------------------------
 INSERT INTO `users` VALUES (1, 0, 'JAVIER', '$2y$10$rr6PECvkq.xJxxJGoQxQB.bfcC2ouAST.H7T94GeCBOiwhqXLeeY6', '2025-08-16 15:12:45', 'Usuario', 'admin', 1);
-INSERT INTO `users` VALUES (2, 1, '16912337', '$2y$10$8Qe7Zp2X1.G3F/H0.Jk5.OeRjI.D1M3.C1/Z/Z/Z/Z/Z/Z/Z/Z/Z', '2026-01-26 17:43:06', 'Javier Ponciano', 'admin', 1);
-INSERT INTO `users` VALUES (3, 1, '0', '$2y$10$8Qe7Zp2X1.G3F/H0.Jk5.OeRjI.D1M3.C1/Z/Z/Z/Z/Z/Z/Z/Z/Z', '2026-01-26 17:43:06', 'Super Administrador', 'superadmin', 1);
+INSERT INTO `users` VALUES (2, 1, '16912337', '$2y$10$HJqK94WVEJk1ZAisyYtu0eQVdHCP6UqnlPk5YDfG02iQSDxayNMJC', '2026-01-26 17:43:06', 'Javier Ponciano', 'admin', 1);
+INSERT INTO `users` VALUES (3, 1, '1234', '$2y$10$HJqK94WVEJk1ZAisyYtu0eQVdHCP6UqnlPk5YDfG02iQSDxayNMJC', '2026-01-26 17:43:06', 'Super Administrador', 'superadmin', 1);
+INSERT INTO `users` VALUES (4, 1, '32616444', '$2y$10$HJqK94WVEJk1ZAisyYtu0eQVdHCP6UqnlPk5YDfG02iQSDxayNMJC', '2026-01-26 23:47:21', 'Adrian Ponciano', 'admin', 1);
+INSERT INTO `users` VALUES (5, 2, '123456789', '$2y$10$HJqK94WVEJk1ZAisyYtu0eQVdHCP6UqnlPk5YDfG02iQSDxayNMJC', '2026-01-27 02:00:48', 'Usuario Prueba', 'admin', 1);
 
 -- ----------------------------
 -- Table structure for usuarios
 -- ----------------------------
 DROP TABLE IF EXISTS `usuarios`;
 CREATE TABLE `usuarios`  (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `cedula` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `nombre` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `telefono` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
@@ -656,19 +682,21 @@ INSERT INTO `usuarios` VALUES (23, '6625503', 'FIDEL RAúL MEDINA TOVAR', '04268
 -- ----------------------------
 DROP TABLE IF EXISTS `ventas`;
 CREATE TABLE `ventas`  (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `negocio_id` int NOT NULL DEFAULT 1,
-  `fecha` datetime NULL DEFAULT current_timestamp,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `negocio_id` int(11) NOT NULL DEFAULT 1,
+  `fecha` datetime NULL DEFAULT CURRENT_TIMESTAMP,
   `total_bs` decimal(10, 2) NULL DEFAULT NULL,
   `total_usd` decimal(10, 2) NULL DEFAULT NULL,
   `tasa` decimal(10, 2) NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `fk_venta_negocio`(`negocio_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+) ENGINE = MyISAM AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
 
 -- ----------------------------
 -- Records of ventas
 -- ----------------------------
 INSERT INTO `ventas` VALUES (1, 1, '2026-01-26 17:57:09', 1503.99, 4.23, 355.55);
+INSERT INTO `ventas` VALUES (2, 1, '2026-01-26 23:26:59', 764.44, 2.15, 355.55);
+INSERT INTO `ventas` VALUES (3, 1, '2026-01-26 23:50:06', 974.21, 2.74, 355.55);
 
 SET FOREIGN_KEY_CHECKS = 1;

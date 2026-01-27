@@ -13,6 +13,7 @@ import 'report_sales_screen.dart';
 import 'low_stock_screen.dart';
 import 'report_purchases_screen.dart';
 import 'purchase_screen.dart';
+import 'market_mode_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -621,6 +622,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
         actions: [
           IconButton(
             icon: const Icon(
+              Icons.shopping_basket_outlined,
+              color: Color(0xFF10B981),
+            ),
+            tooltip: 'Modo Supermercado',
+            onPressed: () => _openMarketMode(),
+          ),
+          IconButton(
+            icon: const Icon(
               Icons.calculate_outlined,
               color: Color(0xFF1E3A8A),
             ),
@@ -755,6 +764,27 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _openMarketMode() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MarketModeScreen(
+          products: _allProducts,
+          onProductScanned: (p) {
+            setState(() {
+              // Buscar el producto original en la lista general para actualizar su qty
+              // Usamos p.id para encontrarlo exactamente
+              final original = _allProducts.firstWhere(
+                (item) => item.id == p.id,
+              );
+              original.qty += 1;
+            });
+          },
         ),
       ),
     );

@@ -143,19 +143,10 @@ class ApiService {
     }
   }
 
-  Future<bool> cargarCompra(
-    int productId,
-    double cantidad,
-    double? nuevoCosto,
-  ) async {
+  Future<bool> cargarCompra(List<Map<String, dynamic>> items) async {
     try {
       final nid = await getNegocioId();
-      final body = {
-        'negocio_id': nid,
-        'producto_id': productId,
-        'cantidad': cantidad,
-      };
-      if (nuevoCosto != null) body['costo_nuevo'] = nuevoCosto;
+      final body = {'negocio_id': nid, 'items': items};
 
       final response = await http.post(
         Uri.parse('$baseUrl/comprar.php'),
