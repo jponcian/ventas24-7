@@ -113,14 +113,14 @@
     require_once __DIR__ . '/db.php';
 
     // Obtener productos con bajo inventario
-    $productos = array_filter(obtenerProductos(), function ($p) {
+    $productos = array_filter(obtenerProductos(1), function ($p) {
         return isset($p['bajo_inventario']) && $p['bajo_inventario'] == 1;
     });
 
     // Agrupar por proveedor
     $agrupados = [];
     foreach ($productos as $p) {
-        $prov = $p['proveedor'] ?: '(Sin proveedor)';
+        $prov = $p['proveedor_nombre'] ?? $p['proveedor'] ?? '(Sin proveedor)';
         if (!isset($agrupados[$prov]))
             $agrupados[$prov] = [];
         $agrupados[$prov][] = $p;
@@ -160,7 +160,7 @@
                             $nombre = htmlspecialchars($p['nombre']);
                             $unidad = isset($p['unidad_medida']) ? htmlspecialchars($p['unidad_medida']) : '';
                             $precio = $p['precio_venta_unidad'] ?
-                                (($p['moneda_compra'] === 'BS') ? number_format($p['precio_venta_unidad'], 2) . ' Bs' : '$' . number_format($p['precio_venta_unidad'], 2)) : '';
+                                (($p['moneda_base'] === 'BS') ? number_format($p['precio_venta_unidad'], 2) . ' Bs' : '$' . number_format($p['precio_venta_unidad'], 2)) : '';
                         ?>
                             <tr>
                                 <td><?php echo $nombre; ?></td>
