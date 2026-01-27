@@ -127,4 +127,60 @@ class ApiService {
       return [];
     }
   }
+
+  Future<Map<String, dynamic>> getReporteDia(String fecha) async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/reporte_dia.php?negocio_id=$nid&fecha=$fecha'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {'ok': false, 'error': 'Error ${response.statusCode}'};
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<bool> cargarCompra(
+    int productId,
+    double cantidad,
+    double? nuevoCosto,
+  ) async {
+    try {
+      final nid = await getNegocioId();
+      final body = {
+        'negocio_id': nid,
+        'producto_id': productId,
+        'cantidad': cantidad,
+      };
+      if (nuevoCosto != null) body['costo_nuevo'] = nuevoCosto;
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/comprar.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+      return response.statusCode == 200 &&
+          jsonDecode(response.body)['ok'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> getReporteCompras(String fecha) async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/reporte_compras.php?negocio_id=$nid&fecha=$fecha'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {'ok': false, 'error': 'Error ${response.statusCode}'};
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
 }

@@ -9,6 +9,10 @@ import 'calc_screen.dart';
 import 'product_form_screen.dart';
 import 'scanner_screen.dart';
 import 'login_screen.dart';
+import 'report_sales_screen.dart';
+import 'low_stock_screen.dart';
+import 'report_purchases_screen.dart';
+import 'purchase_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -199,15 +203,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
               return const SizedBox();
             }
 
-            double _totalBs = 0;
-            double _totalUsd = 0;
+            double totalBs = 0;
+            double totalUsd = 0;
 
             for (var p in selected) {
               double precio = p.precioVenta ?? 0;
               bool esDolar = p.monedaCompra != 'BS';
               double precioBs = esDolar ? precio * _tasa : precio;
-              _totalBs += precioBs * p.qty;
-              _totalUsd += (esDolar ? precio : precio / _tasa) * p.qty;
+              totalBs += precioBs * p.qty;
+              totalUsd += (esDolar ? precio : precio / _tasa) * p.qty;
             }
 
             return Container(
@@ -242,7 +246,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         IconButton(
                           onPressed: () {
                             setState(() {
-                              for (var p in _allProducts) p.qty = 0;
+                              for (var p in _allProducts) {
+                                p.qty = 0;
+                              }
                             });
                             Navigator.pop(context);
                           },
@@ -348,7 +354,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    '${_totalBs.toStringAsFixed(2)} Bs',
+                                    '${totalBs.toStringAsFixed(2)} Bs',
                                     style: GoogleFonts.outfit(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
@@ -356,7 +362,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '${_totalUsd.toStringAsFixed(2)} USD',
+                                    '${totalUsd.toStringAsFixed(2)} USD',
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Colors.grey[600],
@@ -373,6 +379,35 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             height: 60,
                             child: ElevatedButton(
                               onPressed: () async {
+                                final bool? confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Confirmar Venta'),
+                                    content: const Text(
+                                      '¿Estás seguro de que deseas finalizar esta venta?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFF1E3A8A,
+                                          ),
+                                        ),
+                                        child: const Text('Confirmar'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (confirm != true) return;
+
                                 final items = selected.map((p) {
                                   double precio = p.precioVenta ?? 0;
                                   bool esDolar = p.monedaCompra != 'BS';
@@ -390,8 +425,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 }).toList();
 
                                 final ventaData = {
-                                  'total_bs': _totalBs,
-                                  'total_usd': _totalUsd,
+                                  'total_bs': totalBs,
+                                  'total_usd': totalUsd,
                                   'tasa': _tasa,
                                   'detalles': items,
                                 };
@@ -403,7 +438,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 );
                                 if (ok) {
                                   setState(() {
-                                    for (var p in _allProducts) p.qty = 0;
+                                    for (var p in _allProducts) {
+                                      p.qty = 0;
+                                    }
                                   });
                                   _loadData();
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -458,18 +495,110 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double _totalBs = 0;
+    double totalBs = 0;
     for (var p in _allProducts) {
       if (p.qty > 0) {
         double precio = p.precioVenta ?? 0;
         bool esDolar = p.monedaCompra != 'BS';
         double precioBs = esDolar ? precio * _tasa : precio;
-        _totalBs += precioBs * p.qty;
+        totalBs += precioBs * p.qty;
       }
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            UserAccountsDrawerHeader(
+              accountName: Text(_negocioName),
+              accountEmail: Text(_userName),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Text(
+                  _negocioName.isNotEmpty ? _negocioName[0] : 'B',
+                  style: const TextStyle(
+                    fontSize: 40.0,
+                    color: Color(0xFF1E3A8A),
+                  ),
+                ),
+              ),
+              decoration: const BoxDecoration(color: Color(0xFF1E3A8A)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Inicio'),
+              onTap: () {
+                Navigator.pop(context); // Close drawer
+                // Already on Home, do nothing else
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.bar_chart),
+              title: const Text('Reporte de Ventas'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReportSalesScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.warning, color: Colors.orange),
+              title: const Text('Bajo Inventario'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LowStockScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long, color: Colors.purple),
+              title: const Text('Reporte de Compras'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReportPurchasesScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_shopping_cart, color: Colors.green),
+              title: const Text('Cargar Compras'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PurchaseScreen()),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text(
+                'Cerrar Sesión',
+                style: TextStyle(color: Colors.red),
+              ),
+              onTap: () async {
+                await _apiService.logout();
+                if (mounted) Navigator.pushReplacementNamed(context, '/login');
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -570,7 +699,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
         backgroundColor: const Color(0xFF1E3A8A),
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      bottomNavigationBar: _totalBs > 0 ? _buildBottomBar(_totalBs) : null,
+      bottomNavigationBar: totalBs > 0 ? _buildBottomBar(totalBs) : null,
     );
   }
 

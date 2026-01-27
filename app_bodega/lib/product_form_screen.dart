@@ -297,8 +297,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             );
                           }).toList(),
                           onChanged: (val) {
-                            if (val != null)
+                            if (val != null) {
                               setState(() => _monedaCompra = val);
+                            }
                           },
                         ),
                       ],
@@ -365,7 +366,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                         _unidadMedidaCtrl.text = val ? 'paquete' : 'unidad';
                       });
                     },
-                    activeColor: const Color(0xFF1E3A8A),
+                    activeThumbColor: const Color(0xFF1E3A8A),
                   ),
                 ],
               ),

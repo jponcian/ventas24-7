@@ -18,34 +18,64 @@ if (empty($cedula) || empty($password)) {
 try {
     global $db;
     error_log("Login attempt: Cedula=$cedula, Pass=" . (empty($password) ? 'EMPTY' : 'PROVIDED'));
-    $stmt = $db->prepare("SELECT u.*, n.nombre as negocio_nombre FROM users u JOIN negocios n ON u.negocio_id = n.id WHERE u.cedula = ? LIMIT 1");
+    $stmt = $db->prepare("SELECT * FROM users WHERE cedula = ? LIMIT 1");
     $stmt->execute([$cedula]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        error_log("User not found or inactive: $cedula");
-    } else {
-        error_log("User found: " . $user['nombre_completo']);
+        error_log("User not found: $cedula");
+        http_response_code(401);
+        echo json_encode(['ok' => false, 'error' => 'Usuario no encontrado']);
+        exit;
     }
 
-    if ($user && password_verify($password, $user['password_hash'])) {
-        // En un sistema real usaríamos JWT, aquí mandamos los datos básicos para simplificar
-        echo json_encode([
-            'ok' => true,
-            'user' => [
-                'id' => $user['id'],
-                'cedula' => $user['cedula'],
-                'nombre' => $user['nombre_completo'],
-                'rol' => $user['rol'],
-                'negocio_id' => $user['negocio_id'],
-                'negocio_nombre' => $user['negocio_nombre']
-            ]
-        ]);
-    } else {
+    if (!password_verify($password, $user['password_hash'])) {
+        error_log("Invalid password for user: $cedula");
         http_response_code(401);
-        $error = (!$user) ? 'Usuario no encontrado' : 'Contraseña incorrecta';
-        echo json_encode(['ok' => false, 'error' => $error]);
+        echo json_encode(['ok' => false, 'error' => 'Contraseña incorrecta']);
+        exit;
     }
+
+    // Buscar negocio
+    $stmtNeg = $db->prepare("SELECT nombre FROM negocios WHERE id = ?");
+    $stmtNeg->execute([$user['negocio_id']]);
+    $negocio = $stmtNeg->fetch(PDO::FETCH_ASSOC);
+
+    if (!$negocio) {
+        error_log("User $cedula has invalid negocio_id: " . $user['negocio_id']);
+         // Para mantener compatibilidad, quizás asignar un negocio default o dar error
+         // Daremos error para que se sepa qué pasa
+         // OJO: Si es el admin global (ID 1), tal vez queramos dejarlo pasar con valores dummy?
+         // Pero el app espera negocio_id y nombre.
+         
+         // Si es un fix rápido para usuario JAVIER (ID 1) que tiene negocio 0:
+         if ($user['negocio_id'] == 0) {
+             $negocio = ['nombre' => 'Admin Global'];
+             $user['negocio_id'] = 1; // Fallback to 1? Or keep 0? App might break with 0 if using FKs.
+             // Mejor devolvemos error por ahora.
+             http_response_code(401);
+             echo json_encode(['ok' => false, 'error' => 'Usuario sin negocio asignado']);
+             exit;
+         } else {
+             http_response_code(401);
+             echo json_encode(['ok' => false, 'error' => 'Negocio no encontrado']);
+             exit;
+         }
+    }
+
+    error_log("Login success: " . $user['nombre_completo']);
+    
+    echo json_encode([
+        'ok' => true,
+        'user' => [
+            'id' => $user['id'],
+            'cedula' => $user['cedula'],
+            'nombre' => $user['nombre_completo'],
+            'rol' => $user['rol'],
+            'negocio_id' => $user['negocio_id'],
+            'negocio_nombre' => $negocio['nombre']
+        ]
+    ]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => 'Error en el servidor: ' . $e->getMessage()]);

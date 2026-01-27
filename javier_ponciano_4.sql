@@ -11,7 +11,7 @@
  Target Server Version : 101114
  File Encoding         : 65001
 
- Date: 29/12/2025 12:49:05
+ Date: 26/01/2026 18:47:46
 */
 
 SET NAMES utf8mb4;
@@ -32,7 +32,7 @@ CREATE TABLE `compras`  (
   `telefono` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `owner_id` int NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of compras
@@ -46,6 +46,44 @@ INSERT INTO `compras` VALUES (6, 'FORTUNA', 38.93, 18.93, 2, '2025-12-12', 'JAVI
 INSERT INTO `compras` VALUES (7, 'PINTURA SATINADO', 44.79, 17.92, 3, '2025-12-16', 'JAVIER', '+584144679693', 1);
 INSERT INTO `compras` VALUES (8, 'Aceite', 55, 11, 3, '2025-12-23', 'JAVIER', '+584144679693', 1);
 INSERT INTO `compras` VALUES (9, 'Pinturas', 44.79, 17.92, 3, '2025-12-23', 'JAVIER', '+584144679693', 1);
+INSERT INTO `compras` VALUES (10, 'Pintura azul', 28.3, 11.32, 3, '2026-01-05', 'JAVIER', '+584144679693', 1);
+INSERT INTO `compras` VALUES (11, 'Game Pass', 30, 12, 3, '2026-01-20', 'JAVIER', '+584144679693', 1);
+
+-- ----------------------------
+-- Table structure for detalle_ventas
+-- ----------------------------
+DROP TABLE IF EXISTS `detalle_ventas`;
+CREATE TABLE `detalle_ventas`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `venta_id` int NOT NULL,
+  `producto_id` int NOT NULL,
+  `cantidad` decimal(10, 2) NOT NULL,
+  `precio_unitario_bs` decimal(10, 2) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `venta_id`(`venta_id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+
+-- ----------------------------
+-- Records of detalle_ventas
+-- ----------------------------
+INSERT INTO `detalle_ventas` VALUES (1, 1, 233, 1.00, 1503.99);
+
+-- ----------------------------
+-- Table structure for negocios
+-- ----------------------------
+DROP TABLE IF EXISTS `negocios`;
+CREATE TABLE `negocios`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `rif` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+  `activo` tinyint(1) NULL DEFAULT 1,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of negocios
+-- ----------------------------
+INSERT INTO `negocios` VALUES (1, 'Bodega', NULL, 1);
 
 -- ----------------------------
 -- Table structure for pagos
@@ -59,7 +97,7 @@ CREATE TABLE `pagos`  (
   `monto` double NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `compra_id`(`compra_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+) ENGINE = MyISAM AUTO_INCREMENT = 25 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
 
 -- ----------------------------
 -- Records of pagos
@@ -72,6 +110,22 @@ INSERT INTO `pagos` VALUES (5, 4, 1, '2025-12-20', 16);
 INSERT INTO `pagos` VALUES (6, 5, 1, '2025-12-22', 10);
 INSERT INTO `pagos` VALUES (7, 1, 3, '2025-12-24', 28);
 INSERT INTO `pagos` VALUES (8, 6, 1, '2025-12-25', 10);
+INSERT INTO `pagos` VALUES (9, 3, 2, '2025-12-29', 10.76);
+INSERT INTO `pagos` VALUES (10, 7, 1, '2025-12-29', 8.96);
+INSERT INTO `pagos` VALUES (11, 2, 2, '2025-12-30', 7.67);
+INSERT INTO `pagos` VALUES (12, 4, 2, '2026-01-05', 16);
+INSERT INTO `pagos` VALUES (13, 5, 2, '2026-01-05', 10);
+INSERT INTO `pagos` VALUES (14, 8, 1, '2026-01-06', 14.67);
+INSERT INTO `pagos` VALUES (15, 9, 1, '2026-01-06', 8.96);
+INSERT INTO `pagos` VALUES (16, 6, 2, '2026-01-06', 10);
+INSERT INTO `pagos` VALUES (17, 2, 3, '2026-01-12', 7.67);
+INSERT INTO `pagos` VALUES (18, 3, 3, '2026-01-13', 10.76);
+INSERT INTO `pagos` VALUES (19, 7, 2, '2026-01-13', 8.96);
+INSERT INTO `pagos` VALUES (20, 4, 3, '2026-01-17', 16);
+INSERT INTO `pagos` VALUES (21, 5, 3, '2026-01-17', 10);
+INSERT INTO `pagos` VALUES (22, 10, 1, '2026-01-17', 5.66);
+INSERT INTO `pagos` VALUES (23, 8, 2, '2026-01-19', 14.67);
+INSERT INTO `pagos` VALUES (24, 9, 2, '2026-01-19', 8.96);
 
 -- ----------------------------
 -- Table structure for productos
@@ -79,7 +133,9 @@ INSERT INTO `pagos` VALUES (8, 6, 1, '2025-12-25', 10);
 DROP TABLE IF EXISTS `productos`;
 CREATE TABLE `productos`  (
   `id` int NOT NULL AUTO_INCREMENT,
+  `negocio_id` int NOT NULL DEFAULT 1,
   `nombre` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `codigo_barras` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `descripcion` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL,
   `precio_compra` decimal(10, 2) NULL DEFAULT 0.00,
   `precio_venta` decimal(10, 2) NULL DEFAULT 0.00,
@@ -92,316 +148,327 @@ CREATE TABLE `productos`  (
   `moneda_compra` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'USD',
   `precio_venta_mediopaquete` decimal(10, 2) NULL DEFAULT NULL,
   `bajo_inventario` tinyint(1) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 329 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+  `stock` decimal(10, 2) NULL DEFAULT 0.00,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `fk_prod_negocio`(`negocio_id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 351 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of productos
 -- ----------------------------
-INSERT INTO `productos` VALUES (1, 'QUESO', NULL, 4.80, 6.30, 'ANGELA', '2025-12-10 22:46:28', 'unidad', NULL, NULL, 6.30, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (2, 'CLUB SOCIAL', NULL, 1.50, 1.90, 'TINITO', '2025-12-27 14:50:50', 'paquete', 6, 1.90, 0.35, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (63, 'GLUP 2LTS', NULL, 5.80, 1.30, 'LEO', '2025-10-23 22:49:39', 'paquete', 6, NULL, 1.30, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (4, 'CATALINAS', NULL, 3.00, 0.40, 'CATALINERO', '2025-10-29 23:04:06', 'unidad', 10, 3.50, 0.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (5, 'PAN SALADO', NULL, 0.75, 0.90, 'PANADERIA FRENTE ARABITO', '2025-11-02 23:16:47', 'unidad', NULL, NULL, 0.90, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (6, 'PAN CLINEJA', NULL, 1.30, 1.60, 'PANADERIA 4X4', '2025-11-12 23:24:30', 'unidad', NULL, NULL, 1.60, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (300, 'HELADO YOGURT', NULL, 0.40, 0.55, '4X4', '2025-11-01 18:27:03', 'unidad', NULL, NULL, 0.55, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (8, 'PAN RELLENO GUAYABA', NULL, 2.85, 3.50, 'PANADERIA 4X4', '2025-10-29 19:01:48', 'paquete', 10, 3.50, 0.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (9, 'PAN COCO', NULL, 2.65, 3.30, 'PANADERIA 4X4', '2025-11-01 16:33:02', 'paquete', 10, 3.30, 0.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (10, 'RIQUESA', '', 0.00, 3.50, 'POLAR', '2025-12-26 13:07:27', 'unidad', NULL, NULL, 3.50, 'USD', NULL, 1);
-INSERT INTO `productos` VALUES (11, 'SALSA SOYA DOÑA TITA', '', 0.00, 1.15, 'GADUCA', '2025-08-22 11:04:20', 'paquete', NULL, NULL, 1.15, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (12, 'ACEITE VATEL', NULL, 4.66, 5.59, 'COMARCA', '2025-12-24 02:08:04', 'unidad', NULL, NULL, 5.59, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (13, 'SALSA PASTA UW 490GR', NULL, 0.00, 2.95, 'TINITO', '2025-12-26 13:05:52', 'unidad', NULL, NULL, 2.95, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (14, 'ARROZ', NULL, 32.00, 1.67, 'LEO', '2025-11-17 23:22:11', 'paquete', 24, NULL, 1.67, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (15, 'HARINA PAN', NULL, 27.00, 1.62, 'CUEVITA', '2025-12-05 21:09:59', 'paquete', 20, NULL, 1.62, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (16, 'CARAMELO FREEGELLS', NULL, 2.76, 0.50, 'TINITO', '2025-10-30 23:32:09', 'paquete', 12, NULL, 0.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (17, 'HALLS', NULL, 5.46, 0.65, 'TINITO', '2025-11-27 13:37:53', 'paquete', 12, NULL, 0.65, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (18, 'CARAMELO EN SPRAY', '', 0.00, 1.00, 'TINITO', '2025-08-22 11:08:56', 'unidad', NULL, NULL, 1.00, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (19, 'TORONTO', '', 0.00, 0.65, 'GADUCA', '2025-10-13 15:21:50', 'unidad', NULL, NULL, 0.65, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (20, 'CHOCOLATE SAVOY', NULL, 13.50, 1.46, 'GADUCA', '2025-10-13 15:21:32', 'paquete', 12, NULL, 1.46, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (21, 'CHICLE GIGANTE', NULL, 0.00, 0.55, 'TINITO', '2025-10-13 13:48:15', 'unidad', NULL, NULL, 0.55, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (22, 'GALLETAS MALTN\'MILK', '', 0.00, 0.25, '', '2025-08-22 11:13:32', 'unidad', NULL, NULL, 0.25, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (23, 'JABÓN PROTEX 110GR', NULL, 4.80, 5.80, 'COMARCA', '2025-12-24 02:08:17', 'paquete', 3, 5.80, 2.08, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (24, 'ESPONJAS', NULL, 1.20, 0.85, 'LEO', '2025-12-05 21:11:36', 'paquete', 2, NULL, 0.85, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (25, 'FREGADOR', NULL, 5.50, 0.70, 'LEO', '2025-09-22 20:46:52', 'paquete', 15, NULL, 0.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (26, 'COCA-COLA 1.5LTS', '', 0.00, 1.60, '', '2025-08-22 13:05:43', 'unidad', NULL, NULL, 1.60, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (28, 'GATORADE', '', 0.00, 1.80, 'POLAR', '2025-08-22 13:07:03', 'unidad', NULL, NULL, 1.80, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (29, 'TOMATE', NULL, 210.00, 300.00, 'VERDUREROS', '2025-12-22 20:41:51', 'kg', NULL, NULL, 300.00, 'BS', 0.00, 0);
-INSERT INTO `productos` VALUES (30, 'CEBOLLA', NULL, 300.00, 400.00, 'VERDUREROS', '2025-12-22 20:41:43', 'kg', NULL, NULL, 400.00, 'BS', 0.00, 0);
-INSERT INTO `productos` VALUES (31, 'PAPA', NULL, 400.00, 550.00, 'VERDUREROS', '2025-12-22 20:44:19', 'kg', NULL, NULL, 550.00, 'BS', 0.00, 0);
-INSERT INTO `productos` VALUES (32, 'PLÁTANO', NULL, 580.00, 750.00, 'VERDUREROS', '2025-12-22 20:44:38', 'kg', NULL, NULL, 750.00, 'BS', 0.00, 0);
-INSERT INTO `productos` VALUES (33, 'LUCKY', NULL, 895.00, 1150.00, 'CIGARRERO', '2025-12-25 20:38:05', 'paquete', 20, 1150.00, 65.00, 'BS', 500.00, 0);
-INSERT INTO `productos` VALUES (34, 'BELTMONT', NULL, 750.00, 970.00, 'CIGARRERO', '2025-12-25 20:36:46', 'paquete', 20, 970.00, 60.00, 'BS', 490.00, 0);
-INSERT INTO `productos` VALUES (35, 'PALLMALL', NULL, 750.00, 970.00, 'CIGARRERO', '2025-12-25 20:36:58', 'paquete', 20, 970.00, 60.00, 'BS', 490.00, 0);
-INSERT INTO `productos` VALUES (36, 'VICEROY', NULL, 490.00, 610.00, 'CIGARRERO', '2025-12-25 20:35:48', 'paquete', 20, 610.00, 35.00, 'BS', 310.00, 0);
-INSERT INTO `productos` VALUES (37, 'UNIVERSAL', NULL, 460.00, 600.00, 'CIGARRERO', '2025-12-26 13:06:36', 'paquete', 20, 600.00, 35.00, 'BS', 300.00, 1);
-INSERT INTO `productos` VALUES (38, 'CONSUL', NULL, 420.00, 550.00, 'CIGARRERO', '2025-12-25 20:36:23', 'paquete', 20, 550.00, 35.00, 'BS', 260.00, 0);
-INSERT INTO `productos` VALUES (39, 'VELAS', '', 0.00, 0.25, 'TINITO', '2025-08-22 13:25:01', 'unidad', NULL, NULL, 0.25, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (283, 'JUGO JUCOSA', NULL, 1.60, 2.00, 'CUEVITA', '2025-10-08 16:45:02', 'paquete', 3, 2.00, 0.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (42, 'LOPERAN', '', 0.00, 0.25, 'LEO', '2025-08-23 13:53:03', 'unidad', NULL, NULL, 0.25, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (45, 'DICLOFENAC POTÁSICO', NULL, 1.00, 0.15, 'FARMALUNA', '2025-12-20 10:29:26', 'paquete', 30, NULL, 0.15, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (44, 'DICLOFENAC SÓDICO', '', 0.00, 0.10, 'LEO', '2025-08-23 13:54:01', 'unidad', NULL, NULL, 0.10, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (46, 'METOCLOPRAMIDA', '', 0.00, 0.35, 'FARMALUNA', '2025-08-23 13:55:11', 'unidad', NULL, NULL, 0.35, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (47, 'IBUPROFENO', NULL, 1.21, 0.20, 'FARMALUNA', '2025-12-20 10:29:28', 'paquete', 10, NULL, 0.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (48, 'LORATADINA', NULL, 1.31, 0.20, 'FARMALUNA', '2025-11-20 14:39:25', 'paquete', 10, NULL, 0.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (49, 'CETIRIZINA', NULL, 1.00, 0.10, 'FARMALUNA', '2025-11-20 19:33:07', 'paquete', 20, NULL, 0.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (50, 'ACETAMINOFÉN', '', 1.00, 0.10, 'FARMALUNA', '2025-10-28 21:19:14', 'paquete', 20, NULL, 0.10, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (51, 'OMEPRAZOL', NULL, 3.04, 0.20, 'FARMALUNA', '2025-10-01 19:20:01', 'paquete', 28, NULL, 0.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (52, 'AMOXICILINA', NULL, 2.15, 0.30, 'FARMALUNA', '2025-12-20 01:03:58', 'paquete', 10, NULL, 0.30, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (53, 'METRONIDAZOL', '', 0.00, 0.20, 'FARMALUNA', '2025-09-28 15:18:33', 'unidad', NULL, NULL, 0.20, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (54, 'GLUP 1 LT', NULL, 7.90, 1.00, 'LEO', '2025-11-17 19:45:37', 'paquete', 12, NULL, 1.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (55, 'GLUP 400ML', '', 0.00, 0.60, 'LEO', '2025-12-24 02:10:34', 'unidad', NULL, NULL, 0.60, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (56, 'MALTA DE BOTELLA', NULL, 16.38, 0.65, 'POLAR', '2025-11-29 22:16:32', 'paquete', 36, NULL, 0.65, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (57, 'PEPSI-COLA 1.25LTS', NULL, 4.50, 1.10, 'POLAR', '2025-10-11 14:44:11', 'paquete', 6, NULL, 1.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (58, 'PEPSI-COLA 2LT', '', 0.00, 2.00, 'POLAR', '2025-08-23 14:24:06', 'unidad', NULL, NULL, 2.00, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (59, 'JUSTY', '', 0.00, 1.30, 'LEO', '2025-08-23 14:24:21', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (60, 'COCA-COLA 2LTS', NULL, 10.00, 2.20, 'LEO', '2025-11-19 21:27:08', 'paquete', 6, NULL, 2.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (61, 'MALTA 1.5LTS', NULL, 9.84, 2.15, 'POLAR', '2025-11-01 20:53:21', 'paquete', 6, NULL, 2.15, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (62, 'JUGO FRICAJITA', NULL, 1.03, 1.24, 'TINITO', '2025-12-15 12:57:27', 'unidad', NULL, NULL, 1.24, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (65, 'COCA-COLA 1LT', '', 5.00, 1.10, '', '2025-08-23 21:20:10', 'paquete', 6, NULL, 1.10, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (275, 'GOMITAS PLAY', NULL, 13.85, 0.90, 'CUEVITA', '2025-12-26 13:05:18', 'paquete', 24, NULL, 0.90, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (67, 'PAPEL NARANJA 400', NULL, 2.35, 3.10, 'COMARCA', '2025-10-30 20:51:50', 'paquete', 4, 3.10, 0.85, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (68, 'GALLETA MARIA ITALIA', NULL, 0.54, 0.90, 'COMARCA', '2025-10-20 20:43:49', 'paquete', 9, 0.90, NULL, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (69, 'CAFE AMANECER 100GR', NULL, 24.08, 1.50, 'ITC AMANECER', '2025-10-01 00:47:32', 'paquete', 20, NULL, 1.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (70, 'CARAOTAS AMANECER', NULL, 1.00, 1.35, 'ITC AMANECER', '2025-09-06 20:33:32', 'unidad', NULL, NULL, 1.35, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (71, 'PASTA LARGA NONNA', NULL, 0.75, 0.95, 'ITC AMANECER', '2025-12-20 01:05:44', 'unidad', NULL, NULL, 0.95, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (72, 'PASTA CORTA NONNA', NULL, 1.40, 2.10, 'ITC AMANECER', '2025-10-18 14:13:30', 'unidad', NULL, NULL, 2.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (73, 'DORITOS PEQ', NULL, 11.32, 1.23, 'PACO LOS LLANOS', '2025-12-20 12:40:28', 'paquete', 12, NULL, 1.23, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (74, 'DORITOS DIN PEQ', '', 0.00, 1.20, 'PACO LOS LLANOS', '2025-11-09 15:40:04', 'unidad', NULL, NULL, 1.20, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (75, 'DORITOS FH PEQ', '', 0.00, 1.30, 'PACO LOS LLANOS', '2025-08-25 11:28:14', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (76, 'DORITOS DIN FH PEQ', '', 0.00, 1.20, 'PACO LOS LLANOS', '2025-08-25 11:28:51', 'unidad', NULL, NULL, 1.20, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (77, 'CHEESE TRIS P', '', 0.00, 1.10, 'PACO LOS LLANOS', '2025-08-25 11:29:10', 'unidad', NULL, NULL, 1.10, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (78, 'PEPITO P', NULL, 0.00, 1.00, 'PACO LOS LLANOS', '2025-10-19 18:36:11', 'unidad', NULL, NULL, 1.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (79, 'BOLI KRUCH', NULL, 4.40, 0.60, 'COMARCA', '2025-12-22 12:59:01', 'paquete', 12, NULL, 0.60, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (80, 'KESITOS P', NULL, 0.00, 0.60, 'COMARCA', '2025-12-18 01:39:54', 'unidad', NULL, NULL, 0.60, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (81, 'PIGSY PICANTE', NULL, 3.40, 0.40, 'CUEVITA', '2025-12-27 14:49:30', 'paquete', 18, NULL, 0.40, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (82, 'RAQUETY', '', 0.00, 0.65, 'PACO LOS LLANOS', '2025-10-16 15:14:43', 'unidad', NULL, NULL, 0.65, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (83, 'CHISKESITO PEQUEÑO', NULL, 6.39, 0.70, 'COMARCA', '2025-12-22 12:59:15', 'paquete', 12, NULL, 0.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (84, 'CHIPS AHOY', NULL, 2.29, 2.75, 'TINITO', '2025-12-15 12:52:39', 'paquete', 6, 2.75, 0.50, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (85, 'RANCHEIRO', '', 0.00, 1.20, 'CUEVITA', '2025-12-20 01:04:58', 'unidad', NULL, NULL, 1.20, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (86, 'SALSERITOS GRANDES', NULL, 0.88, 1.10, 'COMARCA', '2025-12-15 13:59:28', 'unidad', NULL, NULL, 1.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (87, 'SALSERITOS PEQUEÑOS', NULL, 3.74, 0.50, 'COMARCA', '2025-12-24 02:08:24', 'paquete', 12, NULL, 0.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (88, 'TOSTON TOM', '', 0.00, 0.45, 'LEO', '2025-09-19 11:35:10', 'unidad', NULL, NULL, 0.45, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (89, 'MINI CHIPS', NULL, 1.53, 1.91, 'TINITO', '2025-10-13 13:49:36', 'unidad', NULL, NULL, 1.91, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (90, 'NUCITA CRUNCH', NULL, 1.48, 1.85, 'TINITO', '2025-12-11 13:51:01', 'unidad', NULL, NULL, 1.85, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (91, 'FLIPS PEQUEÑO', '', 0.00, 0.75, 'COMARCA', '2025-08-25 12:11:28', 'unidad', NULL, NULL, 0.75, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (92, 'FLIPS MEDIANO', '', 0.00, 2.30, 'COMARCA', '2025-12-22 12:59:58', 'unidad', NULL, NULL, 2.30, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (93, 'DORITOS G', '', 0.00, 3.30, 'PACO LOS LLANOS', '2025-11-09 15:40:06', 'unidad', NULL, NULL, 3.30, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (95, 'DORITOS FH G', '', 0.00, 3.30, 'PACO LOS LLANOS', '2025-08-25 12:12:42', 'unidad', NULL, NULL, 3.30, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (244, 'CHESITO P', NULL, 2.07, 0.40, 'COMARCA', '2025-10-04 23:31:47', 'paquete', 12, NULL, 0.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (98, 'PEPITO G', NULL, 1.10, 1.43, 'PACO LOS LLANOS', '2025-10-19 18:36:02', 'unidad', NULL, NULL, 1.43, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (100, 'MAXCOCO', '', 0.00, 0.70, 'CUEVITA', '2025-11-28 11:29:11', 'unidad', NULL, NULL, 0.70, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (101, 'CROC-CHOC', NULL, 4.91, 0.40, 'TINITO', '2025-10-18 00:13:39', 'paquete', 24, NULL, 0.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (102, 'TRIDENT', NULL, 7.95, 0.65, 'TINITO', '2025-10-30 23:28:41', 'paquete', 18, NULL, 0.65, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (103, 'MINTY', NULL, 4.45, 0.60, 'TINITO', '2025-10-30 23:31:44', 'paquete', 12, NULL, 0.60, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (104, 'CHICLE GUDS', NULL, 2.56, 0.30, 'TINITO', '2025-12-19 14:43:17', 'paquete', 18, NULL, 0.30, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (105, 'NUCITA TUBO', NULL, 11.03, 1.30, 'TINITO', '2025-12-15 11:36:40', 'paquete', 12, NULL, 1.30, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (106, 'DANDY', NULL, 4.58, 0.60, 'PACO LOS LLANOS', '2025-12-29 13:29:22', 'paquete', 16, NULL, 0.60, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (107, 'OREO DE TUBO', NULL, 1.15, 1.49, 'TINITO', '2025-11-27 13:37:23', 'unidad', NULL, NULL, 1.49, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (108, 'OREO 6S', NULL, 2.04, 2.55, 'TINITO', '2025-12-11 13:49:44', 'paquete', 6, 2.55, 0.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (110, 'OREO FUDGE', '', 2.45, 3.00, 'TINITO', '2025-08-25 12:25:30', 'paquete', 6, 3.00, 0.65, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (111, 'TAKYTA 150GR', NULL, 0.82, 1.00, 'TINITO', '2025-12-15 12:54:53', 'paquete', 8, 1.00, 0.15, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (112, 'OREO DE CAJA', NULL, 4.38, 0.75, 'TINITO', '2025-12-15 11:37:14', 'paquete', 8, NULL, 0.75, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (113, 'CHUPETA PIN PON', '', 0.00, 0.50, 'TINITO', '2025-12-18 14:41:36', 'unidad', NULL, NULL, 0.50, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (114, 'POLVO EXPLOSIVO', '', 0.00, 0.30, 'TINITO', '2025-08-25 12:26:26', 'unidad', NULL, NULL, 0.30, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (115, 'CHUPETA EXPLOSIVA', '', 0.00, 0.40, 'TINITO', '2025-08-25 12:26:41', 'unidad', NULL, NULL, 0.40, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (116, 'CHICLE DE YOYO', NULL, 6.45, 0.50, 'TINITO', '2025-10-13 13:47:08', 'paquete', 24, NULL, 0.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (117, 'PILURIN LATA', '', 0.00, 5.15, 'TINITO', '2025-08-25 12:27:12', 'unidad', NULL, NULL, 5.15, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (118, 'PIRULIN', NULL, 9.45, 0.55, 'TINITO', '2025-10-18 00:19:17', 'paquete', 25, NULL, 0.55, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (119, 'NUCITA', '', 0.00, 0.60, 'TINITO', '2025-08-25 12:27:33', 'unidad', NULL, NULL, 0.60, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (120, 'BRINKY', NULL, 2.60, 0.50, 'CUEVITA', '2025-10-08 16:45:42', 'paquete', 10, NULL, 0.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (121, 'PEPITAS', NULL, 5.90, 0.45, 'PACO LOS LLANOS', '2025-12-29 13:29:49', 'paquete', 18, NULL, 0.45, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (122, 'PALITOS', NULL, 7.35, 0.55, 'PACO LOS LLANOS', '2025-12-29 13:29:43', 'paquete', 18, NULL, 0.55, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (123, 'COLORETI', NULL, 4.50, 0.40, 'TINITO', '2025-10-18 00:07:52', 'paquete', 24, NULL, 0.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (124, 'SPARKIES BUBBALOO', '', 0.00, 0.40, 'TINITO', '2025-08-25 12:29:38', 'unidad', NULL, NULL, 0.40, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (125, 'EXTINTOR', '', 0.00, 0.95, 'TINITO', '2025-08-25 12:30:09', 'unidad', NULL, NULL, 0.95, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (126, 'CHUPETA DE ANILLOS', '', 0.00, 0.55, 'TINITO', '2025-12-18 14:41:55', 'unidad', NULL, NULL, 0.55, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (127, 'CRAYÓN CHICLE', '', 0.00, 0.25, 'TINITO', '2025-08-25 12:31:02', 'unidad', NULL, NULL, 0.25, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (128, 'COLORES CHICLE', NULL, 0.00, 0.45, 'TINITO', '2025-10-19 15:40:44', 'unidad', NULL, NULL, 0.45, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (129, 'CHUPETA DE MASCOTAS', '', 0.00, 1.30, 'TINITO', '2025-09-08 15:22:31', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (130, 'SPINNER RING', '', 0.00, 1.30, 'TINITO', '2025-08-25 12:33:08', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (131, 'JUGUETE DE POCETA', '', 0.00, 0.95, 'TINITO', '2025-08-25 12:33:20', 'unidad', NULL, NULL, 0.95, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (132, 'COCOSETE', '', 0.00, 1.20, 'GADUCA', '2025-08-25 12:33:43', 'unidad', NULL, NULL, 1.20, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (286, 'CEPILLO DENTAL', NULL, 1.10, 1.50, 'GADUCA', '2025-12-24 15:02:09', 'unidad', NULL, NULL, 1.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (134, 'SAMBA', NULL, 15.60, 1.02, 'GADUCA', '2025-09-23 11:25:50', 'paquete', 20, NULL, 1.02, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (135, 'SAMBA PEQUEÑA', '', 0.00, 0.65, 'GADUCA', '2025-08-25 12:34:45', 'unidad', NULL, NULL, 0.65, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (136, 'FLIPS CAJA', '', 0.00, 3.85, 'COMARCA', '2025-08-25 14:05:34', 'unidad', NULL, NULL, 3.85, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (137, 'CORN FLAKES DE CAJA', '', 0.00, 3.00, 'TINITO', '2025-08-25 14:06:01', 'unidad', NULL, NULL, 3.00, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (138, 'CRONCH FLAKES BOLSA', NULL, 2.38, 3.20, 'COMARCA', '2025-10-30 20:55:20', 'unidad', NULL, NULL, 3.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (139, 'FRUTY AROS', '', 0.00, 3.70, 'COMARCA', '2025-12-24 02:08:16', 'unidad', NULL, NULL, 3.70, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (140, 'JUMBY RIKOS G', NULL, 9.80, 0.85, 'LEO', '2025-12-05 21:09:42', 'paquete', 18, NULL, 0.85, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (141, 'CHISKESITO GRANDE', NULL, 1.38, 1.85, 'COMARCA', '2025-12-24 02:08:14', 'unidad', NULL, NULL, 1.85, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (142, 'CHESITO G', NULL, 0.58, 0.80, 'COMARCA', '2025-12-18 01:39:49', 'unidad', NULL, NULL, 0.80, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (143, 'DOBOM 400GR', NULL, 3.90, 5.00, 'LEO', '2025-12-05 21:10:10', 'unidad', NULL, NULL, 5.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (144, 'DOBOM 200GRS', NULL, 26.70, 3.00, 'LEO', '2025-11-17 19:45:04', 'paquete', 12, NULL, 3.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (145, 'DOBOM 125GRS', NULL, 1.45, 1.89, 'LEO', '2025-12-26 13:05:34', 'unidad', NULL, NULL, 1.89, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (146, 'CAMPIÑA 200GR', NULL, 3.14, 3.77, 'TINITO', '2025-12-27 14:49:55', 'unidad', NULL, NULL, 3.77, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (147, 'CAMPIÑA 125GRS', NULL, 2.02, 2.42, 'TINITO', '2025-10-27 14:55:42', 'unidad', NULL, NULL, 2.42, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (148, 'LECHE UPACA', NULL, 1.69, 2.20, 'COMARCA', '2025-12-27 14:50:03', 'unidad', NULL, NULL, 2.20, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (149, 'LECHE INDOSA 200GR', NULL, 1.00, 1.40, 'TINITO', '2025-12-26 13:05:25', 'unidad', NULL, NULL, 1.40, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (150, 'AVENA 200GR PANTERA', NULL, 0.83, 1.10, 'COMARCA', '2025-10-30 20:58:07', 'unidad', NULL, NULL, 1.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (151, 'COMPOTA GRANDE', NULL, 1.23, 1.60, 'COMARCA', '2025-12-26 13:07:21', 'unidad', NULL, NULL, 1.60, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (152, 'COMPOTA PEQUEÑA', NULL, 0.85, 1.30, 'COMARCA', '2025-12-26 13:07:22', 'unidad', NULL, NULL, 1.30, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (153, 'PASTICHO', '', 0.00, 1.40, 'COMARCA', '2025-10-06 16:36:53', 'unidad', NULL, NULL, 1.40, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (154, 'MAIZINA PEQUEÑA', '', 0.00, 1.00, 'COMARCA', '2025-12-24 02:08:21', 'unidad', NULL, NULL, 1.00, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (155, 'MAIZINA GRANDE', '', 0.00, 2.00, 'COMARCA', '2025-08-25 14:16:26', 'unidad', NULL, NULL, 2.00, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (156, 'SOPA MAGGY', NULL, 14.84, 1.61, 'GADUCA', '2025-11-20 15:09:11', 'paquete', 12, NULL, 1.61, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (158, 'LECHE CONDENSADA', NULL, 2.96, 3.55, 'GADUCA', '2025-10-13 15:19:25', 'unidad', NULL, NULL, 3.55, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (159, 'BOKA', NULL, 3.10, 0.50, 'LEO', '2025-12-26 13:06:07', 'paquete', 10, NULL, 0.50, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (160, 'PEGA LOKA', NULL, 14.40, 0.70, 'LEO', '2025-08-25 14:33:25', 'paquete', 42, NULL, 0.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (161, 'BOMBILLO LED 10W', NULL, 0.70, 0.91, 'LEO', '2025-12-26 13:06:17', 'unidad', NULL, NULL, 0.91, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (164, 'CARAOTA PANTERA', '', 0.00, 2.20, 'COMARCA', '2025-08-25 15:04:27', 'unidad', NULL, NULL, 2.20, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (165, 'CARAOTAS DON JUAN', '', 0.00, 1.00, '', '2025-08-25 15:06:29', 'unidad', NULL, NULL, 1.00, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (166, 'CARAOTA BLANCA PANTERA', NULL, 2.02, 2.63, 'COMARCA', '2025-11-09 16:37:38', 'unidad', NULL, NULL, 2.63, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (167, 'FRIJOL', '', 0.00, 1.50, '', '2025-08-25 15:08:40', 'unidad', NULL, NULL, 1.50, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (168, 'ARVEJAS PANTERA', NULL, 0.00, 1.35, 'COMARCA', '2025-11-09 16:37:02', 'unidad', NULL, NULL, 1.35, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (169, 'MAÍZ DE COTUFAS', NULL, 1.34, 1.65, 'COMARCA', '2025-11-28 11:28:08', 'unidad', NULL, NULL, 1.65, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (170, 'CAFÉ AMANECER 200GR', NULL, 14.45, 3.01, 'ITC AMANECER', '2025-12-20 01:06:12', 'paquete', 6, NULL, 3.01, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (171, 'CAFÉ FLOR ARAUCA', NULL, 2.56, 3.10, 'COMARCA', '2025-12-24 02:08:12', 'unidad', NULL, NULL, 3.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (172, 'CAFÉ ARAUCA 200GRS', NULL, 2.54, 3.10, 'COMARCA', '2025-12-24 02:08:11', 'unidad', NULL, NULL, 3.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (173, 'CAFÉ ARAUCA 100GR', NULL, 1.28, 1.60, 'COMARCA', '2025-12-22 12:58:36', 'unidad', NULL, NULL, 1.60, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (174, 'CAFÉ ARAUCA 50GRS', NULL, 0.64, 0.90, 'COMARCA', '2025-12-22 12:58:37', 'unidad', NULL, NULL, 0.90, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (260, 'SALSA DOÑA TITA PEQ', NULL, 25.53, 1.40, 'GADUCA', '2025-11-21 22:39:36', 'paquete', 24, NULL, 1.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (176, 'YOKOIMA 100GR', NULL, 11.90, 1.55, 'LEO', '2025-12-05 21:11:05', 'paquete', 10, NULL, 1.55, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (177, 'FAVORITO 100GRS', NULL, 0.00, 1.50, 'ITC AMANECER', '2025-12-20 01:05:56', 'unidad', NULL, NULL, 1.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (178, 'FAVORITO 50GRS', NULL, 11.18, 0.73, 'ITC AMANECER', '2025-12-20 01:05:31', 'paquete', 20, NULL, 0.73, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (179, 'SALSA PAMPERO GR', NULL, 0.00, 2.10, 'POLAR', '2025-09-06 20:46:42', 'unidad', NULL, NULL, 2.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (180, 'SALSA PAMPERO PEQ', NULL, 0.00, 1.45, 'POLAR', '2025-09-06 20:46:50', 'unidad', NULL, NULL, 1.45, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (181, 'SALSA TIQUIRE GR', NULL, 0.00, 2.10, 'COMARCA', '2025-09-06 20:46:57', 'unidad', NULL, NULL, 2.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (182, 'SALSA TIQUIRE PEQ', NULL, 0.00, 1.45, 'COMARCA', '2025-09-06 20:47:03', 'unidad', NULL, NULL, 1.45, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (183, 'SALSA DOÑA TITA GR', NULL, 38.89, 2.11, 'GADUCA', '2025-11-21 22:39:01', 'paquete', 24, NULL, 2.11, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (184, 'MAYONESA MAVESA PEQUEÑA', NULL, 42.24, 2.20, 'POLAR', '2025-11-29 22:13:47', 'paquete', 24, NULL, 2.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (185, 'MAYONESA KRAFF 175GR', '', 1.49, 1.95, 'TINITO', '2025-12-11 13:49:41', 'unidad', NULL, NULL, 1.95, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (186, 'MAYONESA MAVESA GRANDE', '', 0.00, 4.10, 'POLAR', '2025-08-25 15:50:19', 'unidad', NULL, NULL, 4.10, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (187, 'DIABLITOS 115GR', NULL, 2.71, 3.25, 'TINITO', '2025-10-30 23:32:31', 'unidad', NULL, NULL, 3.25, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (188, 'DIABLITOS 54GR', NULL, 1.58, 1.98, 'TINITO', '2025-11-27 13:35:28', 'unidad', NULL, NULL, 1.98, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (189, 'ATÚN AZUL SDLA', NULL, 2.98, 3.87, 'TINITO', '2025-11-27 13:37:02', 'unidad', NULL, NULL, 3.87, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (190, 'ATUN ROJO SDLA', NULL, 3.45, 4.14, 'TINITO', '2025-10-13 13:40:25', 'unidad', NULL, NULL, 4.14, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (191, 'SARDINA', NULL, 16.90, 0.92, 'LEO', '2025-11-19 21:25:28', 'paquete', 24, NULL, 0.92, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (192, 'VINAGRE DE MANZANA', '', 0.00, 1.60, 'COMARCA', '2025-08-25 15:51:41', 'unidad', NULL, NULL, 1.60, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (193, 'VINAGRE DOÑA TITA', '', 0.00, 1.55, 'GADUCA', '2025-08-25 15:51:59', 'unidad', NULL, NULL, 1.55, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (194, 'VINAGRE TIQUIRE', NULL, 1.10, 1.40, 'COMARCA', '2025-10-04 23:22:51', 'unidad', NULL, NULL, 1.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (195, 'ACEITE IDEAL 900ML', NULL, 38.50, 4.17, 'LEO', '2025-11-19 21:26:20', 'paquete', 12, NULL, 4.17, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (196, 'ACEITE DE 430ML', NULL, 38.90, 2.15, 'LEO', '2025-12-26 13:07:04', 'paquete', 24, NULL, 2.15, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (198, 'PASTA LARGA HORIZONTE', NULL, 19.00, 2.06, 'LEO', '2025-10-23 22:48:45', 'paquete', 12, NULL, 2.06, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (199, 'PASTA HORIZONTE CORTA', NULL, 21.50, 2.33, 'LEO', '2025-10-23 22:48:31', 'paquete', 12, NULL, 2.33, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (200, 'HARINA DE TRIGO', NULL, 11.60, 1.52, 'LEO', '2025-11-17 23:21:20', 'paquete', 10, NULL, 1.52, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (201, 'AZÚCAR', NULL, 30.00, 2.00, 'COMARCA', '2025-12-24 02:08:06', 'paquete', 20, NULL, 2.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (202, 'SAL', '', 0.00, 0.60, 'LEO', '2025-12-27 14:51:14', 'unidad', NULL, NULL, 0.60, 'USD', NULL, 1);
-INSERT INTO `productos` VALUES (203, 'DELINE DE 250GRS', '', 0.00, 1.50, 'LEO', '2025-08-25 16:06:22', 'unidad', NULL, NULL, 1.50, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (204, 'NELLY DE 250GRS', NULL, 28.08, 1.46, 'POLAR', '2025-10-11 14:42:37', 'paquete', 24, NULL, 1.46, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (205, 'NELLY DE 500GRS', '', 0.00, 2.50, 'POLAR', '2025-08-25 16:07:24', 'unidad', NULL, NULL, 2.50, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (206, 'MAVESA DE 250GRS', NULL, 32.64, 1.70, 'POLAR', '2025-11-29 22:12:48', 'paquete', 24, NULL, 1.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (207, 'MAVESA DE 500GRS', NULL, 29.28, 3.05, 'POLAR', '2025-12-23 19:46:07', 'paquete', 12, NULL, 3.05, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (208, 'HUEVOS', NULL, 6.70, 8.00, 'CUEVITA', '2025-12-10 22:49:36', 'paquete', 30, 8.00, 0.30, 'USD', 4.10, 0);
-INSERT INTO `productos` VALUES (209, 'MASA PASTELITO ROMY', NULL, 1.80, 2.20, 'RAUL', '2025-12-22 13:03:26', 'unidad', NULL, NULL, 2.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (210, 'NUTRIBELLA', NULL, 7.80, 0.85, 'LEO', '2025-11-17 19:47:33', 'paquete', 12, NULL, 0.85, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (211, 'DESODORANTE CLINICAL', '', 0.00, 0.60, 'LEO', '2025-08-25 16:10:43', 'unidad', NULL, NULL, 0.60, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (212, 'DESODORANTE', NULL, 5.90, 0.50, 'LEO', '2025-11-17 21:50:59', 'paquete', 18, NULL, 0.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (213, 'SHAMPOO H&S', NULL, 0.00, 0.60, 'LEO', '2025-11-15 12:48:21', 'unidad', NULL, NULL, 0.60, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (214, 'BOLSAS NEGRAS', NULL, 8.50, 0.45, 'CUEVITA', '2025-11-20 20:39:08', 'paquete', 25, NULL, 0.45, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (215, 'AXION EN CREMA', NULL, 1.28, 1.66, 'GADUCA', '2025-12-26 13:11:41', 'unidad', NULL, NULL, 1.66, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (216, 'VASELINA', '', 0.00, 3.40, 'TINITO', '2025-08-25 16:11:49', 'unidad', NULL, NULL, 3.40, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (217, 'COLGATE TOTAL', NULL, 2.10, 2.63, 'GADUCA', '2025-09-23 11:59:29', 'unidad', NULL, NULL, 2.63, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (218, 'COLGATE PLAX', NULL, 3.25, 4.23, 'GADUCA', '2025-11-21 22:33:51', 'unidad', NULL, NULL, 4.23, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (219, 'COLGATE TRIPLE ACCIÓN', NULL, 1.33, 1.66, 'GADUCA', '2025-09-23 11:58:31', 'unidad', NULL, NULL, 1.66, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (220, 'COLGATE TRADICIONAL 90ML', NULL, 1.16, 1.45, 'GADUCA', '2025-09-23 11:58:02', 'unidad', 12, NULL, 1.45, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (221, 'COLGATE NIÑOS', NULL, 1.30, 1.63, 'GADUCA', '2025-09-23 11:28:02', 'unidad', NULL, NULL, 1.63, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (322, 'MARIA SELECTA', NULL, 1.43, 1.86, 'TINITO', '2025-12-15 12:57:21', 'paquete', 9, 1.86, 0.25, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (223, 'TOALLAS AZULES', NULL, 40.30, 1.70, 'LEO', '2025-12-26 13:11:21', 'paquete', 30, NULL, 1.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (224, 'TOALLAS MORADAS', NULL, 29.30, 1.40, 'CUEVITA', '2025-12-24 19:03:58', 'paquete', 30, NULL, 1.40, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (225, 'JABÓN ESPECIAL', NULL, 40.00, 1.20, 'RAMON', '2025-11-17 23:18:18', 'paquete', 50, NULL, 1.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (226, 'JABÓN POPULAR', NULL, 57.90, 1.05, 'LEO', '2025-11-17 23:20:48', 'paquete', 72, NULL, 1.05, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (227, 'JABÓN LAS LLAVES', '', 0.00, 1.30, 'POLAR', '2025-12-26 13:10:51', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 1);
-INSERT INTO `productos` VALUES (228, 'JABÓN DE AVENA', '', 0.00, 0.60, 'TINITO', '2025-12-15 12:53:20', 'unidad', NULL, NULL, 0.60, 'USD', NULL, 1);
-INSERT INTO `productos` VALUES (229, 'JABÓN HUGME', NULL, 0.00, 0.65, 'LEO', '2025-11-28 11:28:25', 'unidad', NULL, NULL, 0.65, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (231, 'JABÓN LAK', NULL, 54.00, 1.17, 'LEO', '2025-11-17 23:20:14', 'paquete', 64, NULL, 1.17, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (232, 'GELATINA CABELLO PEQ', NULL, 43.90, 2.40, 'LEO', '2025-10-26 14:21:27', 'paquete', 24, NULL, 2.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (233, 'ACE ALIVE 1KG', NULL, 29.00, 3.30, 'CUEVITA', '2025-11-28 11:27:06', 'paquete', 12, NULL, 3.30, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (234, 'ACE ALIVE 500GRS', NULL, 30.00, 1.86, 'CUEVITA', '2025-11-17 19:44:14', 'paquete', 24, NULL, 1.86, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (235, 'ACE OSO BLANCO 400GRS', NULL, 20.50, 1.50, 'CUEVITA', '2025-12-26 13:10:58', 'paquete', 20, NULL, 1.50, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (236, 'SUAVITEL', NULL, 7.90, 0.86, 'LEO', '2025-09-06 22:29:51', 'paquete', 12, NULL, 0.86, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (237, 'CLORO LOFO 1LT', NULL, 12.00, 1.30, 'LEO', '2025-11-17 23:16:42', 'paquete', 12, NULL, 1.30, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (238, 'AFEITADORA', NULL, 6.40, 0.75, 'LEO', '2025-11-30 14:20:34', 'paquete', 12, NULL, 0.75, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (239, 'HOJILLAS', NULL, 7.20, 1.00, 'LEO', '2025-11-02 21:48:13', 'paquete', 12, NULL, 1.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (240, 'LECHE 1LT LOS ANDES', '', 0.00, 2.15, 'LOS ANDES', '2025-08-26 12:26:31', 'unidad', NULL, NULL, 2.15, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (285, 'APUREÑITO', NULL, 4.70, 0.65, 'CUEVITA', '2025-12-20 01:04:54', 'paquete', 12, NULL, 0.65, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (242, 'YESQUERO', '', 0.00, 0.40, 'CUEVITA', '2025-12-20 01:04:59', 'unidad', NULL, NULL, 0.40, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (243, 'TRIDENT INDIVIDUAL', NULL, 5.68, 0.15, '', '2025-10-18 00:14:18', 'paquete', 60, NULL, 0.15, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (245, 'ATUN RICA DELI', NULL, 2.45, 2.94, 'TINITO', '2025-10-13 15:30:33', 'unidad', NULL, NULL, 2.94, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (246, 'SALSA PASTA UW 190GR', NULL, 1.17, 1.50, 'TINITO', '2025-12-26 13:05:50', 'unidad', NULL, NULL, 1.50, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (247, 'SORBETICO PEQ', '', 1.07, 1.35, 'TINITO', '2025-08-28 15:38:52', 'paquete', 4, 1.35, 0.40, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (248, 'SORBETICO WAFER', NULL, 0.96, 1.25, 'TINITO', '2025-12-11 13:49:47', 'unidad', NULL, NULL, 1.25, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (249, 'TANG', '', 6.45, 0.60, 'TINITO', '2025-08-28 15:44:00', 'paquete', 15, NULL, 0.60, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (250, 'CHICLE FREEGELLS', NULL, 3.58, 0.40, 'TINITO', '2025-09-24 21:05:33', 'paquete', 15, NULL, 0.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (251, 'CHICLE TATTOO', NULL, 2.87, 0.07, 'TINITO', '2025-12-15 12:52:39', 'paquete', 90, NULL, 0.07, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (252, 'ACE 3N 400GR', NULL, 1.31, 1.64, 'TINITO', '2025-10-13 13:39:55', 'unidad', NULL, NULL, 1.64, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (253, 'ACE 3N 1KG', NULL, 3.06, 3.67, 'TINITO', '2025-12-01 23:22:28', 'unidad', NULL, NULL, 3.67, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (254, 'GALLETA MARIA MINI', '', 0.50, 0.70, 'TINITO', '2025-08-28 16:06:09', 'unidad', NULL, NULL, 0.70, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (256, 'COCO CRUCH', '', 0.00, 1.20, 'CUEVITA', '2025-09-18 14:52:27', 'unidad', NULL, NULL, 1.20, 'USD', NULL, 0);
-INSERT INTO `productos` VALUES (257, 'CHEESE TRIS G', NULL, 1.66, 2.16, 'PACO LOS LLANOS', '2025-12-24 02:08:53', 'unidad', NULL, NULL, 2.16, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (258, 'BOLI KRUNCH G', NULL, 0.85, 1.25, 'COMARCA', '2025-12-24 02:08:10', 'unidad', NULL, NULL, 1.25, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (259, 'KESITOS G', NULL, 0.89, 1.25, 'COMARCA', '2025-12-08 11:56:00', 'unidad', NULL, NULL, 1.25, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (262, 'CHAKARO GDE', NULL, 8.00, 0.90, 'CHAKARO', '2025-09-11 19:44:57', 'paquete', 12, NULL, 0.90, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (261, 'DESINFECTANTE', NULL, 0.78, 1.20, 'LIMPIEZA', '2025-12-22 13:03:53', 'unidad', NULL, NULL, 1.20, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (263, 'MANDADOR', NULL, 9.00, 1.00, 'CHAKARO', '2025-09-11 19:45:21', 'paquete', 12, NULL, 1.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (264, 'CHUPETA', NULL, 6.19, 0.20, 'LEO', '2025-11-02 21:49:01', 'paquete', 46, NULL, 0.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (265, 'SALCHICHAS', NULL, 4.05, 5.30, 'RAUL', '2025-12-06 09:11:59', 'kg', NULL, NULL, 5.30, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (266, 'CLORO AAA', NULL, 0.53, 1.00, 'LIMPIEZA', '2025-11-01 16:09:27', 'unidad', NULL, NULL, 1.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (267, 'LAVAPLATOS AAA', NULL, 1.76, 2.30, 'LIMPIEZA', '2025-09-22 20:13:09', 'unidad', NULL, NULL, 2.30, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (268, 'LAVAPLATOS AA', NULL, 1.38, 1.80, 'LIMPIEZA', '2025-09-22 20:13:37', 'unidad', NULL, NULL, 1.80, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (269, 'CLORO AA', NULL, 0.48, 0.80, 'LIMPIEZA', '2025-09-22 20:24:23', 'unidad', NULL, NULL, 0.80, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (270, 'CERA BLANCA', NULL, 0.59, 0.90, 'LIMPIEZA', '2025-12-27 14:51:32', 'unidad', NULL, NULL, 0.90, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (271, 'SUAVIZANTE', NULL, 1.12, 1.65, 'LIMPIEZA', '2025-11-01 16:09:13', 'unidad', NULL, NULL, 1.65, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (272, 'DESENGRASANTE AAA', NULL, 1.51, 2.00, 'LIMPIEZA', '2025-09-22 20:16:43', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (273, 'MARSHMALLOWS 100GR', NULL, 0.96, 1.25, 'TINITO', '2025-12-15 12:57:15', 'unidad', NULL, NULL, 1.25, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (274, 'HUEVITO SORPRESA', NULL, 5.83, 0.70, 'TINITO', '2025-10-28 20:14:20', 'paquete', 12, NULL, 0.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (276, 'GALLETA SODA', NULL, 1.46, 1.90, 'LEO', '2025-09-25 21:15:12', 'paquete', 10, 1.90, 0.25, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (277, 'YOKOIMA 50GR', NULL, 12.50, 0.81, 'LEO', '2025-09-25 22:20:24', 'paquete', 20, NULL, 0.81, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (278, 'SARDINAS NONNA', NULL, 9.08, 0.95, 'ITC AMANECER', '2025-12-20 01:05:38', 'paquete', 12, NULL, 0.95, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (279, 'TIGRITO', NULL, 5.10, 0.65, 'CUEVITA', '2025-12-20 01:04:58', 'paquete', 12, NULL, 0.65, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (280, 'PLAQUITAS', NULL, 1.80, 0.17, 'CATALINERO', '2025-10-03 00:02:56', 'paquete', 15, NULL, 0.17, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (282, 'KETCHUP CAPRI 198GR', NULL, 1.13, 1.41, 'COMARCA', '2025-10-04 22:53:37', 'unidad', NULL, NULL, 1.41, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (284, 'ATUN MARGARITA', NULL, 66.58, 2.38, 'POLAR', '2025-10-11 14:46:31', 'paquete', 35, NULL, 2.38, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (287, 'HOJA EXAMEN', NULL, 2.40, 0.10, 'CUEVITA', '2025-10-17 20:38:42', 'paquete', 50, NULL, 0.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (288, 'BOMBONES CORAZON', NULL, 1.32, 1.75, 'TINITO', '2025-10-18 00:30:58', 'unidad', NULL, NULL, 1.75, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (289, 'BOMBONES ROSA', NULL, 2.23, 2.70, 'TINITO', '2025-10-18 00:05:16', 'unidad', NULL, NULL, 2.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (290, 'NUCITA CRUNCH JR', NULL, 2.39, 0.60, 'TINITO', '2025-10-18 00:06:25', 'paquete', 6, NULL, 0.60, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (291, 'YOYO NEON', NULL, 0.86, 1.15, 'TINITO', '2025-10-18 00:11:25', 'unidad', NULL, NULL, 1.15, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (292, 'GUSANITO LOCO', NULL, 0.66, 0.86, 'TINITO', '2025-10-18 00:12:56', 'unidad', 30, NULL, 0.86, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (293, 'ACONDICIONADOR SEDAL', NULL, 4.07, 0.50, 'TINITO', '2025-12-26 13:10:38', 'paquete', 12, NULL, 0.50, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (294, 'JAMÓN', NULL, 1.60, 2.00, 'RAUL', '2025-11-09 15:39:42', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (295, 'QUESO AMARILLO', NULL, 1.60, 2.00, 'RAUL', '2025-11-09 15:39:47', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (296, 'RAQUETY G', NULL, 0.83, 1.10, 'PACO LOS LLANOS', '2025-10-19 18:38:49', 'unidad', NULL, NULL, 1.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (297, 'PAPEL AMARILLO 600', NULL, 3.48, 4.30, 'COMARCA', '2025-10-30 20:56:42', 'paquete', 4, 4.30, 1.25, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (298, 'COLORETI MINI', NULL, 4.09, 0.20, 'TINITO', '2025-10-30 23:33:35', 'paquete', 36, NULL, 0.20, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (299, 'MENTITAS AMBROSOLI', NULL, 11.54, 0.70, 'TINITO', '2025-10-30 23:35:43', 'paquete', 24, NULL, 0.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (310, 'CARAMELOS', NULL, 2.70, 0.05, 'LEO', '2025-11-02 21:50:21', 'paquete', 100, NULL, 0.05, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (301, 'BARQUILLON', NULL, 1.00, 1.40, '4X4', '2025-11-01 18:27:36', 'unidad', NULL, NULL, 1.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (302, 'PALETA FRESH LIMON', NULL, 0.28, 0.40, 'CALI', '2025-11-01 19:14:12', 'unidad', NULL, NULL, 0.40, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (303, 'PALETA PASION YOGURT', NULL, 0.35, 0.50, 'CALI', '2025-11-01 19:14:13', 'unidad', 9, NULL, 0.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (304, 'PALETA EXOTICO', NULL, 0.35, 0.50, 'CALI', '2025-11-01 19:14:13', 'unidad', NULL, NULL, 0.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (305, 'BARQUILLA SUPER CONO', NULL, 0.82, 1.10, 'CALI', '2025-11-01 19:43:19', 'unidad', NULL, NULL, 1.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (306, 'POLET FERRERO ROCHER', NULL, 1.36, 2.00, 'CALI', '2025-11-01 19:40:24', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (307, 'POLET TRIPLE CAPITA', NULL, 1.36, 2.00, 'CALI', '2025-11-01 19:40:51', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (308, 'POLET TRIPLE CAPITA COCO', NULL, 1.36, 2.00, 'CALI', '2025-11-01 19:41:49', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (309, 'MAXI SANDWICH', NULL, 0.82, 1.10, 'CALI', '2025-11-01 19:43:07', 'unidad', NULL, NULL, 1.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (311, 'RIKESA 200GR', NULL, 3.02, 3.77, 'POLAR', '2025-11-04 23:18:55', 'unidad', NULL, NULL, 3.77, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (312, 'PAPEL ROJO 180', NULL, 0.84, 1.30, 'COMARCA', '2025-12-18 01:39:35', 'paquete', 4, 1.30, 0.45, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (313, 'PAPEL VERDE 215', NULL, 1.02, 1.85, 'COMARCA', '2025-11-09 15:47:53', 'paquete', 4, 1.85, 0.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (314, 'PAPEL MARRÓN 300', NULL, 1.91, 2.45, 'COMARCA', '2025-11-09 15:48:59', 'paquete', 4, 2.45, 0.70, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (315, 'CAFÉ NONNA 100GR', NULL, 24.08, 1.50, 'ITC AMANECER', '2025-12-24 02:08:46', 'paquete', 20, NULL, 1.50, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (316, 'LENTEJA PANTERA', NULL, 1.72, 2.10, 'COMARCA', '2025-11-09 16:35:48', 'unidad', NULL, NULL, 2.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (317, 'GELATINA MONTALBAN', NULL, 1.45, 1.81, 'COMARCA', '2025-11-09 16:39:29', 'unidad', NULL, NULL, 1.81, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (318, 'MAYONESA TITA', NULL, 1.62, 1.85, 'GADUCA', '2025-12-20 16:47:33', 'unidad', NULL, NULL, 1.85, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (319, 'BOMBONES BEL', NULL, 3.82, 0.10, 'TINITO', '2025-12-15 14:01:40', 'paquete', 50, NULL, 0.10, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (320, 'ENERGIZER AA', NULL, 2.06, 2.68, 'TINITO', '2025-12-15 12:53:10', 'unidad', NULL, NULL, 2.68, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (321, 'ENERGIZER AAA', NULL, 2.06, 2.68, 'TINITO', '2025-12-15 12:53:10', 'unidad', NULL, NULL, 2.68, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (323, 'MARILU TUBO', NULL, 1.76, 2.20, 'TINITO', '2025-12-15 12:57:18', 'paquete', 6, 2.20, 0.45, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (324, 'CARAMELO MIEL', NULL, 1.60, 0.05, 'TINITO', '2025-11-30 00:41:19', 'paquete', 100, NULL, 0.05, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (325, 'NUTTELINI', NULL, 3.50, 0.45, 'TINITO', '2025-11-30 00:42:15', 'paquete', 12, NULL, 0.45, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (326, 'BOMBILLO LED 20W', NULL, 1.30, 1.56, 'CUEVITA', '2025-12-26 13:06:18', 'unidad', NULL, NULL, 1.56, 'USD', 0.00, 1);
-INSERT INTO `productos` VALUES (327, 'BARRILETE', NULL, 2.75, 0.80, 'COMARCA', '2025-12-15 14:05:50', 'paquete', 50, NULL, 0.80, 'USD', 0.00, 0);
-INSERT INTO `productos` VALUES (328, 'FRUTYS', NULL, 12.80, 1.40, 'CUEVITA', '2025-12-22 21:18:08', 'paquete', 12, NULL, 1.40, 'USD', 0.00, 0);
+INSERT INTO `productos` VALUES (1, 1, 'QUESO', NULL, NULL, 4.80, 7.00, 'ANGELA', '2026-01-26 22:46:36', 'unidad', NULL, NULL, 6.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (2, 1, 'CLUB SOCIAL', NULL, NULL, 1.71, 2.15, 'TINITO', '2026-01-08 02:59:12', 'paquete', 6, 2.15, 0.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (63, 1, 'GLUP 2LTS', NULL, NULL, 6.50, 1.41, 'LEO', '2026-01-08 21:26:20', 'paquete', 6, NULL, 1.41, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (4, 1, 'CATALINAS', NULL, NULL, 3.00, 0.40, 'CATALINERO', '2025-10-29 23:04:06', 'unidad', 10, 3.50, 0.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (5, 1, 'PAN SALADO', NULL, NULL, 0.80, 1.00, 'PANADERIA FRENTE ARABITO', '2026-01-08 23:57:59', 'unidad', NULL, NULL, 1.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (6, 1, 'PAN CLINEJA', NULL, NULL, 1.30, 1.60, 'PANADERIA 4X4', '2026-01-17 12:06:32', 'unidad', NULL, NULL, 1.60, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (300, 1, 'HELADO YOGURT', NULL, NULL, 0.40, 0.55, '4X4', '2025-11-01 18:27:03', 'unidad', NULL, NULL, 0.55, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (8, 1, 'PAN RELLENO GUAYABA', NULL, NULL, 3.34, 4.50, 'PANADERIA 4X4', '2026-01-17 15:47:20', 'paquete', 10, 4.50, 0.45, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (9, 1, 'PAN COCO', NULL, NULL, 2.65, 3.30, 'PANADERIA 4X4', '2026-01-17 12:06:32', 'paquete', 10, 3.30, 0.40, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (10, 1, 'RIQUESA', NULL, '', 0.00, 3.50, 'POLAR', '2025-12-26 13:07:27', 'unidad', NULL, NULL, 3.50, 'USD', NULL, 1, 0.00);
+INSERT INTO `productos` VALUES (11, 1, 'SALSA SOYA AJO INGLESA DOÑA TITA', NULL, NULL, 13.18, 1.43, 'GADUCA', '2025-12-29 18:14:05', 'paquete', 12, NULL, 1.43, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (12, 1, 'ACEITE VATEL', NULL, NULL, 60.00, 6.00, 'COMARCA', '2026-01-19 12:35:23', 'paquete', 12, NULL, 6.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (13, 1, 'SALSA PASTA UW 490GR', NULL, NULL, 0.00, 2.95, 'TINITO', '2026-01-17 12:07:18', 'unidad', NULL, NULL, 2.95, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (14, 1, 'ARROZ', NULL, NULL, 33.00, 1.79, 'LEO', '2026-01-13 16:29:59', 'paquete', 24, NULL, 1.79, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (15, 1, 'HARINA PAN', NULL, NULL, 31.00, 1.94, 'CUEVITA', '2026-01-13 16:29:30', 'paquete', 20, NULL, 1.94, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (16, 1, 'CARAMELO FREEGELLS', NULL, NULL, 2.76, 0.50, 'TINITO', '2025-10-30 23:32:09', 'paquete', 12, NULL, 0.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (17, 1, 'HALLS', NULL, NULL, 5.46, 0.65, 'TINITO', '2025-11-27 13:37:53', 'paquete', 12, NULL, 0.65, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (339, 1, 'GALLE LULU LIMON 175GR', NULL, NULL, 1.61, 2.01, 'TINITO', '2026-01-07 01:13:38', 'unidad', NULL, NULL, 2.01, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (19, 1, 'TORONTO', NULL, '', 0.00, 0.65, 'GADUCA', '2025-10-13 15:21:50', 'unidad', NULL, NULL, 0.65, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (20, 1, 'CHOCOLATE SAVOY', NULL, NULL, 15.45, 1.70, 'GADUCA', '2026-01-20 20:25:50', 'paquete', 12, NULL, 1.70, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (21, 1, 'CHICLE GIGANTE', NULL, NULL, 0.00, 0.55, 'TINITO', '2025-10-13 13:48:15', 'unidad', NULL, NULL, 0.55, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (22, 1, 'GALLETAS MALTN\'MILK', NULL, '', 0.00, 0.25, '', '2025-08-22 11:13:32', 'unidad', NULL, NULL, 0.25, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (23, 1, 'JABÓN PROTEX 110GR', NULL, NULL, 7.50, 9.00, 'COMARCA', '2026-01-19 12:44:07', 'paquete', 3, 9.00, 3.25, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (24, 1, 'ESPONJAS', NULL, NULL, 1.20, 0.85, 'LEO', '2026-01-17 12:04:40', 'paquete', 2, NULL, 0.85, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (25, 1, 'FREGADOR', NULL, NULL, 5.50, 0.70, 'LEO', '2025-09-22 20:46:52', 'paquete', 15, NULL, 0.70, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (26, 1, 'COCA-COLA 1.5LTS', NULL, '', 0.00, 1.60, '', '2025-08-22 13:05:43', 'unidad', NULL, NULL, 1.60, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (28, 1, 'GATORADE', NULL, '', 0.00, 1.80, 'POLAR', '2026-01-17 12:04:54', 'unidad', NULL, NULL, 1.80, 'USD', NULL, 1, 0.00);
+INSERT INTO `productos` VALUES (29, 1, 'TOMATE', NULL, NULL, 390.00, 550.00, 'VERDUREROS', '2026-01-12 23:33:26', 'kg', NULL, NULL, 550.00, 'BS', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (30, 1, 'CEBOLLA', NULL, NULL, 390.00, 550.00, 'VERDUREROS', '2026-01-12 23:33:45', 'kg', NULL, NULL, 550.00, 'BS', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (31, 1, 'PAPA', NULL, NULL, 490.00, 650.00, 'VERDUREROS', '2026-01-12 23:33:09', 'kg', NULL, NULL, 650.00, 'BS', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (32, 1, 'PLÁTANO', NULL, NULL, 800.00, 1040.00, 'VERDUREROS', '2026-01-12 23:34:09', 'kg', NULL, NULL, 1040.00, 'BS', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (33, 1, 'LUCKY', NULL, NULL, 1055.00, 1380.00, 'CIGARRERO', '2026-01-20 20:33:52', 'paquete', 20, 1380.00, 75.00, 'BS', 700.00, 0, 0.00);
+INSERT INTO `productos` VALUES (34, 1, 'BELTMONT', NULL, NULL, 880.00, 1150.00, 'CIGARRERO', '2026-01-20 20:32:37', 'paquete', 20, 1150.00, 65.00, 'BS', 580.00, 0, 0.00);
+INSERT INTO `productos` VALUES (35, 1, 'PALLMALL', NULL, NULL, 880.00, 1150.00, 'CIGARRERO', '2026-01-20 20:31:40', 'paquete', 20, 1150.00, 65.00, 'BS', 580.00, 0, 0.00);
+INSERT INTO `productos` VALUES (37, 1, 'UNIVERSAL', NULL, NULL, 590.00, 770.00, 'CIGARRERO', '2026-01-20 20:30:27', 'paquete', 20, 770.00, 45.00, 'BS', 390.00, 0, 0.00);
+INSERT INTO `productos` VALUES (38, 1, 'CONSUL', NULL, NULL, 495.00, 650.00, 'CIGARRERO', '2026-01-20 20:30:37', 'paquete', 20, 650.00, 40.00, 'BS', 330.00, 0, 0.00);
+INSERT INTO `productos` VALUES (39, 1, 'VELAS', NULL, '', 0.00, 0.25, 'TINITO', '2025-08-22 13:25:01', 'unidad', NULL, NULL, 0.25, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (283, 1, 'JUGO JUCOSA', NULL, NULL, 1.60, 2.00, 'CUEVITA', '2026-01-17 12:05:25', 'paquete', 3, 2.00, 0.70, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (42, 1, 'LOPERAN', NULL, '', 0.00, 0.25, 'LEO', '2025-08-23 13:53:03', 'unidad', NULL, NULL, 0.25, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (45, 1, 'DICLOFENAC POTÁSICO', NULL, NULL, 1.00, 0.15, 'FARMALUNA', '2025-12-20 10:29:26', 'paquete', 30, NULL, 0.15, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (44, 1, 'DICLOFENAC SÓDICO', NULL, '', 0.00, 0.10, 'LEO', '2025-08-23 13:54:01', 'unidad', NULL, NULL, 0.10, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (46, 1, 'METOCLOPRAMIDA', NULL, '', 0.00, 0.35, 'FARMALUNA', '2025-08-23 13:55:11', 'unidad', NULL, NULL, 0.35, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (47, 1, 'IBUPROFENO', NULL, NULL, 1.21, 0.20, 'FARMALUNA', '2025-12-20 10:29:28', 'paquete', 10, NULL, 0.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (48, 1, 'LORATADINA', NULL, NULL, 1.45, 0.25, 'FARMALUNA', '2026-01-23 00:36:50', 'paquete', 10, NULL, 0.25, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (49, 1, 'CETIRIZINA', NULL, NULL, 1.00, 0.15, 'FARMALUNA', '2026-01-23 00:37:00', 'paquete', 20, NULL, 0.15, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (50, 1, 'ACETAMINOFÉN', NULL, NULL, 1.00, 0.15, 'FARMALUNA', '2026-01-23 00:37:12', 'paquete', 20, NULL, 0.15, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (51, 1, 'OMEPRAZOL', NULL, NULL, 3.04, 0.20, 'FARMALUNA', '2025-10-01 19:20:01', 'paquete', 28, NULL, 0.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (52, 1, 'AMOXICILINA', NULL, NULL, 2.15, 0.30, 'FARMALUNA', '2025-12-20 01:03:58', 'paquete', 10, NULL, 0.30, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (53, 1, 'METRONIDAZOL', NULL, '', 0.00, 0.20, 'FARMALUNA', '2025-09-28 15:18:33', 'unidad', NULL, NULL, 0.20, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (54, 1, 'GLUP 1 LT', NULL, NULL, 8.50, 1.00, 'LEO', '2026-01-08 21:26:59', 'paquete', 12, NULL, 1.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (55, 1, 'GLUP 400ML', NULL, NULL, 5.90, 0.60, 'LEO', '2026-01-08 21:27:26', 'paquete', 15, NULL, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (56, 1, 'MALTA DE BOTELLA', NULL, NULL, 16.38, 0.65, 'POLAR', '2026-01-17 12:05:47', 'paquete', 36, NULL, 0.65, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (57, 1, 'PEPSI-COLA 1.25LTS', NULL, NULL, 4.50, 1.10, 'POLAR', '2025-10-11 14:44:11', 'paquete', 6, NULL, 1.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (58, 1, 'PEPSI-COLA 2LT', NULL, '', 0.00, 2.00, 'POLAR', '2025-08-23 14:24:06', 'unidad', NULL, NULL, 2.00, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (59, 1, 'JUSTY', NULL, '', 0.00, 1.30, 'LEO', '2025-08-23 14:24:21', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (60, 1, 'COCA-COLA 2LTS', NULL, NULL, 10.00, 2.20, 'LEO', '2025-11-19 21:27:08', 'paquete', 6, NULL, 2.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (61, 1, 'MALTA 1.5LTS', NULL, NULL, 9.84, 2.15, 'POLAR', '2026-01-17 12:05:47', 'paquete', 6, NULL, 2.15, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (62, 1, 'JUGO FRICAJITA', NULL, NULL, 0.99, 1.24, 'TINITO', '2026-01-08 03:01:34', 'unidad', NULL, NULL, 1.24, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (65, 1, 'COCA-COLA 1LT', NULL, '', 5.00, 1.10, '', '2025-08-23 21:20:10', 'paquete', 6, NULL, 1.10, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (275, 1, 'GOMITAS PLAY', NULL, NULL, 13.85, 0.90, 'CUEVITA', '2026-01-08 03:10:50', 'paquete', 24, NULL, 0.90, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (67, 1, 'PAPEL NARANJA 400', NULL, NULL, 2.90, 3.70, 'COMARCA', '2026-01-19 12:23:11', 'paquete', 4, 3.70, 1.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (68, 1, 'GALLETA MARIA ITALIA', NULL, NULL, 0.54, 0.90, 'COMARCA', '2025-10-20 20:43:49', 'paquete', 9, 0.90, NULL, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (69, 1, 'CAFE AMANECER 100GR', NULL, NULL, 13.00, 1.63, 'ITC AMANECER', '2026-01-17 12:02:49', 'paquete', 10, NULL, 1.63, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (70, 1, 'CARAOTAS AMANECER', NULL, NULL, 1.00, 1.35, 'ITC AMANECER', '2025-09-06 20:33:32', 'unidad', NULL, NULL, 1.35, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (71, 1, 'PASTA LARGA NONNA', NULL, NULL, 0.75, 0.95, 'ITC AMANECER', '2025-12-20 01:05:44', 'unidad', NULL, NULL, 0.95, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (72, 1, 'PASTA CORTA NONNA', NULL, NULL, 1.40, 2.10, 'ITC AMANECER', '2025-10-18 14:13:30', 'unidad', NULL, NULL, 2.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (73, 1, 'DORITOS PEQ', NULL, NULL, 11.32, 1.23, 'PACO LOS LLANOS', '2025-12-20 12:40:28', 'paquete', 12, NULL, 1.23, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (74, 1, 'DORITOS DIN PEQ', NULL, '', 0.00, 1.20, 'PACO LOS LLANOS', '2025-11-09 15:40:04', 'unidad', NULL, NULL, 1.20, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (75, 1, 'DORITOS FH PEQ', NULL, '', 0.00, 1.30, 'PACO LOS LLANOS', '2025-08-25 11:28:14', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (76, 1, 'DORITOS DIN FH PEQ', NULL, '', 0.00, 1.20, 'PACO LOS LLANOS', '2025-08-25 11:28:51', 'unidad', NULL, NULL, 1.20, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (77, 1, 'CHEESE TRIS P', NULL, '', 0.00, 1.10, 'PACO LOS LLANOS', '2025-08-25 11:29:10', 'unidad', NULL, NULL, 1.10, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (78, 1, 'PEPITO P', NULL, NULL, 0.00, 1.00, 'PACO LOS LLANOS', '2025-10-19 18:36:11', 'unidad', NULL, NULL, 1.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (79, 1, 'BOLI KRUCH', NULL, NULL, 4.40, 0.60, 'COMARCA', '2025-12-22 12:59:01', 'paquete', 12, NULL, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (80, 1, 'KESITOS P', NULL, NULL, 0.00, 0.60, 'COMARCA', '2025-12-18 01:39:54', 'unidad', NULL, NULL, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (81, 1, 'PIGSY PICANTE', NULL, NULL, 3.40, 0.40, 'CUEVITA', '2025-12-27 14:49:30', 'paquete', 18, NULL, 0.40, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (82, 1, 'RAQUETY', NULL, '', 0.00, 0.65, 'PACO LOS LLANOS', '2025-10-16 15:14:43', 'unidad', NULL, NULL, 0.65, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (83, 1, 'CHISKESITO PEQUEÑO', NULL, NULL, 6.39, 0.70, 'COMARCA', '2025-12-22 12:59:15', 'paquete', 12, NULL, 0.70, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (84, 1, 'CHIPS AHOY', NULL, NULL, 2.29, 2.75, 'TINITO', '2026-01-04 23:45:02', 'paquete', 6, 2.75, 0.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (85, 1, 'COCO CRUCH', NULL, NULL, 1.40, 1.82, 'CUEVITA', '2026-01-13 16:33:57', 'unidad', NULL, NULL, 1.82, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (86, 1, 'SALSERITOS GRANDES', NULL, NULL, 1.61, 2.01, 'COMARCA', '2026-01-10 13:46:16', 'unidad', NULL, NULL, 2.01, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (87, 1, 'SALSERITOS PEQUEÑOS', NULL, NULL, 5.00, 0.60, 'COMARCA', '2026-01-19 13:06:36', 'paquete', 12, NULL, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (88, 1, 'TOSTON TOM', NULL, '', 0.00, 0.45, 'LEO', '2025-09-19 11:35:10', 'unidad', NULL, NULL, 0.45, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (89, 1, 'MINI CHIPS', NULL, NULL, 1.90, 2.30, 'TINITO', '2026-01-08 03:05:36', 'unidad', NULL, NULL, 2.30, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (90, 1, 'NUCITA CRUNCH', NULL, NULL, 1.48, 1.85, 'TINITO', '2025-12-11 13:51:01', 'unidad', NULL, NULL, 1.85, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (91, 1, 'FLIPS PEQUEÑO', NULL, NULL, 3.37, 0.80, 'COMARCA', '2026-01-20 20:28:18', 'paquete', 6, NULL, 0.80, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (92, 1, 'FLIPS MEDIANO', NULL, NULL, 1.84, 2.50, 'COMARCA', '2026-01-19 12:41:43', 'unidad', NULL, NULL, 2.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (93, 1, 'DORITOS G', NULL, '', 0.00, 3.30, 'PACO LOS LLANOS', '2025-11-09 15:40:06', 'unidad', NULL, NULL, 3.30, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (95, 1, 'DORITOS FH G', NULL, '', 0.00, 3.30, 'PACO LOS LLANOS', '2025-08-25 12:12:42', 'unidad', NULL, NULL, 3.30, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (244, 1, 'CHESITO P', NULL, NULL, 2.07, 0.40, 'COMARCA', '2025-10-04 23:31:47', 'paquete', 12, NULL, 0.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (98, 1, 'PEPITO G', NULL, NULL, 1.10, 1.43, 'PACO LOS LLANOS', '2025-10-19 18:36:02', 'unidad', NULL, NULL, 1.43, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (100, 1, 'MAXCOCO', NULL, NULL, 7.75, 1.01, 'CUEVITA', '2026-01-13 16:45:29', 'paquete', 10, NULL, 1.01, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (101, 1, 'CROC-CHOC', NULL, NULL, 4.91, 0.40, 'TINITO', '2025-10-18 00:13:39', 'paquete', 24, NULL, 0.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (102, 1, 'TRIDENT', NULL, NULL, 7.95, 0.65, 'TINITO', '2025-10-30 23:28:41', 'paquete', 18, NULL, 0.65, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (103, 1, 'MINTY', NULL, NULL, 4.45, 0.60, 'TINITO', '2025-10-30 23:31:44', 'paquete', 12, NULL, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (104, 1, 'CHICLE GUDS', NULL, NULL, 2.56, 0.30, 'TINITO', '2025-12-19 14:43:17', 'paquete', 18, NULL, 0.30, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (105, 1, 'NUCITA TUBO', NULL, NULL, 11.03, 1.30, 'TINITO', '2026-01-17 12:06:22', 'paquete', 12, NULL, 1.30, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (106, 1, 'DANDY', NULL, NULL, 4.58, 0.60, 'PACO LOS LLANOS', '2025-12-29 13:29:22', 'paquete', 16, NULL, 0.60, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (107, 1, 'OREO DE TUBO', NULL, NULL, 1.33, 1.73, 'TINITO', '2026-01-08 03:06:09', 'unidad', NULL, NULL, 1.73, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (108, 1, 'OREO 6S', NULL, NULL, 2.04, 2.55, 'TINITO', '2025-12-11 13:49:44', 'paquete', 6, 2.55, 0.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (110, 1, 'OREO FUDGE', NULL, '', 2.45, 3.00, 'TINITO', '2025-08-25 12:25:30', 'paquete', 6, 3.00, 0.65, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (111, 1, 'TAKYTA 150GR', NULL, NULL, 0.82, 1.00, 'TINITO', '2025-12-15 12:54:53', 'paquete', 8, 1.00, 0.15, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (112, 1, 'OREO DE CAJA', NULL, NULL, 4.38, 0.75, 'TINITO', '2025-12-15 11:37:14', 'paquete', 8, NULL, 0.75, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (113, 1, 'CHUPETA PIN PON', NULL, '', 0.00, 0.50, 'TINITO', '2025-12-18 14:41:36', 'unidad', NULL, NULL, 0.50, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (114, 1, 'POLVO EXPLOSIVO', NULL, '', 0.00, 0.30, 'TINITO', '2025-08-25 12:26:26', 'unidad', NULL, NULL, 0.30, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (115, 1, 'CHUPETA EXPLOSIVA', NULL, '', 0.00, 0.40, 'TINITO', '2025-08-25 12:26:41', 'unidad', NULL, NULL, 0.40, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (116, 1, 'CHICLE DE YOYO', NULL, NULL, 7.64, 0.50, 'TINITO', '2026-01-08 03:09:24', 'paquete', 24, NULL, 0.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (118, 1, 'PIRULIN', NULL, NULL, 9.45, 0.55, 'TINITO', '2025-10-18 00:19:17', 'paquete', 25, NULL, 0.55, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (119, 1, 'NUCITA', NULL, NULL, 5.16, 0.60, 'TINITO', '2026-01-17 12:06:21', 'paquete', 12, NULL, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (120, 1, 'BRINKY', NULL, NULL, 2.60, 0.50, 'CUEVITA', '2025-10-08 16:45:42', 'paquete', 10, NULL, 0.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (121, 1, 'PEPITAS', NULL, NULL, 5.90, 0.45, 'PACO LOS LLANOS', '2026-01-03 13:00:07', 'paquete', 18, NULL, 0.45, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (122, 1, 'PALITOS', NULL, NULL, 7.35, 0.55, 'PACO LOS LLANOS', '2026-01-03 13:00:02', 'paquete', 18, NULL, 0.55, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (123, 1, 'COLORETI', NULL, NULL, 4.50, 0.40, 'TINITO', '2025-10-18 00:07:52', 'paquete', 24, NULL, 0.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (124, 1, 'SPARKIES BUBBALOO', NULL, '', 0.00, 0.40, 'TINITO', '2025-08-25 12:29:38', 'unidad', NULL, NULL, 0.40, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (125, 1, 'EXTINTOR', NULL, '', 0.00, 0.95, 'TINITO', '2025-08-25 12:30:09', 'unidad', NULL, NULL, 0.95, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (126, 1, 'CHUPETA DE ANILLOS', NULL, '', 0.00, 0.55, 'TINITO', '2025-12-18 14:41:55', 'unidad', NULL, NULL, 0.55, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (127, 1, 'CRAYÓN CHICLE', NULL, '', 0.00, 0.25, 'TINITO', '2025-08-25 12:31:02', 'unidad', NULL, NULL, 0.25, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (128, 1, 'COLORES CHICLE', NULL, NULL, 0.00, 0.45, 'TINITO', '2025-10-19 15:40:44', 'unidad', NULL, NULL, 0.45, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (129, 1, 'CHUPETA DE MASCOTAS', NULL, '', 0.00, 1.30, 'TINITO', '2025-09-08 15:22:31', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (130, 1, 'SPINNER RING', NULL, '', 0.00, 1.30, 'TINITO', '2025-08-25 12:33:08', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (131, 1, 'JUGUETE DE POCETA', NULL, '', 0.00, 0.95, 'TINITO', '2025-08-25 12:33:20', 'unidad', NULL, NULL, 0.95, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (132, 1, 'COCOSETE', NULL, NULL, 20.64, 1.50, 'GADUCA', '2026-01-09 15:04:49', 'paquete', 18, NULL, 1.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (286, 1, 'CEPILLO DENTAL COLGATE', NULL, NULL, 1.11, 1.50, 'GADUCA', '2025-12-29 18:15:13', 'unidad', NULL, NULL, 1.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (134, 1, 'SAMBA', NULL, NULL, 20.73, 1.35, 'GADUCA', '2026-01-09 15:05:14', 'paquete', 20, NULL, 1.35, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (135, 1, 'SAMBA PEQUEÑA', NULL, '', 0.00, 0.65, 'GADUCA', '2025-08-25 12:34:45', 'unidad', NULL, NULL, 0.65, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (136, 1, 'FLIPS CAJA', NULL, NULL, 3.17, 4.12, 'COMARCA', '2026-01-19 12:42:09', 'unidad', NULL, NULL, 4.12, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (137, 1, 'CORN FLAKES DE CAJA', NULL, NULL, 2.56, 3.20, 'TINITO', '2026-01-07 00:59:13', 'unidad', NULL, NULL, 3.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (138, 1, 'CRONCH FLAKES BOLSA', NULL, NULL, 3.21, 4.01, 'COMARCA', '2026-01-10 13:46:53', 'unidad', NULL, NULL, 4.01, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (139, 1, 'FRUTY AROS', NULL, '', 0.00, 3.70, 'COMARCA', '2025-12-24 02:08:16', 'unidad', NULL, NULL, 3.70, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (140, 1, 'JUMBY RIKOS G', NULL, NULL, 14.00, 1.10, 'LEO', '2026-01-13 16:21:08', 'paquete', 18, NULL, 1.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (141, 1, 'CHISKESITO GRANDE', NULL, NULL, 1.38, 1.85, 'COMARCA', '2025-12-24 02:08:14', 'unidad', NULL, NULL, 1.85, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (142, 1, 'CHESITO G', NULL, NULL, 0.58, 0.80, 'COMARCA', '2025-12-18 01:39:49', 'unidad', NULL, NULL, 0.80, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (143, 1, 'DOBOM 400GR', NULL, NULL, 5.90, 7.38, 'LEO', '2026-01-12 23:21:39', 'unidad', NULL, NULL, 7.38, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (144, 1, 'DOBOM 200GRS', NULL, NULL, 3.00, 3.75, 'LEO', '2026-01-12 23:21:25', 'unidad', 12, NULL, 3.75, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (145, 1, 'DOBOM 125GRS', NULL, NULL, 2.00, 2.50, 'LEO', '2026-01-12 23:21:17', 'unidad', NULL, NULL, 2.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (146, 1, 'CAMPIÑA 200GR', NULL, NULL, 3.14, 3.77, 'TINITO', '2026-01-17 12:03:10', 'unidad', NULL, NULL, 3.77, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (147, 1, 'CAMPIÑA 125GRS', NULL, NULL, 2.02, 2.42, 'TINITO', '2026-01-17 12:03:04', 'unidad', NULL, NULL, 2.42, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (148, 1, 'LECHE UPACA', NULL, NULL, 1.69, 2.20, 'COMARCA', '2025-12-27 14:50:03', 'unidad', NULL, NULL, 2.20, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (149, 1, 'LECHE INDOSA 200GR', NULL, NULL, 1.10, 1.43, 'TINITO', '2026-01-17 12:05:33', 'unidad', NULL, NULL, 1.43, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (150, 1, 'AVENA 200GR PANTERA', NULL, NULL, 0.83, 1.25, 'COMARCA', '2026-01-19 12:38:55', 'unidad', NULL, NULL, 1.25, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (151, 1, 'COMPOTA GRANDE', NULL, NULL, 1.10, 1.43, 'COMARCA', '2026-01-07 01:14:36', 'unidad', NULL, NULL, 1.43, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (152, 1, 'COMPOTA PEQUEÑA', NULL, NULL, 0.79, 1.10, 'COMARCA', '2026-01-07 01:15:08', 'unidad', NULL, NULL, 1.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (337, 1, 'ELITE CHOC. TUBO 100GR', NULL, NULL, 0.95, 1.23, 'TINITO', '2026-01-08 13:45:11', 'unidad', NULL, NULL, 1.23, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (154, 1, 'MAIZINA 90GR', NULL, NULL, 0.82, 1.07, 'COMARCA', '2026-01-19 12:58:51', 'unidad', NULL, NULL, 1.07, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (155, 1, 'MAIZINA 120GR', NULL, NULL, 1.00, 1.30, 'COMARCA', '2026-01-19 12:59:09', 'unidad', NULL, NULL, 1.30, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (156, 1, 'SOPA MAGGY', NULL, NULL, 20.50, 2.22, 'GADUCA', '2026-01-09 15:01:34', 'paquete', 12, NULL, 2.22, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (158, 1, 'LECHE CONDENSADA', NULL, NULL, 2.96, 3.55, 'GADUCA', '2025-10-13 15:19:25', 'unidad', NULL, NULL, 3.55, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (159, 1, 'BOKA', NULL, NULL, 4.00, 0.60, 'LEO', '2026-01-15 20:45:27', 'paquete', 10, NULL, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (160, 1, 'PEGA LOKA', NULL, NULL, 14.40, 0.70, 'LEO', '2025-08-25 14:33:25', 'paquete', 42, NULL, 0.70, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (161, 1, 'BOMBILLO LED 10W', NULL, NULL, 1.05, 1.31, 'LA 14', '2026-01-06 20:09:51', 'unidad', NULL, NULL, 1.31, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (164, 1, 'CARAOTA PANTERA', NULL, NULL, 1.71, 2.20, 'COMARCA', '2026-01-10 13:47:19', 'unidad', NULL, NULL, 2.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (165, 1, 'CARAOTAS DON JUAN', NULL, '', 0.00, 1.00, '', '2025-08-25 15:06:29', 'unidad', NULL, NULL, 1.00, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (166, 1, 'CARAOTA BLANCA PANTERA', NULL, NULL, 2.02, 2.63, 'COMARCA', '2025-11-09 16:37:38', 'unidad', NULL, NULL, 2.63, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (167, 1, 'FRIJOL PANTERA', NULL, NULL, 0.00, 1.50, 'COMARCA', '2026-01-06 14:05:34', 'unidad', NULL, NULL, 1.50, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (168, 1, 'ARVEJAS PANTERA', '', NULL, 1.60, 2.00, 'COMARCA', '2026-01-26 02:52:04', 'unidad', 1, 0.00, 2.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (169, 1, 'MAÍZ DE COTUFAS', NULL, NULL, 1.34, 1.65, 'COMARCA', '2026-01-17 12:05:41', 'unidad', NULL, NULL, 1.65, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (170, 1, 'CAFÉ AMANECER 200GR', NULL, NULL, 14.45, 3.01, 'ITC AMANECER', '2026-01-17 12:02:51', 'paquete', 6, NULL, 3.01, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (171, 1, 'CAFÉ FLOR ARAUCA', NULL, NULL, 2.85, 3.71, 'COMARCA', '2026-01-19 12:39:56', 'unidad', NULL, NULL, 3.71, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (172, 1, 'CAFÉ ARAUCA 200GRS', NULL, NULL, 2.60, 3.30, 'COMARCA', '2026-01-20 20:26:57', 'unidad', NULL, NULL, 3.30, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (173, 1, 'CAFÉ ARAUCA 100GR', NULL, NULL, 1.43, 1.75, 'COMARCA', '2026-01-20 20:26:37', 'unidad', NULL, NULL, 1.75, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (174, 1, 'CAFÉ ARAUCA 50GRS', NULL, NULL, 0.64, 0.90, 'COMARCA', '2025-12-22 12:58:37', 'unidad', NULL, NULL, 0.90, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (260, 1, 'SALSA DOÑA TITA PEQ', NULL, NULL, 25.53, 1.40, 'GADUCA', '2025-11-21 22:39:36', 'paquete', 24, NULL, 1.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (176, 1, 'YOKOIMA 100GR', NULL, NULL, 13.50, 1.69, 'LEO', '2026-01-13 16:28:33', 'paquete', 10, NULL, 1.69, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (177, 1, 'FAVORITO 100GRS', NULL, NULL, 0.00, 1.50, 'ITC AMANECER', '2025-12-20 01:05:56', 'unidad', NULL, NULL, 1.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (178, 1, 'FAVORITO 50GRS', NULL, NULL, 11.18, 0.73, 'ITC AMANECER', '2025-12-20 01:05:31', 'paquete', 20, NULL, 0.73, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (179, 1, 'SALSA PAMPERO GR', NULL, NULL, 0.00, 2.10, 'POLAR', '2025-09-06 20:46:42', 'unidad', NULL, NULL, 2.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (180, 1, 'SALSA PAMPERO PEQ', NULL, NULL, 0.00, 1.45, 'POLAR', '2025-09-06 20:46:50', 'unidad', NULL, NULL, 1.45, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (181, 1, 'SALSA TIQUIRE GR', NULL, NULL, 0.00, 2.10, 'COMARCA', '2025-09-06 20:46:57', 'unidad', NULL, NULL, 2.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (182, 1, 'SALSA TIQUIRE PEQ', NULL, NULL, 0.00, 1.45, 'COMARCA', '2025-09-06 20:47:03', 'unidad', NULL, NULL, 1.45, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (183, 1, 'SALSA DOÑA TITA GR', NULL, NULL, 41.10, 2.14, 'GADUCA', '2026-01-20 20:03:21', 'paquete', 24, NULL, 2.14, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (184, 1, 'MAYONESA MAVESA PEQUEÑA', NULL, NULL, 49.00, 2.55, 'POLAR', '2026-01-13 16:31:05', 'paquete', 24, NULL, 2.55, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (185, 1, 'MAYONESA KRAFF 175GR', NULL, NULL, 2.30, 2.76, 'TINITO', '2026-01-08 03:03:47', 'unidad', NULL, NULL, 2.76, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (187, 1, 'DIABLITOS 115GR', NULL, NULL, 2.71, 3.25, 'TINITO', '2026-01-08 02:59:40', 'unidad', NULL, NULL, 3.25, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (188, 1, 'DIABLITOS 54GR', NULL, NULL, 1.58, 1.98, 'TINITO', '2025-11-27 13:35:28', 'unidad', NULL, NULL, 1.98, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (189, 1, 'ATÚN AZUL SDLA', NULL, NULL, 2.98, 3.87, 'TINITO', '2025-11-27 13:37:02', 'unidad', NULL, NULL, 3.87, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (190, 1, 'ATUN ROJO SDLA', NULL, NULL, 3.45, 4.14, 'TINITO', '2025-10-13 13:40:25', 'unidad', NULL, NULL, 4.14, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (191, 1, 'SARDINA', '7595122001927', NULL, 17.50, 1.00, 'LEO', '2026-01-19 20:47:48', 'paquete', 24, NULL, 1.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (192, 1, 'VINAGRE DE MANZANA', NULL, '', 0.00, 1.60, 'COMARCA', '2025-08-25 15:51:41', 'unidad', NULL, NULL, 1.60, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (193, 1, 'VINAGRE DOÑA TITA', NULL, NULL, 1.00, 1.55, 'GADUCA', '2026-01-09 15:06:37', 'unidad', NULL, NULL, 1.55, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (194, 1, 'VINAGRE TIQUIRE', NULL, NULL, 1.07, 1.40, 'COMARCA', '2026-01-20 20:27:35', 'unidad', NULL, NULL, 1.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (195, 1, 'ACEITE IDEAL 900ML', NULL, NULL, 39.30, 4.17, 'LEO', '2026-01-18 23:45:39', 'paquete', 12, NULL, 4.17, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (196, 1, 'ACEITE PAMPA 1/2LT', NULL, NULL, 29.00, 3.20, 'LEO', '2026-01-13 16:23:12', 'paquete', 12, NULL, 3.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (198, 1, 'PASTA LARGA HORIZONTE', NULL, NULL, 25.70, 2.78, 'LEO', '2026-01-13 16:26:57', 'paquete', 12, NULL, 2.78, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (199, 1, 'PASTA HORIZONTE CORTA', NULL, NULL, 29.10, 3.15, 'LEO', '2026-01-13 16:26:44', 'paquete', 12, NULL, 3.15, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (200, 1, 'HARINA DE TRIGO', NULL, NULL, 11.60, 1.52, 'LEO', '2026-01-17 12:05:00', 'paquete', 10, NULL, 1.52, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (201, 1, 'AZÚCAR', '7597304223943', NULL, 30.00, 2.00, 'COMARCA', '2026-01-17 12:54:25', 'paquete', 20, NULL, 2.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (202, 1, 'SAL', NULL, NULL, 8.50, 0.60, 'CUEVITA', '2026-01-13 19:07:23', 'paquete', 25, NULL, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (203, 1, 'DELINE DE 250GRS', NULL, '', 0.00, 1.50, 'LEO', '2025-08-25 16:06:22', 'unidad', NULL, NULL, 1.50, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (204, 1, 'NELLY DE 250GRS', NULL, NULL, 28.08, 1.60, 'POLAR', '2026-01-17 12:06:12', 'paquete', 24, NULL, 1.60, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (205, 1, 'NELLY DE 500GRS', NULL, NULL, 0.00, 2.70, 'POLAR', '2026-01-17 12:06:13', 'unidad', NULL, NULL, 2.70, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (206, 1, 'MAVESA DE 250GRS', NULL, NULL, 34.50, 1.87, 'POLAR', '2026-01-13 16:30:30', 'paquete', 24, NULL, 1.87, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (207, 1, 'MAVESA DE 500GRS', NULL, NULL, 24.00, 2.60, 'POLAR', '2026-01-13 16:33:24', 'paquete', 12, NULL, 2.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (208, 1, 'HUEVOS', NULL, NULL, 6.70, 8.00, 'CUEVITA', '2025-12-10 22:49:36', 'paquete', 30, 8.00, 0.30, 'USD', 4.10, 0, 0.00);
+INSERT INTO `productos` VALUES (209, 1, 'MASA PASTELITO ROMY', NULL, NULL, 1.80, 2.20, 'RAUL', '2026-01-18 23:45:09', 'unidad', NULL, NULL, 2.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (210, 1, 'NUTRIBELLA', NULL, NULL, 7.80, 0.85, 'LEO', '2026-01-17 12:06:23', 'paquete', 12, NULL, 0.85, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (211, 1, 'DESODORANTE CLINICAL', NULL, NULL, 9.00, 0.65, 'GADUCA', '2026-01-09 15:09:13', 'paquete', 20, NULL, 0.65, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (212, 1, 'DESODORANTE', NULL, NULL, 7.70, 0.58, 'LEO', '2026-01-09 15:09:30', 'paquete', 18, NULL, 0.58, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (213, 1, 'SHAMPOO H&S', NULL, NULL, 0.00, 0.60, 'LEO', '2025-11-15 12:48:21', 'unidad', NULL, NULL, 0.60, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (214, 1, 'BOLSAS NEGRAS', NULL, NULL, 8.50, 0.55, 'CUEVITA', '2026-01-17 12:52:37', 'paquete', 25, NULL, 0.55, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (215, 1, 'AXION EN CREMA', NULL, NULL, 2.11, 2.74, 'GADUCA', '2026-01-20 20:04:03', 'unidad', NULL, NULL, 2.74, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (346, 1, 'MARSHMALLOWS NAVIDEÑO', NULL, NULL, 0.95, 1.20, 'TINITO', '2026-01-08 03:02:45', 'unidad', NULL, NULL, 1.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (349, 1, 'CUBITOS MAGGIE', NULL, NULL, 50.00, 0.35, 'GADUCA', '2026-01-09 15:01:12', 'paquete', 250, NULL, 0.35, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (217, 1, 'COLGATE TOTAL', NULL, NULL, 2.10, 2.63, 'GADUCA', '2025-09-23 11:59:29', 'unidad', NULL, NULL, 2.63, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (218, 1, 'COLGATE PLAX', NULL, NULL, 3.25, 4.23, 'GADUCA', '2025-11-21 22:33:51', 'unidad', NULL, NULL, 4.23, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (219, 1, 'COLGATE TRIPLE ACCIÓN 60ML', NULL, NULL, 1.73, 2.16, 'GADUCA', '2026-01-09 15:07:15', 'unidad', NULL, NULL, 2.16, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (220, 1, 'COLGATE TRADICIONAL 90ML', NULL, NULL, 1.50, 1.88, 'GADUCA', '2026-01-09 15:07:48', 'unidad', 12, NULL, 1.88, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (221, 1, 'COLGATE NIÑOS', NULL, NULL, 1.60, 2.00, 'GADUCA', '2026-01-09 15:08:08', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (322, 1, 'MARIA SELECTA', NULL, NULL, 1.43, 1.86, 'TINITO', '2025-12-15 12:57:21', 'paquete', 9, 1.86, 0.25, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (223, 1, 'TOALLAS AZULES', NULL, NULL, 40.30, 1.70, 'LEO', '2025-12-26 13:11:21', 'paquete', 30, NULL, 1.70, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (224, 1, 'TOALLAS MORADAS', NULL, NULL, 29.30, 1.40, 'CUEVITA', '2025-12-24 19:03:58', 'paquete', 30, NULL, 1.40, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (225, 1, 'JABÓN ESPECIAL', NULL, NULL, 40.00, 1.20, 'RAMON', '2025-11-17 23:18:18', 'paquete', 50, NULL, 1.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (226, 1, 'JABÓN POPULAR', NULL, NULL, 57.90, 1.30, 'LEO', '2026-01-18 23:46:23', 'paquete', 72, NULL, 1.30, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (227, 1, 'JABÓN LAS LLAVES', NULL, '', 0.00, 1.30, 'POLAR', '2026-01-18 23:46:54', 'unidad', NULL, NULL, 1.30, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (228, 1, 'JABÓN DE AVENA', NULL, '', 0.00, 0.60, 'TINITO', '2025-12-15 12:53:20', 'unidad', NULL, NULL, 0.60, 'USD', NULL, 1, 0.00);
+INSERT INTO `productos` VALUES (229, 1, 'JABÓN HUGME', NULL, NULL, 0.00, 0.65, 'LEO', '2025-11-28 11:28:25', 'unidad', NULL, NULL, 0.65, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (231, 1, 'JABÓN LAK', NULL, NULL, 4.10, 1.50, 'LEO', '2026-01-17 12:53:25', 'paquete', 4, NULL, 1.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (232, 1, 'GELATINA CABELLO PEQ', NULL, NULL, 43.90, 2.40, 'LEO', '2025-10-26 14:21:27', 'paquete', 24, NULL, 2.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (233, 1, 'ACE ALIVE 1KG', '', NULL, 39.00, 4.23, 'CUEVITA', '2026-01-26 17:57:09', 'unidad', 12, 0.00, 4.23, 'USD', 0.00, 1, -1.00);
+INSERT INTO `productos` VALUES (234, 1, 'ACE ALIVE 500GRS', NULL, NULL, 39.00, 2.15, 'CUEVITA', '2026-01-26 02:31:12', 'unidad', NULL, NULL, NULL, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (235, 1, 'ACE OSO BLANCO 400GRS', NULL, NULL, 28.00, 1.82, 'CUEVITA', '2026-01-13 16:24:35', 'paquete', 20, NULL, 1.82, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (236, 1, 'SUAVITEL', NULL, NULL, 7.90, 0.86, 'LEO', '2026-01-17 12:07:37', 'paquete', 12, NULL, 0.86, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (237, 1, 'CLORO LOFO 1LT', NULL, NULL, 12.00, 1.30, 'LEO', '2025-11-17 23:16:42', 'paquete', 12, NULL, 1.30, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (238, 1, 'AFEITADORA', NULL, NULL, 6.40, 0.75, 'LEO', '2025-11-30 14:20:34', 'paquete', 12, NULL, 0.75, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (239, 1, 'HOJILLAS', NULL, NULL, 7.20, 1.00, 'LEO', '2025-11-02 21:48:13', 'paquete', 12, NULL, 1.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (240, 1, 'LECHE 1LT LOS ANDES', NULL, '', 0.00, 2.15, 'LOS ANDES', '2025-08-26 12:26:31', 'unidad', NULL, NULL, 2.15, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (285, 1, 'APUREÑITO', NULL, NULL, 5.90, 0.75, 'CUEVITA', '2026-01-15 20:44:07', 'paquete', 12, NULL, 0.75, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (242, 1, 'YESQUERO', NULL, '', 0.00, 0.40, 'CUEVITA', '2025-12-20 01:04:59', 'unidad', NULL, NULL, 0.40, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (243, 1, 'TRIDENT INDIVIDUAL', NULL, NULL, 5.68, 0.15, '', '2025-10-18 00:14:18', 'paquete', 60, NULL, 0.15, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (245, 1, 'ATUN RICA DELI', NULL, NULL, 2.45, 2.94, 'TINITO', '2025-10-13 15:30:33', 'unidad', NULL, NULL, 2.94, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (246, 1, 'SALSA PASTA UW 190GR', NULL, NULL, 1.17, 1.50, 'TINITO', '2025-12-26 13:05:50', 'unidad', NULL, NULL, 1.50, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (247, 1, 'SORBETICO PEQ', NULL, '', 1.07, 1.35, 'TINITO', '2025-08-28 15:38:52', 'paquete', 4, 1.35, 0.40, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (248, 1, 'SORBETICO WAFER', NULL, NULL, 1.17, 1.52, 'TINITO', '2026-01-08 03:06:49', 'unidad', NULL, NULL, 1.52, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (249, 1, 'TANG', NULL, '', 6.45, 0.60, 'TINITO', '2025-08-28 15:44:00', 'paquete', 15, NULL, 0.60, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (250, 1, 'CHICLE FREEGELLS', NULL, NULL, 3.58, 0.40, 'TINITO', '2025-09-24 21:05:33', 'paquete', 15, NULL, 0.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (251, 1, 'CHICLE TATTOO', NULL, NULL, 2.87, 0.07, 'TINITO', '2025-12-15 12:52:39', 'paquete', 90, NULL, 0.07, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (254, 1, 'GALLETA MARIA MINI', NULL, '', 0.50, 0.70, 'TINITO', '2025-08-28 16:06:09', 'unidad', NULL, NULL, 0.70, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (256, 1, 'COCO CRUCH', NULL, '', 0.00, 1.20, 'CUEVITA', '2025-09-18 14:52:27', 'unidad', NULL, NULL, 1.20, 'USD', NULL, 0, 0.00);
+INSERT INTO `productos` VALUES (257, 1, 'CHEESE TRIS G', NULL, NULL, 1.66, 2.16, 'PACO LOS LLANOS', '2025-12-24 02:08:53', 'unidad', NULL, NULL, 2.16, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (258, 1, 'BOLI KRUNCH G', NULL, NULL, 0.85, 1.25, 'COMARCA', '2025-12-24 02:08:10', 'unidad', NULL, NULL, 1.25, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (259, 1, 'KESITOS G', NULL, NULL, 0.89, 1.25, 'COMARCA', '2025-12-08 11:56:00', 'unidad', NULL, NULL, 1.25, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (262, 1, 'CHAKARO GDE', NULL, NULL, 8.00, 0.90, 'CHAKARO', '2025-09-11 19:44:57', 'paquete', 12, NULL, 0.90, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (261, 1, 'DESINFECTANTE', NULL, NULL, 0.78, 1.20, 'LIMPIEZA', '2026-01-06 20:08:26', 'unidad', NULL, NULL, 1.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (263, 1, 'MANDADOR', NULL, NULL, 9.00, 1.00, 'CHAKARO', '2026-01-17 12:05:49', 'paquete', 12, NULL, 1.00, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (264, 1, 'CHUPETA', NULL, NULL, 6.19, 0.20, 'LEO', '2026-01-17 12:03:34', 'paquete', 46, NULL, 0.20, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (265, 1, 'SALCHICHAS', NULL, NULL, 4.05, 5.30, 'RAUL', '2025-12-06 09:11:59', 'kg', NULL, NULL, 5.30, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (266, 1, 'CLORO AAA', NULL, NULL, 0.53, 1.00, 'LIMPIEZA', '2025-11-01 16:09:27', 'unidad', NULL, NULL, 1.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (267, 1, 'LAVAPLATOS AAA', NULL, NULL, 1.81, 2.35, 'LIMPIEZA', '2026-01-03 15:34:30', 'unidad', NULL, NULL, 2.35, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (268, 1, 'LAVAPLATOS AA', NULL, NULL, 1.38, 1.80, 'LIMPIEZA', '2025-09-22 20:13:37', 'unidad', NULL, NULL, 1.80, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (269, 1, 'CLORO AA', NULL, NULL, 0.48, 0.80, 'LIMPIEZA', '2025-09-22 20:24:23', 'unidad', NULL, NULL, 0.80, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (270, 1, 'CERA BLANCA', NULL, NULL, 0.87, 1.13, 'LIMPIEZA', '2026-01-03 15:34:47', 'unidad', NULL, NULL, 1.13, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (271, 1, 'SUAVIZANTE', NULL, NULL, 1.12, 1.65, 'LIMPIEZA', '2025-11-01 16:09:13', 'unidad', NULL, NULL, 1.65, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (272, 1, 'DESENGRASANTE AAA', NULL, NULL, 1.51, 2.00, 'LIMPIEZA', '2025-09-22 20:16:43', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (329, 1, 'BOMBILLO LED 20W', NULL, NULL, 1.86, 2.33, 'LA 14', '2026-01-06 20:09:40', 'unidad', NULL, NULL, 2.33, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (273, 1, 'MARSHMALLOWS 100GR', NULL, NULL, 1.02, 1.30, 'TINITO', '2026-01-08 03:02:55', 'unidad', NULL, NULL, 1.30, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (274, 1, 'HUEVITO SORPRESA', NULL, NULL, 5.83, 0.70, 'TINITO', '2025-10-28 20:14:20', 'paquete', 12, NULL, 0.70, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (276, 1, 'GALLETA SODA EL SOL', NULL, NULL, 1.55, 2.00, 'LEO', '2026-01-07 01:07:57', 'paquete', 10, 2.00, 0.25, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (277, 1, 'YOKOIMA 50GR', NULL, NULL, 12.50, 0.81, 'LEO', '2025-09-25 22:20:24', 'paquete', 20, NULL, 0.81, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (279, 1, 'TIGRITO', NULL, NULL, 5.90, 0.75, 'CUEVITA', '2026-01-15 20:44:35', 'paquete', 12, NULL, 0.75, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (280, 1, 'PLAQUITAS', NULL, NULL, 1.80, 0.17, 'CATALINERO', '2026-01-17 12:06:52', 'paquete', 15, NULL, 0.17, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (282, 1, 'KETCHUP CAPRI 198GR', NULL, NULL, 1.13, 1.41, 'COMARCA', '2025-10-04 22:53:37', 'unidad', NULL, NULL, 1.41, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (284, 1, 'ATUN MARGARITA', NULL, NULL, 66.58, 2.38, 'POLAR', '2026-01-17 12:02:21', 'paquete', 35, NULL, 2.38, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (287, 1, 'HOJA EXAMEN', NULL, NULL, 2.40, 0.10, 'CUEVITA', '2026-01-17 12:05:06', 'paquete', 50, NULL, 0.10, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (288, 1, 'BOMBONES CORAZON', NULL, NULL, 1.32, 1.75, 'TINITO', '2025-10-18 00:30:58', 'unidad', NULL, NULL, 1.75, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (289, 1, 'BOMBONES ROSA', NULL, NULL, 2.23, 2.70, 'TINITO', '2026-01-04 23:43:51', 'unidad', NULL, NULL, 2.70, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (290, 1, 'NUCITA CRUNCH JR', NULL, NULL, 2.39, 0.60, 'TINITO', '2026-01-04 23:46:01', 'paquete', 6, NULL, 0.60, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (291, 1, 'YOYO NEON', NULL, NULL, 0.86, 1.15, 'TINITO', '2025-10-18 00:11:25', 'unidad', NULL, NULL, 1.15, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (292, 1, 'GUSANITO LOCO', NULL, NULL, 0.66, 0.86, 'TINITO', '2025-10-18 00:12:56', 'unidad', 30, NULL, 0.86, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (293, 1, 'ACONDICIONADOR SEDAL', NULL, NULL, 4.07, 0.50, 'TINITO', '2025-12-26 13:10:38', 'paquete', 12, NULL, 0.50, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (294, 1, 'JAMÓN', NULL, NULL, 1.60, 2.00, 'RAUL', '2025-11-09 15:39:42', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (295, 1, 'QUESO AMARILLO', NULL, NULL, 1.60, 2.00, 'RAUL', '2025-11-09 15:39:47', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (296, 1, 'RAQUETY G', NULL, NULL, 0.83, 1.10, 'PACO LOS LLANOS', '2025-10-19 18:38:49', 'unidad', NULL, NULL, 1.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (297, 1, 'PAPEL AMARILLO 600', NULL, NULL, 4.00, 5.00, 'COMARCA', '2026-01-19 12:22:39', 'paquete', 4, 5.00, 1.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (298, 1, 'COLORETI MINI', NULL, NULL, 4.09, 0.20, 'TINITO', '2025-10-30 23:33:35', 'paquete', 36, NULL, 0.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (299, 1, 'MENTITAS AMBROSOLI', NULL, NULL, 11.54, 0.70, 'TINITO', '2025-10-30 23:35:43', 'paquete', 24, NULL, 0.70, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (310, 1, 'CARAMELOS', NULL, NULL, 2.70, 0.05, 'LEO', '2025-11-02 21:50:21', 'paquete', 100, NULL, 0.05, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (301, 1, 'BARQUILLON', NULL, NULL, 1.00, 1.40, '4X4', '2025-11-01 18:27:36', 'unidad', NULL, NULL, 1.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (302, 1, 'PALETA FRESH LIMON', NULL, NULL, 0.28, 0.40, 'CALI', '2025-11-01 19:14:12', 'unidad', NULL, NULL, 0.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (303, 1, 'PALETA PASION YOGURT', NULL, NULL, 0.35, 0.50, 'CALI', '2025-11-01 19:14:13', 'unidad', 9, NULL, 0.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (304, 1, 'PALETA EXOTICO', NULL, NULL, 0.35, 0.50, 'CALI', '2025-11-01 19:14:13', 'unidad', NULL, NULL, 0.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (305, 1, 'BARQUILLA SUPER CONO', NULL, NULL, 0.82, 1.10, 'CALI', '2025-11-01 19:43:19', 'unidad', NULL, NULL, 1.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (306, 1, 'POLET FERRERO ROCHER', NULL, NULL, 1.36, 2.00, 'CALI', '2025-11-01 19:40:24', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (307, 1, 'POLET TRIPLE CAPITA', NULL, NULL, 1.36, 2.00, 'CALI', '2025-11-01 19:40:51', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (308, 1, 'POLET TRIPLE CAPITA COCO', NULL, NULL, 1.36, 2.00, 'CALI', '2025-11-01 19:41:49', 'unidad', NULL, NULL, 2.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (309, 1, 'MAXI SANDWICH', NULL, NULL, 0.82, 1.10, 'CALI', '2025-11-01 19:43:07', 'unidad', NULL, NULL, 1.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (311, 1, 'RIKESA 200GR', NULL, NULL, 3.02, 3.77, 'POLAR', '2025-11-04 23:18:55', 'unidad', NULL, NULL, 3.77, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (312, 1, 'PAPEL ROJO 180', NULL, NULL, 1.14, 1.48, 'COMARCA', '2026-01-19 12:25:48', 'paquete', 4, 1.48, 0.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (313, 1, 'PAPEL VERDE 215', NULL, NULL, 1.23, 1.85, 'COMARCA', '2026-01-19 12:25:08', 'paquete', 4, 1.85, 0.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (314, 1, 'PAPEL MARRÓN 300', NULL, NULL, 2.40, 3.10, 'COMARCA', '2026-01-19 12:24:14', 'paquete', 4, 3.10, 0.90, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (315, 1, 'CAFÉ NONNA 100GR', NULL, NULL, 13.00, 1.63, 'ITC AMANECER', '2026-01-13 16:28:14', 'paquete', 10, NULL, 1.63, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (316, 1, 'LENTEJA PANTERA', NULL, NULL, 1.72, 2.10, 'COMARCA', '2025-11-09 16:35:48', 'unidad', NULL, NULL, 2.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (336, 1, 'MINI MARILU TUBO 100GR', NULL, NULL, 1.07, 1.39, 'TINITO', '2026-01-07 01:10:10', 'unidad', NULL, NULL, 1.39, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (318, 1, 'MAYONESA TITA', NULL, NULL, 1.62, 1.94, 'GADUCA', '2026-01-09 15:05:40', 'unidad', NULL, NULL, 1.94, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (319, 1, 'BOMBONES BEL', NULL, NULL, 3.82, 0.10, 'TINITO', '2025-12-15 14:01:40', 'paquete', 50, NULL, 0.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (338, 1, 'ELITE VAINI TUBO 100GR', NULL, NULL, 0.82, 1.07, 'TINITO', '2026-01-08 13:45:11', 'unidad', NULL, NULL, 1.07, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (323, 1, 'MARILU TUBO 240GR', NULL, NULL, 1.94, 2.40, 'TINITO', '2026-01-07 01:10:26', 'paquete', 6, 2.40, 0.50, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (324, 1, 'CARAMELO MIEL', NULL, NULL, 1.60, 0.05, 'TINITO', '2026-01-04 23:44:49', 'paquete', 100, NULL, 0.05, 'USD', 0.00, 1, 0.00);
+INSERT INTO `productos` VALUES (325, 1, 'NUTTELINI', NULL, NULL, 3.50, 0.45, 'TINITO', '2025-11-30 00:42:15', 'paquete', 12, NULL, 0.45, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (330, 1, 'CEPILLO DENTAL COLGATE NIÑO', NULL, NULL, 1.23, 1.60, 'GADUCA', '2025-12-29 18:15:52', 'unidad', NULL, NULL, 1.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (327, 1, 'BARRILETE', NULL, NULL, 2.75, 0.80, 'COMARCA', '2025-12-15 14:05:50', 'paquete', 50, NULL, 0.80, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (328, 1, 'FRUTYS', NULL, NULL, 12.50, 1.40, 'CUEVITA', '2026-01-10 14:30:23', 'paquete', 12, NULL, 1.40, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (341, 1, 'GALLE MARILU CAJA', NULL, NULL, 4.62, 0.30, 'TINITO', '2026-01-07 01:18:31', 'paquete', 24, NULL, 0.30, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (332, 1, 'ACEITE COPOSA 850ML', NULL, NULL, 3.92, 4.90, 'COMARCA', '2026-01-20 16:22:37', 'unidad', NULL, NULL, 4.90, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (331, 1, 'JABÓN PROTEX 75GR', NULL, NULL, 1.28, 1.66, 'GADUCA', '2026-01-23 13:07:18', 'unidad', NULL, NULL, 1.66, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (333, 1, 'RECARGA MOVISTAR', NULL, NULL, 150.00, 190.00, 'EMILIO', '2026-01-19 12:16:40', 'unidad', NULL, NULL, 190.00, 'BS', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (334, 1, 'RECARGA DIGITEL', NULL, NULL, 160.00, 200.00, 'EMILIO', '2026-01-04 13:03:32', 'unidad', NULL, NULL, 200.00, 'BS', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (335, 1, 'RECARGA MOVILNET', NULL, NULL, 150.00, 185.00, 'EMILIO', '2026-01-04 13:04:16', 'unidad', NULL, NULL, 185.00, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (340, 1, 'GALLETA BROWNIE 175GR', NULL, NULL, 1.55, 2.02, 'TINITO', '2026-01-07 01:13:20', 'unidad', NULL, NULL, 2.02, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (342, 1, 'GALLE Q-KISS 200GR', NULL, NULL, 2.63, 3.16, 'TINITO', '2026-01-07 01:22:53', 'unidad', NULL, NULL, 3.16, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (343, 1, 'GALLETA REX 200GR', NULL, NULL, 1.26, 1.60, 'TINITO', '2026-01-07 01:23:53', 'unidad', NULL, NULL, 1.60, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (344, 1, 'GALLETA LIMON 77GR', NULL, NULL, 0.64, 0.83, 'TINITO', '2026-01-07 01:30:20', 'unidad', NULL, NULL, 0.83, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (345, 1, 'GALLETA LIMON 90GR', NULL, NULL, 0.88, 1.14, 'TINITO', '2026-01-07 01:31:49', 'unidad', NULL, NULL, 1.14, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (347, 1, 'CHUPA POP SURTIDO', NULL, NULL, 3.06, 0.20, 'TINITO', '2026-01-08 03:08:28', 'paquete', 24, NULL, 0.20, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (348, 1, 'TATTOO CHUPETA', NULL, NULL, 3.18, 0.10, 'TINITO', '2026-01-08 03:10:12', 'paquete', 50, NULL, 0.10, 'USD', 0.00, 0, 0.00);
+INSERT INTO `productos` VALUES (350, 1, 'CREMA ALIDENT', NULL, NULL, 18.00, 1.95, 'CUEVITA', '2026-01-13 16:24:07', 'paquete', 12, NULL, 1.95, 'USD', 0.00, 0, 0.00);
 
 -- ----------------------------
 -- Table structure for tasas_cambio
@@ -414,7 +481,7 @@ CREATE TABLE `tasas_cambio`  (
   `created_at` timestamp NULL DEFAULT current_timestamp,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `fecha`(`fecha`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 88 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+) ENGINE = MyISAM AUTO_INCREMENT = 103 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
 
 -- ----------------------------
 -- Records of tasas_cambio
@@ -506,6 +573,21 @@ INSERT INTO `tasas_cambio` VALUES (84, '2025-12-22', 285.40240000, '2025-12-20 1
 INSERT INTO `tasas_cambio` VALUES (85, '2025-12-23', 288.44940000, '2025-12-23 10:40:32');
 INSERT INTO `tasas_cambio` VALUES (86, '2025-12-26', 291.35240000, '2025-12-24 13:28:29');
 INSERT INTO `tasas_cambio` VALUES (87, '2025-12-29', 294.96990000, '2025-12-27 14:50:58');
+INSERT INTO `tasas_cambio` VALUES (88, '2025-12-30', 298.14310000, '2025-12-30 11:55:40');
+INSERT INTO `tasas_cambio` VALUES (89, '2026-01-02', 301.37090000, '2025-12-31 12:50:56');
+INSERT INTO `tasas_cambio` VALUES (90, '2026-01-05', 304.67960000, '2026-01-03 12:49:32');
+INSERT INTO `tasas_cambio` VALUES (91, '2026-01-06', 308.15460000, '2026-01-06 12:17:38');
+INSERT INTO `tasas_cambio` VALUES (92, '2026-01-07', 311.88140000, '2026-01-07 05:22:41');
+INSERT INTO `tasas_cambio` VALUES (93, '2026-01-08', 321.03230000, '2026-01-08 11:24:26');
+INSERT INTO `tasas_cambio` VALUES (94, '2026-01-09', 325.38940000, '2026-01-09 13:49:17');
+INSERT INTO `tasas_cambio` VALUES (95, '2026-01-13', 330.37510000, '2026-01-10 13:45:01');
+INSERT INTO `tasas_cambio` VALUES (96, '2026-01-14', 336.45960000, '2026-01-14 15:24:22');
+INSERT INTO `tasas_cambio` VALUES (97, '2026-01-15', 339.14950000, '2026-01-15 13:23:53');
+INSERT INTO `tasas_cambio` VALUES (98, '2026-01-16', 341.74250000, '2026-01-16 14:01:41');
+INSERT INTO `tasas_cambio` VALUES (99, '2026-01-20', 344.50710000, '2026-01-17 12:00:52');
+INSERT INTO `tasas_cambio` VALUES (100, '2026-01-21', 347.26310000, '2026-01-21 20:02:03');
+INSERT INTO `tasas_cambio` VALUES (101, '2026-01-23', 352.70630000, '2026-01-23 00:35:53');
+INSERT INTO `tasas_cambio` VALUES (102, '2026-01-26', 355.55280000, '2026-01-25 12:00:52');
 
 -- ----------------------------
 -- Table structure for users
@@ -513,17 +595,25 @@ INSERT INTO `tasas_cambio` VALUES (87, '2025-12-29', 294.96990000, '2025-12-27 1
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users`  (
   `id` int NOT NULL AUTO_INCREMENT,
-  `username` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
+  `negocio_id` int NOT NULL,
+  `cedula` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `created_at` datetime NULL DEFAULT current_timestamp,
+  `nombre_completo` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'Usuario',
+  `rol` enum('superadmin','admin','vendedor') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT 'admin',
+  `activo` tinyint(1) NULL DEFAULT 1,
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `username`(`username`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+  UNIQUE INDEX `username`(`cedula`) USING BTREE,
+  UNIQUE INDEX `cedula`(`cedula`) USING BTREE,
+  INDEX `fk_user_negocio`(`negocio_id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` VALUES (1, 'JAVIER', '$2y$10$rr6PECvkq.xJxxJGoQxQB.bfcC2ouAST.H7T94GeCBOiwhqXLeeY6', '2025-08-16 15:12:45');
+INSERT INTO `users` VALUES (1, 0, 'JAVIER', '$2y$10$rr6PECvkq.xJxxJGoQxQB.bfcC2ouAST.H7T94GeCBOiwhqXLeeY6', '2025-08-16 15:12:45', 'Usuario', 'admin', 1);
+INSERT INTO `users` VALUES (2, 1, '16912337', '$2y$10$8Qe7Zp2X1.G3F/H0.Jk5.OeRjI.D1M3.C1/Z/Z/Z/Z/Z/Z/Z/Z/Z', '2026-01-26 17:43:06', 'Javier Ponciano', 'admin', 1);
+INSERT INTO `users` VALUES (3, 1, '0', '$2y$10$8Qe7Zp2X1.G3F/H0.Jk5.OeRjI.D1M3.C1/Z/Z/Z/Z/Z/Z/Z/Z/Z', '2026-01-26 17:43:06', 'Super Administrador', 'superadmin', 1);
 
 -- ----------------------------
 -- Table structure for usuarios
@@ -537,7 +627,7 @@ CREATE TABLE `usuarios`  (
   `foto` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `cedula`(`cedula`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 21 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 24 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of usuarios
@@ -557,5 +647,28 @@ INSERT INTO `usuarios` VALUES (17, '19760009', 'JACKLIN POLANCO', '00000000000',
 INSERT INTO `usuarios` VALUES (18, '24662785', 'RAFAEL POLANCO', '00000000000', 'uploads/24662785.jpeg');
 INSERT INTO `usuarios` VALUES (19, '15710575', 'DENNY VELIZ', '04243102770', 'uploads/15710575.jpeg');
 INSERT INTO `usuarios` VALUES (20, '18220800', 'SOL KARINA RUIZ DE MEDINA', '04127775892', 'uploads/18220800.jpeg');
+INSERT INTO `usuarios` VALUES (21, '28393556', 'PEDRO ALEJANDRO ROJAS GALINDO', '04129797432', 'uploads/28393556.jpeg');
+INSERT INTO `usuarios` VALUES (22, '18219662', 'GERFRANK JOSE GONZALEZ CORONIL', '04124968505', 'uploads/18219662.jpeg');
+INSERT INTO `usuarios` VALUES (23, '6625503', 'FIDEL RAúL MEDINA TOVAR', '04268444291', 'uploads/6625503.jpeg');
+
+-- ----------------------------
+-- Table structure for ventas
+-- ----------------------------
+DROP TABLE IF EXISTS `ventas`;
+CREATE TABLE `ventas`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `negocio_id` int NOT NULL DEFAULT 1,
+  `fecha` datetime NULL DEFAULT current_timestamp,
+  `total_bs` decimal(10, 2) NULL DEFAULT NULL,
+  `total_usd` decimal(10, 2) NULL DEFAULT NULL,
+  `tasa` decimal(10, 2) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `fk_venta_negocio`(`negocio_id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+
+-- ----------------------------
+-- Records of ventas
+-- ----------------------------
+INSERT INTO `ventas` VALUES (1, 1, '2026-01-26 17:57:09', 1503.99, 4.23, 355.55);
 
 SET FOREIGN_KEY_CHECKS = 1;
