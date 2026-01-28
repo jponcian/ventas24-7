@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'api_service.dart';
 import 'product_model.dart';
-import 'product_form_screen.dart'; // Reuse for editing if needed
+// Reuse for editing if needed
 
 class LowStockScreen extends StatefulWidget {
   const LowStockScreen({super.key});

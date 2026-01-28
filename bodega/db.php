@@ -110,8 +110,8 @@ function editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida,
         $pv_paquete = $precio_venta;
     }
 
-    $sql = "UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, costo_unitario = ?, precio_venta_unidad = ?, precio_venta_paquete = ?, proveedor_id = ?, moneda_base = ?, bajo_inventario = ?";
-    $params = [$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario];
+    $sql = "UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, costo_unitario = ?, precio_venta_unidad = ?, precio_venta_paquete = ?, proveedor_id = ?, moneda_base = ?, bajo_inventario = ?, vende_media = ?";
+    $params = [$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $vende_media];
 
     if ($stock !== null) {
         $sql .= ", stock = ?";

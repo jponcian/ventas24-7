@@ -118,8 +118,8 @@ class ApiService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data['ok'] == true) {
-          final List<dynamic> list = data['proveedores'];
-          return list.map((e) => e.toString()).toList();
+          final List<dynamic> list = data['proveedores'] ?? [];
+          return list.map((e) => e['nombre'].toString()).toList();
         }
       }
       return [];

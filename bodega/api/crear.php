@@ -14,6 +14,7 @@ if (!isset($body['negocio_id']) || !isset($body['nombre'])) {
 
 $negocio_id = intval($body['negocio_id']);
 $nombre = trim($body['nombre']);
+error_log("Crear producto: $nombre en negocio $negocio_id");
 $codigo_barras = $body['codigo_barras'] ?? null;
 $descripcion = $body['descripcion'] ?? null;
 $unidad_medida = $body['unidad_medida'] ?? 'unidad';

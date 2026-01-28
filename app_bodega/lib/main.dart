@@ -201,8 +201,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 .toList();
 
             if (selected.isEmpty) {
-              Future.microtask(() => Navigator.pop(context));
-              return const SizedBox();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              });
+              return const Center(child: Text('Carrito Vacío'));
             }
 
             double totalBs = 0;
@@ -280,21 +284,81 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
                             children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.blue[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  '${p.qty}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
+                              // Botones de cantidad
+                              Column(
+                                children: [
+                                  // Botón incrementar
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        p.qty++;
+                                      });
+                                      setModalState(() {});
+                                    },
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.green[300]!,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.add,
+                                        size: 18,
+                                        color: Colors.green[700],
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(height: 4),
+                                  // Cantidad
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue[50],
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      '${p.qty}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Botón decrementar
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        if (p.qty > 1) {
+                                          p.qty--;
+                                        }
+                                      });
+                                      setModalState(() {});
+                                    },
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.orange[300]!,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.remove,
+                                        size: 18,
+                                        color: Colors.orange[700],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -318,11 +382,55 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   ],
                                 ),
                               ),
-                              Text(
-                                '${subtotalBs.toStringAsFixed(2)} Bs',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    '${subtotalBs.toStringAsFixed(2)} Bs',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Botón eliminar
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        p.qty = 0;
+                                      });
+                                      setModalState(() {});
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red[50],
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.delete_outline,
+                                            size: 14,
+                                            color: Colors.red[700],
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Eliminar',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.red[700],
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),

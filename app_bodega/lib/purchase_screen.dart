@@ -326,7 +326,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                           children: [
                             Expanded(
                               child: DropdownButtonFormField<int>(
-                                value: _selectedProveedorId,
+                                initialValue: _selectedProveedorId,
                                 hint: const Text('Seleccionar Proveedor'),
                                 items: _proveedores
                                     .map(
