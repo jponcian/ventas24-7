@@ -71,6 +71,44 @@
         html {
             scroll-behavior: smooth;
         }
+
+        .footer-premium {
+            background: linear-gradient(180deg, #021523 0%, #010d16 100%);
+            border-top: 1px solid rgba(239, 87, 52, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer-premium::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--danger), transparent);
+            opacity: 0.5;
+        }
+
+        .footer-logo {
+            font-family: 'poppins', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .do-badge-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            border-radius: 12px;
+            display: inline-block;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .do-badge-container:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            border-color: rgba(239, 87, 52, 0.4);
+        }
     </style>
 </head>
 
@@ -332,21 +370,42 @@
     </div>
 
     <!-- Footer -->
-    <footer class="footer has-background-primary has-text-white pt-6 pb-6">
+    <footer class="footer footer-premium has-text-white pt-6 pb-6 mt-6">
         <div class="container">
             <div class="columns is-vcentered">
                 <div class="column is-6">
-                    <p class="title is-5 has-text-white mb-2">Portfolio Profesional</p>
-                    <p class="subtitle is-size-7 has-text-grey-light">
-                        Ingeniería en Informática &copy; 2025
+                    <div class="footer-logo mb-4">
+                        <span class="has-text-weight-bold is-size-4">
+                            <span class="has-text-danger">DEV</span>PROFILE
+                        </span>
+                    </div>
+                    <p class="subtitle is-size-6 has-text-grey-light mb-4">
+                        Soluciones tecnológicas a medida para la gestión empresarial.
+                    </p>
+                    <p class="is-size-7 has-text-grey">
+                        Ingeniería en Informática &copy; 2026 | Javier Ponciano
                     </p>
                 </div>
                 <div class="column is-6 has-text-right-tablet">
-                    <div class="buttons is-right">
-                        <a href="#" class="button is-small is-white is-outlined is-rounded"><i
-                                class="fa-brands fa-github"></i></a>
-                        <a href="#" class="button is-small is-white is-outlined is-rounded"><i
-                                class="fa-brands fa-linkedin"></i></a>
+                    <div class="mb-5">
+                        <div class="do-badge-container">
+                            <a
+                                href="https://www.digitalocean.com/?refcode=004d8c71908f&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge">
+                                <img src="https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%202.svg"
+                                    alt="DigitalOcean Referral Badge" style="height: 32px; display: block;" />
+                            </a>
+                        </div>
+                    </div>
+                    <div class="social-links">
+                        <p class="is-size-7 has-text-grey mb-3">CONECTA CONMIGO</p>
+                        <div class="buttons is-right">
+                            <a href="#" class="button is-small is-white is-outlined is-rounded mx-1">
+                                <span class="icon"><i class="fa-brands fa-github"></i></span>
+                            </a>
+                            <a href="#" class="button is-small is-white is-outlined is-rounded mx-1">
+                                <span class="icon"><i class="fa-brands fa-linkedin"></i></span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
