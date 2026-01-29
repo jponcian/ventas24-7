@@ -104,19 +104,23 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           void updateSuggestion() {
-            double? newCost = double.tryParse(costCtrl.text);
-            if (newCost != null && newCost > 0) {
-              // Si el modo es paquete, convertir a unitario para calcular margen
-              if (modoCarga == 'paquete' && tamPaquete > 0) {
-                newCost = newCost / tamPaquete;
-              }
-              // Si la moneda seleccionada es BS, convertir a USD para comparar con el sistema
-              if (_selectedMoneda == 'BS' && _tasa > 0) {
-                newCost = newCost / _tasa;
+            double? enteredCost = double.tryParse(costCtrl.text);
+            if (enteredCost != null && enteredCost > 0) {
+              double unitCost = enteredCost;
+
+              // Si el modo es paquete, el costo ingresado es del paquete completo.
+              // Convertimos a costo unitario para calcular el precio de venta unitario.
+              if (modoCarga == 'paquete' && tamPaquete > 1) {
+                unitCost = enteredCost / tamPaquete;
               }
 
-              // Calcular sugerido con 30% por defecto
-              double suggested = newCost! * 1.30;
+              // Si la moneda seleccionada es BS, convertir a USD
+              if (_selectedMoneda == 'BS' && _tasa > 0) {
+                unitCost = unitCost / _tasa;
+              }
+
+              // Calcular sugerido con 30% por defecto (Precio Unitario)
+              double suggested = unitCost * 1.30;
               suggestionCtrl.text = suggested.toStringAsFixed(2);
             }
           }
@@ -124,16 +128,18 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
           Widget marginBtn(int percent) {
             return GestureDetector(
               onTap: () {
-                double? newCost = double.tryParse(costCtrl.text);
-                if (newCost != null && newCost > 0) {
-                  if (modoCarga == 'paquete' && tamPaquete > 0) {
-                    newCost = newCost / tamPaquete;
+                double? enteredCost = double.tryParse(costCtrl.text);
+                if (enteredCost != null && enteredCost > 0) {
+                  double unitCost = enteredCost;
+
+                  if (modoCarga == 'paquete' && tamPaquete > 1) {
+                    unitCost = enteredCost / tamPaquete;
                   }
                   if (_selectedMoneda == 'BS' && _tasa > 0) {
-                    newCost = newCost / _tasa;
+                    unitCost = unitCost / _tasa;
                   }
 
-                  double price = newCost! * (1 + (percent / 100));
+                  double price = unitCost * (1 + (percent / 100));
                   suggestionCtrl.text = price.toStringAsFixed(2);
                 }
               },
