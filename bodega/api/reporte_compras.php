@@ -15,30 +15,31 @@ if ($nid <= 0) {
 try {
     global $db;
     
-    // Total compras del día
-    // costo_unitario * cantidad
+    // Total compras del día usando el maestro
     $stmt = $db->prepare("
         SELECT 
             COUNT(*) as total_transacciones,
-            COALESCE(SUM(cantidad * IFNULL(costo_unitario, 0)), 0) as total_costo
+            COALESCE(SUM(total), 0) as total_costo
         FROM compras 
         WHERE negocio_id = ? AND DATE(fecha) = ?
     ");
     $stmt->execute([$nid, $fecha]);
     $resumen = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Detalle agrupado por proveedor
+    // Detalle de todos los items comprados en el día
     $stmtDetalle = $db->prepare("
         SELECT 
             p.nombre,
-            c.cantidad,
-            c.costo_unitario,
-            (c.cantidad * IFNULL(c.costo_unitario, 0)) as total,
-            COALESCE(p.proveedor, 'Sin Proveedor') as proveedor
-        FROM compras c
-        JOIN productos p ON p.id = c.producto_id
+            ci.cantidad,
+            ci.costo_unitario,
+            (ci.cantidad * ci.costo_unitario) as total,
+            COALESCE(p.proveedor, 'Sin Proveedor') as proveedor,
+            c.fecha
+        FROM compras_items ci
+        JOIN compras c ON c.id = ci.compra_id
+        JOIN productos p ON p.id = ci.producto_id
         WHERE c.negocio_id = ? AND DATE(c.fecha) = ?
-        ORDER BY proveedor, p.nombre
+        ORDER BY c.fecha DESC, p.nombre
     ");
     $stmtDetalle->execute([$nid, $fecha]);
     $items = $stmtDetalle->fetchAll(PDO::FETCH_ASSOC);

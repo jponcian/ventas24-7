@@ -35,14 +35,15 @@ try {
         SELECT 
             p.nombre,
             p.unidad_medida, 
-            COALESCE(p.proveedor, 'Sin Proveedor') as proveedor,
+            COALESCE(pr.nombre, 'Sin Proveedor') as proveedor,
             SUM(d.cantidad) as total_cantidad,
             SUM(d.cantidad * d.precio_unitario_bs) as total_bs
         FROM detalle_ventas d
         JOIN ventas v ON v.id = d.venta_id
         JOIN productos p ON p.id = d.producto_id
+        LEFT JOIN proveedores pr ON pr.id = p.proveedor_id
         WHERE v.negocio_id = ? AND DATE(v.fecha) = ?
-        GROUP BY p.proveedor, p.id, p.nombre, p.unidad_medida
+        GROUP BY pr.nombre, p.id, p.nombre, p.unidad_medida
         ORDER BY proveedor, nombre
     ");
     $stmtDetalle->execute([$negocio_id, $fecha]);

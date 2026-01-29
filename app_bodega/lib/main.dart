@@ -13,6 +13,8 @@ import 'report_sales_screen.dart';
 import 'low_stock_screen.dart';
 import 'report_purchases_screen.dart';
 import 'purchase_screen.dart';
+import 'market_mode_screen.dart';
+import 'history_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -199,8 +201,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 .toList();
 
             if (selected.isEmpty) {
-              Future.microtask(() => Navigator.pop(context));
-              return const SizedBox();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              });
+              return const Center(child: Text('Carrito Vacío'));
             }
 
             double totalBs = 0;
@@ -278,21 +284,81 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
                             children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.blue[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  '${p.qty}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
+                              // Botones de cantidad
+                              Column(
+                                children: [
+                                  // Botón incrementar
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        p.qty++;
+                                      });
+                                      setModalState(() {});
+                                    },
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.green[300]!,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.add,
+                                        size: 18,
+                                        color: Colors.green[700],
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(height: 4),
+                                  // Cantidad
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue[50],
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      '${p.qty}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Botón decrementar
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        if (p.qty > 1) {
+                                          p.qty--;
+                                        }
+                                      });
+                                      setModalState(() {});
+                                    },
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.orange[300]!,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.remove,
+                                        size: 18,
+                                        color: Colors.orange[700],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -316,11 +382,55 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   ],
                                 ),
                               ),
-                              Text(
-                                '${subtotalBs.toStringAsFixed(2)} Bs',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    '${subtotalBs.toStringAsFixed(2)} Bs',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Botón eliminar
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        p.qty = 0;
+                                      });
+                                      setModalState(() {});
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red[50],
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.delete_outline,
+                                            size: 14,
+                                            color: Colors.red[700],
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Eliminar',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.red[700],
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -493,6 +603,80 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
+  Future<void> _generarEtiquetasPDF() async {
+    // Get all product IDs from current filtered list
+    final productIds = _filteredProducts
+        .where((p) => p.id > 0) // Only real products, not package variants
+        .map((p) => p.id)
+        .toList();
+
+    if (productIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay productos para generar etiquetas'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final pdfUrl = await _apiService.generarEtiquetasPDF(productIds);
+      if (pdfUrl != null && mounted) {
+        // Show dialog with URL to open in browser
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Etiquetas PDF'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Las etiquetas están listas.'),
+                const SizedBox(height: 16),
+                Text(
+                  pdfUrl,
+                  style: const TextStyle(fontSize: 12, color: Colors.blue),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cerrar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  // Copy URL to clipboard or open in browser
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Abre este enlace en tu navegador:\n$pdfUrl',
+                      ),
+                      duration: const Duration(seconds: 5),
+                    ),
+                  );
+                },
+                child: const Text('Copiar'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al generar etiquetas'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double totalBs = 0;
@@ -584,6 +768,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.history, color: Colors.blueGrey),
+              title: const Text('Historial Cargas'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HistoryScreen(),
+                  ),
+                );
+              },
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
@@ -621,6 +818,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
         actions: [
           IconButton(
             icon: const Icon(
+              Icons.shopping_basket_outlined,
+              color: Color(0xFF10B981),
+            ),
+            tooltip: 'Modo Supermercado',
+            onPressed: () => _openMarketMode(),
+          ),
+          IconButton(
+            icon: const Icon(
               Icons.calculate_outlined,
               color: Color(0xFF1E3A8A),
             ),
@@ -628,6 +833,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
               context,
               MaterialPageRoute(builder: (context) => CalcScreen(tasa: _tasa)),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.print_outlined, color: Color(0xFFEF4444)),
+            tooltip: 'Generar Etiquetas PDF',
+            onPressed: () => _generarEtiquetasPDF(),
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
@@ -755,6 +965,27 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _openMarketMode() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MarketModeScreen(
+          products: _allProducts,
+          onProductScanned: (p) {
+            setState(() {
+              // Buscar el producto original en la lista general para actualizar su qty
+              // Usamos p.id para encontrarlo exactamente
+              final original = _allProducts.firstWhere(
+                (item) => item.id == p.id,
+              );
+              original.qty += 1;
+            });
+          },
         ),
       ),
     );

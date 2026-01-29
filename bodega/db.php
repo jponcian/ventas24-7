@@ -23,13 +23,49 @@ try {
 }
 
 // --- Productos ---
-function agregarProducto($negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = 0)
+     function agregarProducto($negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = 0)
 {
     global $db;
-    $legacyVenta = ($unidad_medida === 'paquete' && $precio_venta_paquete !== null) ? $precio_venta_paquete : ($precio_venta_unidad ?? $precio_venta ?? 0);
     
-    $stmt = $db->prepare("INSERT INTO productos (negocio_id, nombre, codigo_barras, descripcion, unidad_medida, tam_paquete, precio_compra, precio_venta, precio_venta_paquete, precio_venta_mediopaquete, precio_venta_unidad, proveedor, moneda_compra, bajo_inventario, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$negocio_id, $nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario, $stock]);
+    // Buscar o crear proveedor ID
+    $provId = null;
+    if ($proveedor) {
+        $stmtP = $db->prepare("SELECT id FROM proveedores WHERE nombre = ? AND negocio_id = ?");
+        $stmtP->execute([$proveedor, $negocio_id]);
+        $p = $stmtP->fetch(PDO::FETCH_ASSOC);
+        if ($p) $provId = $p['id'];
+        else {
+             $stmtIns = $db->prepare("INSERT INTO proveedores (negocio_id, nombre) VALUES (?, ?)");
+             $stmtIns->execute([$negocio_id, $proveedor]);
+             $provId = $db->lastInsertId();
+        }
+    }
+
+    // Normalizar precios entrantes para llenar los nuevos campos
+    $costo_unitario = 0;
+    if ($precio_compra > 0) {
+        // Asumimos que precio_compra viene acorde a la unidad de medida (si es pack, es precio pack)
+        if ($unidad_medida === 'paquete' && $tam_paquete > 1) {
+            $costo_unitario = $precio_compra / $tam_paquete;
+        } else {
+            $costo_unitario = $precio_compra;
+        }
+    }
+
+    $pv_unidad = $precio_venta_unidad ?? 0;
+    $pv_paquete = $precio_venta_paquete ?? 0;
+
+    // Si faltan precios, intentar calcularlos
+    if ($pv_unidad == 0 && $precio_venta > 0) {
+        if ($unidad_medida === 'paquete' && $tam_paquete > 1) $pv_unidad = $precio_venta / $tam_paquete;
+        else $pv_unidad = $precio_venta;
+    }
+    if ($pv_paquete == 0 && $unidad_medida === 'paquete' && $precio_venta > 0) {
+        $pv_paquete = $precio_venta;
+    }
+
+    $stmt = $db->prepare("INSERT INTO productos (negocio_id, nombre, codigo_barras, descripcion, unidad_medida, tam_paquete, costo_unitario, precio_venta_unidad, precio_venta_paquete, proveedor_id, moneda_base, bajo_inventario, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$negocio_id, $nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $stock]);
     return $db->lastInsertId();
 }
 
@@ -38,8 +74,44 @@ function editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida,
     global $db;
     $legacyVenta = ($unidad_medida === 'paquete' && $precio_venta_paquete !== null) ? $precio_venta_paquete : ($precio_venta_unidad ?? $precio_venta ?? 0);
 
-    $sql = "UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, precio_compra = ?, precio_venta = ?, precio_venta_paquete = ?, precio_venta_mediopaquete = ?, precio_venta_unidad = ?, proveedor = ?, moneda_compra = ?, bajo_inventario = ?";
-    $params = [$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $legacyVenta, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $proveedor, $moneda_compra, $bajo_inventario];
+    // Buscar o crear proveedor ID
+    $provId = null;
+    if ($proveedor) {
+        $stmtP = $db->prepare("SELECT id FROM proveedores WHERE nombre = ? AND negocio_id = ?");
+        $stmtP->execute([$proveedor, $negocio_id]);
+        $p = $stmtP->fetch(PDO::FETCH_ASSOC);
+        if ($p) $provId = $p['id'];
+        else {
+             $stmtIns = $db->prepare("INSERT INTO proveedores (negocio_id, nombre) VALUES (?, ?)");
+             $stmtIns->execute([$negocio_id, $proveedor]);
+             $provId = $db->lastInsertId();
+        }
+    }
+
+    // Normalizar precios (similar a agregar)
+    $costo_unitario = 0;
+    if ($precio_compra > 0) {
+        if ($unidad_medida === 'paquete' && $tam_paquete > 1) {
+            $costo_unitario = $precio_compra / $tam_paquete;
+        } else {
+            $costo_unitario = $precio_compra;
+        }
+    }
+    
+    $pv_unidad = $precio_venta_unidad ?? 0;
+    $pv_paquete = $precio_venta_paquete ?? 0;
+    
+    // Si faltan precios, intentar calcularlos
+    if ($pv_unidad == 0 && $precio_venta > 0) {
+        if ($unidad_medida === 'paquete' && $tam_paquete > 1) $pv_unidad = $precio_venta / $tam_paquete;
+        else $pv_unidad = $precio_venta;
+    }
+    if ($pv_paquete == 0 && $unidad_medida === 'paquete' && $precio_venta > 0) {
+        $pv_paquete = $precio_venta;
+    }
+
+    $sql = "UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, costo_unitario = ?, precio_venta_unidad = ?, precio_venta_paquete = ?, proveedor_id = ?, moneda_base = ?, bajo_inventario = ?, vende_media = ?";
+    $params = [$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $vende_media];
 
     if ($stock !== null) {
         $sql .= ", stock = ?";
@@ -65,12 +137,26 @@ function obtenerProductos($negocio_id, $q = null)
 {
     global $db;
     if ($q === null || $q === '') {
-        $stmt = $db->prepare("SELECT * FROM productos WHERE negocio_id = ? ORDER BY nombre ASC");
+        $stmt = $db->prepare("
+            SELECT p.*, pr.nombre as proveedor_nombre 
+            FROM productos p 
+            LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+            WHERE p.negocio_id = ? 
+            ORDER BY p.nombre ASC
+        ");
         $stmt->execute([$negocio_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     $like = '%' . $q . '%';
-    $stmt = $db->prepare("SELECT * FROM productos WHERE negocio_id = ? AND (nombre LIKE ? OR codigo_barras = ? OR descripcion LIKE ? OR proveedor LIKE ? OR unidad_medida LIKE ?) ORDER BY nombre ASC");
+    // Nota: proveedor es nombre, pero ahora tenemos proveedor_id. Para buscar por nombre de proveedor necesitaríamos un JOIN.
+    // Mantenemos la estructura simple por ahora, buscando en las columnas de texto de producto.
+    $stmt = $db->prepare("
+        SELECT p.*, pr.nombre as proveedor_nombre 
+        FROM productos p 
+        LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+        WHERE p.negocio_id = ? AND (p.nombre LIKE ? OR p.codigo_barras LIKE ? OR p.descripcion LIKE ? OR pr.nombre LIKE ? OR p.unidad_medida LIKE ?) 
+        ORDER BY p.nombre ASC
+    ");
     $stmt->execute([$negocio_id, $like, $q, $like, $like, $like]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }

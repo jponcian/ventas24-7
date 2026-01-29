@@ -316,7 +316,7 @@
                     // Mostrar precio de compra con moneda
                     let precioCompraInfo = '';
                     let precioVentaInfoResaltadoFinal = '';
-                    if (i.moneda_compra === 'BS') {
+                    if (i.moneda_base === 'BS') {
                         // Mostrar solo precios de venta en Bs y en azul, incluyendo la palabra
                         let ventaBs = '';
                         if (i.precio_venta_paquete) {
@@ -326,7 +326,7 @@
                             ventaBs += `<span class=\"fw-bold text-primary\">Unidad:</span> <span class=\"fw-bold text-primary\">${Number(i.precio_venta_unidad).toFixed(2)} Bs</span>`;
                         }
                         precioVentaInfoResaltadoFinal = ventaBs;
-                    } else if (i.moneda_compra === 'USD') {
+                    } else if (i.moneda_base === 'USD') {
                         precioVentaInfoResaltadoFinal = precioVentaInfoResaltado;
                     } else {
                         precioVentaInfoResaltadoFinal = precioVentaInfoResaltado;
@@ -398,10 +398,10 @@
                     await cargarProveedores(p.proveedor || '');
                     form.unidad_medida.value = p.unidad_medida || 'unidad';
                     form.tam_paquete.value = p.tam_paquete || '';
-                    form.precio_compra.value = p.precio_compra || 0;
+                    form.precio_compra.value = p.costo_unitario || 0;
                     form.precio_venta_unidad.value = (p.precio_venta_unidad !== undefined && p.precio_venta_unidad !== null) ? p.precio_venta_unidad : '';
                     form.precio_venta_paquete.value = (p.precio_venta_paquete !== undefined && p.precio_venta_paquete !== null) ? p.precio_venta_paquete : '';
-                    form.moneda_compra.value = p.moneda_compra || 'USD';
+                    form.moneda_compra.value = p.moneda_base || 'USD';
                     form.vende_media.checked = (p.precio_venta_mediopaquete !== undefined && p.precio_venta_mediopaquete !== null && parseFloat(p.precio_venta_mediopaquete) > 0);
                     form.precio_venta_medio_paquete.value = (p.precio_venta_mediopaquete !== undefined && p.precio_venta_mediopaquete !== null) ? p.precio_venta_mediopaquete : '';
                     // Set tasa_calculo to current system rate as default or keep it if we had a way to store it (we don't currently store invoice rate)

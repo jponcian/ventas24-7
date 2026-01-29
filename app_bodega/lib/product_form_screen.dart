@@ -173,11 +173,37 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       'stock': double.tryParse(_stockCtrl.text) ?? 0.0,
     };
 
-    bool success;
-    if (widget.product == null) {
-      success = await _apiService.createProduct(data);
-    } else {
-      success = await _apiService.updateProduct(widget.product!.id.abs(), data);
+    bool success = false;
+    try {
+      if (widget.product == null) {
+        success = await _apiService.createProduct(data);
+      } else {
+        success = await _apiService.updateProduct(
+          widget.product!.id.abs(),
+          data,
+        );
+      }
+
+      if (!success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error al guardar: El servidor devolvió un error'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      success = false;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error de conexión: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
 
     setState(() => _isLoading = false);
@@ -191,15 +217,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           ),
         );
         Navigator.pop(context, true);
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al guardar'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     }
   }

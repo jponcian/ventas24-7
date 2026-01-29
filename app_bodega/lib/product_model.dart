@@ -42,7 +42,11 @@ class Product {
       descripcion: json['descripcion'],
       unidadMedida: json['unidad_medida'],
       precioVenta: double.tryParse(json['precio_venta'].toString()),
-      precioCompra: double.tryParse(json['precio_compra'].toString()),
+      precioCompra: double.tryParse(
+        json['costo_unitario']?.toString() ??
+            json['precio_compra']?.toString() ??
+            '0',
+      ),
       bajoInventario: int.tryParse(json['bajo_inventario'].toString()),
       precioVentaPaquete: double.tryParse(
         json['precio_venta_paquete']?.toString() ?? '',
@@ -53,9 +57,9 @@ class Product {
             '',
       ),
       tamPaquete: double.tryParse(json['tam_paquete']?.toString() ?? '1'),
-      monedaCompra: json['moneda_compra'],
+      monedaCompra: json['moneda_base'] ?? json['moneda_compra'],
       codigoBarras: json['codigo_barras'],
-      proveedor: json['proveedor'],
+      proveedor: json['proveedor_nombre'] ?? json['proveedor'],
       stock: double.tryParse(json['stock']?.toString() ?? '0'),
     );
   }
