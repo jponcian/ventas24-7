@@ -33,11 +33,12 @@ try {
             ci.cantidad,
             ci.costo_unitario,
             (ci.cantidad * ci.costo_unitario) as total,
-            COALESCE(p.proveedor, 'Sin Proveedor') as proveedor,
+            COALESCE(pr.nombre, 'Sin Proveedor') as proveedor,
             c.fecha
         FROM compras_items ci
         JOIN compras c ON c.id = ci.compra_id
         JOIN productos p ON p.id = ci.producto_id
+        LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
         WHERE c.negocio_id = ? AND DATE(c.fecha) = ?
         ORDER BY c.fecha DESC, p.nombre
     ");

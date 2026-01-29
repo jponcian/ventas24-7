@@ -6,10 +6,14 @@ header('Content-Type: application/json; charset=utf-8');
 $json = file_get_contents('php://input');
 $body = json_decode($json, true) ?? [];
 
-if (!isset($body['id']) || !isset($body['negocio_id'])) {
+if (!isset($body['id'])) {
     http_response_code(400);
-    echo json_encode(['ok' => false, 'error' => 'Falta id o negocio_id']);
+    echo json_encode(['ok' => false, 'error' => 'Falta id']);
     exit;
+}
+
+if (!isset($body['negocio_id'])) {
+    $body['negocio_id'] = 1;
 }
 
 $id = intval($body['id']);
