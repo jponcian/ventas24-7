@@ -4,6 +4,8 @@ import 'api_service.dart';
 import 'product_model.dart';
 import 'scanner_screen.dart';
 
+import 'utils.dart';
+
 class PurchaseScreen extends StatefulWidget {
   const PurchaseScreen({super.key});
 
@@ -70,9 +72,11 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
 
   Future<void> _showAddStockDialog(Product p) async {
     final qtyCtrl = TextEditingController();
-    // Pre-llenar con el último costo conocido (en USD)
+    // Pre-llenar con el último costo conocido (en USD), formateado
     final costCtrl = TextEditingController(
-      text: p.precioCompra != null ? p.precioCompra.toString() : '',
+      text: p.precioCompra != null
+          ? p.precioCompra!.toStringAsFixed(2)
+          : '0.00',
     );
     // Para sugerencia de precio
     final suggestionCtrl = TextEditingController();
@@ -83,6 +87,13 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
     // Calcular margen actual para sugerir
     double currentPrice = p.precioReal;
     double currentCost = p.precioCompra ?? 0;
+
+    // Si el producto está configurado como 'paquete' y tiene tamaño definido,
+    // el precioCompra base es del paquete. Convertirlo a unitario para el margen.
+    if (p.unidadMedida == 'paquete' && tamPaquete > 0) {
+      currentCost = currentCost / tamPaquete;
+    }
+
     double currentMargin = 0;
     if (currentCost > 0) {
       currentMargin = (currentPrice - currentCost) / currentCost;
@@ -96,7 +107,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
             double? newCost = double.tryParse(costCtrl.text);
             if (newCost != null && newCost > 0) {
               // Si el modo es paquete, convertir a unitario para calcular margen
-              if (modoCarga == 'paquete') {
+              if (modoCarga == 'paquete' && tamPaquete > 0) {
                 newCost = newCost / tamPaquete;
               }
               // Si la moneda seleccionada es BS, convertir a USD para comparar con el sistema
@@ -104,10 +115,50 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                 newCost = newCost / _tasa;
               }
 
-              // Calcular sugerido manteniendo el margen
-              double suggested = newCost * (1 + currentMargin);
+              // Calcular sugerido con 30% por defecto
+              double suggested = newCost! * 1.30;
               suggestionCtrl.text = suggested.toStringAsFixed(2);
             }
+          }
+
+          Widget marginBtn(int percent) {
+            return GestureDetector(
+              onTap: () {
+                double? newCost = double.tryParse(costCtrl.text);
+                if (newCost != null && newCost > 0) {
+                  if (modoCarga == 'paquete' && tamPaquete > 0) {
+                    newCost = newCost / tamPaquete;
+                  }
+                  if (_selectedMoneda == 'BS' && _tasa > 0) {
+                    newCost = newCost / _tasa;
+                  }
+
+                  double price = newCost! * (1 + (percent / 100));
+                  suggestionCtrl.text = price.toStringAsFixed(2);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF1E3A8A).withOpacity(0.2),
+                  ),
+                ),
+                child: Text(
+                  '+$percent%',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E3A8A),
+                  ),
+                ),
+              ),
+            );
           }
 
           return AlertDialog(
@@ -189,15 +240,14 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: costCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [SlidingDecimalFormatter()],
                     onChanged: (_) => updateSuggestion(),
                     decoration: InputDecoration(
                       labelText: modoCarga == 'paquete'
                           ? 'Costo Paquete ($_selectedMoneda)'
                           : 'Costo Unidad ($_selectedMoneda)',
-                      hintText: 'Ej: 5.50',
+                      hintText: '0.00',
                       border: const OutlineInputBorder(),
                     ),
                   ),
@@ -222,9 +272,8 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                         const SizedBox(height: 4),
                         TextField(
                           controller: suggestionCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [SlidingDecimalFormatter()],
                           decoration: const InputDecoration(
                             labelText: 'Nuevo Precio Venta (Sugerido)',
                             isDense: true,
@@ -232,9 +281,18 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                             prefixText: '\$ ',
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            marginBtn(10),
+                            marginBtn(20),
+                            marginBtn(30),
+                          ],
+                        ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Calculado base al margen actual. Deja vacío para no cambiar.',
+                          'Calculado con 30% por defecto. Deja vacío para no cambiar.',
                           style: TextStyle(fontSize: 10, color: Colors.grey),
                         ),
                       ],

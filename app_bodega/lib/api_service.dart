@@ -58,12 +58,15 @@ class ApiService {
     }
   }
 
-  Future<List<Product>> getProducts() async {
+  Future<List<Product>> getProducts([String? query]) async {
     try {
       final nid = await getNegocioId();
-      final response = await http.get(
-        Uri.parse('$baseUrl/ver.php?negocio_id=$nid'),
-      );
+      String url = '$baseUrl/ver.php?negocio_id=$nid';
+      if (query != null && query.isNotEmpty) {
+        url += '&q=$query';
+      }
+
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         List<dynamic> body = jsonDecode(response.body);
@@ -75,27 +78,50 @@ class ApiService {
     }
   }
 
-  Future<bool> createProduct(Map<String, dynamic> data) async {
-    data['negocio_id'] = await getNegocioId();
-    final response = await http.post(
-      Uri.parse('$baseUrl/crear.php'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(data),
-    );
-    return response.statusCode == 200 &&
-        jsonDecode(response.body)['ok'] == true;
+  Future<Map<String, dynamic>> createProduct(Map<String, dynamic> data) async {
+    try {
+      data['negocio_id'] = await getNegocioId();
+      final response = await http.post(
+        Uri.parse('$baseUrl/crear.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      final body = jsonDecode(response.body);
+      if (response.statusCode == 200 && body['ok'] == true) {
+        return {'success': true};
+      }
+      return {
+        'success': false,
+        'message': body['error'] ?? 'Error desconocido del servidor',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
   }
 
-  Future<bool> updateProduct(int id, Map<String, dynamic> data) async {
-    data['id'] = id;
-    data['negocio_id'] = await getNegocioId();
-    final response = await http.post(
-      Uri.parse('$baseUrl/editar.php'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(data),
-    );
-    return response.statusCode == 200 &&
-        jsonDecode(response.body)['ok'] == true;
+  Future<Map<String, dynamic>> updateProduct(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      data['id'] = id;
+      data['negocio_id'] = await getNegocioId();
+      final response = await http.post(
+        Uri.parse('$baseUrl/editar.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      final body = jsonDecode(response.body);
+      if (response.statusCode == 200 && body['ok'] == true) {
+        return {'success': true};
+      }
+      return {
+        'success': false,
+        'message': body['error'] ?? 'Error desconocido del servidor',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
   }
 
   Future<bool> registrarVenta(Map<String, dynamic> ventaData) async {
@@ -256,13 +282,13 @@ class ApiService {
     }
   }
 
-  Future<String?> generarEtiquetasPDF(List<int> productIds) async {
+  Future<String?> generarEtiquetasPDF(List<int>? productIds) async {
     try {
       final nid = await getNegocioId();
       final response = await http.post(
         Uri.parse('$baseUrl/generar_etiquetas.php'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'negocio_id': nid, 'ids': productIds}),
+        body: jsonEncode({'negocio_id': nid, 'ids': productIds ?? []}),
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

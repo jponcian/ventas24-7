@@ -3,14 +3,12 @@ require_once __DIR__ . '/cors.php';
 require __DIR__ . '/../db.php';
 header('Content-Type: application/json; charset=utf-8');
 
-$negocio_id = isset($_GET['negocio_id']) ? intval($_GET['negocio_id']) : 0;
+$negocio_id = isset($_GET['negocio_id']) ? intval($_GET['negocio_id']) : 1;
 $id = isset($_GET['id']) ? intval($_GET['id']) : null;
 $q = isset($_GET['q']) ? $_GET['q'] : null;
 
 if ($negocio_id <= 0) {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'error' => 'Falta negocio_id']);
-    exit;
+    $negocio_id = 1;
 }
 
 try {

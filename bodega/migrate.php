@@ -100,6 +100,10 @@ if (!columnExists($pdo, $dbname, $table, 'moneda_compra')) {
 if (!columnExists($pdo, $dbname, $table, 'codigo_barras')) {
     $changes[] = "ADD COLUMN `codigo_barras` VARCHAR(64) NULL AFTER `nombre` ";
 }
+// Añadir vende_media
+if (!columnExists($pdo, $dbname, $table, 'vende_media')) {
+    $changes[] = "ADD COLUMN `vende_media` TINYINT(1) NOT NULL DEFAULT 0";
+}
 // Eliminar cantidad
 $dropCantidad = false;
 if (columnExists($pdo, $dbname, $table, 'cantidad')) {

@@ -15,6 +15,7 @@ import 'report_purchases_screen.dart';
 import 'purchase_screen.dart';
 import 'market_mode_screen.dart';
 import 'history_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -603,69 +604,93 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
-  Future<void> _generarEtiquetasPDF() async {
-    // Get all product IDs from current filtered list
-    final productIds = _filteredProducts
-        .where((p) => p.id > 0) // Only real products, not package variants
-        .map((p) => p.id)
-        .toList();
-
-    if (productIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No hay productos para generar etiquetas'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    try {
-      final pdfUrl = await _apiService.generarEtiquetasPDF(productIds);
-      if (pdfUrl != null && mounted) {
-        // Show dialog with URL to open in browser
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Etiquetas PDF'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Las etiquetas están listas.'),
-                const SizedBox(height: 16),
-                Text(
-                  pdfUrl,
-                  style: const TextStyle(fontSize: 12, color: Colors.blue),
+  Future<void> _generarEtiquetasPDF([List<int>? ids]) async {
+    // Si no se pasaron IDs, preguntar al usuario qué desea hacer
+    if (ids == null) {
+      final String? choice = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Imprimir Etiquetas'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                // Opción 1: Últimos modificados (comportamiento por defecto)
+                leading: const Icon(
+                  Icons.history,
+                  color: Colors.blue,
+                  size: 32,
                 ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cerrar'),
+                title: const Text('Últimos Modificados'),
+                subtitle: const Text('Genera 1 hoja con los cambios recientes'),
+                onTap: () => Navigator.pop(ctx, 'last'),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  // Copy URL to clipboard or open in browser
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Abre este enlace en tu navegador:\n$pdfUrl',
-                      ),
-                      duration: const Duration(seconds: 5),
-                    ),
-                  );
-                },
-                child: const Text('Copiar'),
+              const Divider(),
+              ListTile(
+                // Opción 2: Selección Manual
+                leading: const Icon(
+                  Icons.touch_app,
+                  color: Colors.green,
+                  size: 32,
+                ),
+                title: const Text('Selección Manual'),
+                subtitle: const Text('Buscar y elegir productos específicos'),
+                onTap: () => Navigator.pop(ctx, 'manual'),
               ),
             ],
           ),
-        );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, null), // Cancelar
+              child: const Text('Cancelar'),
+            ),
+          ],
+        ),
+      );
+
+      if (choice == null) return; // Cancelado
+
+      if (choice == 'manual') {
+        ids = await _showSelectionDialog();
+        if (ids == null || ids.isEmpty) return; // Cancelado o vacío
+      }
+      // si choice == 'last', ids se mantiene null, lo que dispara el LIMIT 12 en backend
+    }
+
+    try {
+      final pdfUrl = await _apiService.generarEtiquetasPDF(ids);
+      if (pdfUrl != null && mounted) {
+        // Open PDF directly
+        final Uri uri = Uri.parse(pdfUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          // Fallback if cannot launch
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Etiquetas PDF'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('No se pudo abrir automáticamente.'),
+                  const SizedBox(height: 8),
+                  SelectableText(pdfUrl),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cerrar'),
+                ),
+              ],
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Error al generar etiquetas'),
+            content: Text('Error al generar PDF'),
             backgroundColor: Colors.red,
           ),
         );
@@ -675,6 +700,107 @@ class _ProductListScreenState extends State<ProductListScreen> {
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
+  }
+
+  // Diálogo para buscar y seleccionar productos manualmente
+  Future<List<int>?> _showSelectionDialog() async {
+    return showDialog<List<int>>(
+      context: context,
+      builder: (context) {
+        // Variables locales del diálogo
+        Set<int> selectedIds = {};
+        List<Product> searchResults = [];
+        bool isLoading = false;
+        TextEditingController searchCtrl = TextEditingController();
+
+        // Función interna para buscar
+        Future<void> doSearch(String query, StateSetter setState) async {
+          setState(() => isLoading = true);
+          try {
+            // Reutilizamos getProducts con query search
+            final res = await _apiService.getProducts(query);
+            setState(() {
+              searchResults = res;
+              isLoading = false;
+            });
+          } catch (e) {
+            setState(() => isLoading = false);
+          }
+        }
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Seleccionar Productos'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Buscar producto...',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () => doSearch(searchCtrl.text, setState),
+                        ),
+                      ),
+                      onSubmitted: (val) => doSearch(val, setState),
+                    ),
+                    const SizedBox(height: 10),
+                    // Lista de resultados
+                    Expanded(
+                      child: isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : searchResults.isEmpty
+                          ? const Center(
+                              child: Text('Busca productos para agregar'),
+                            )
+                          : ListView.builder(
+                              itemCount: searchResults.length,
+                              itemBuilder: (ctx, i) {
+                                final p = searchResults[i];
+                                final isSelected = selectedIds.contains(p.id);
+                                return CheckboxListTile(
+                                  title: Text(p.nombre),
+                                  subtitle: Text(
+                                    '${p.precioVentaUnidad?.toStringAsFixed(2) ?? "0.00"} \$ / ${p.precioVentaPaquete?.toStringAsFixed(2) ?? "0.00"} \$ (Paq)',
+                                  ),
+                                  value: isSelected,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      if (val == true) {
+                                        selectedIds.add(p.id);
+                                      } else {
+                                        selectedIds.remove(p.id);
+                                      }
+                                    });
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text('${selectedIds.length} productos seleccionados'),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, null),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, selectedIds.toList()),
+                  child: const Text('Imprimir Selección'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -719,45 +845,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.bar_chart),
-              title: const Text('Reporte de Ventas'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ReportSalesScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.warning, color: Colors.orange),
-              title: const Text('Bajo Inventario'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LowStockScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.receipt_long, color: Colors.purple),
-              title: const Text('Reporte de Compras'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ReportPurchasesScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.add_shopping_cart, color: Colors.green),
               title: const Text('Cargar Compras'),
               onTap: () {
@@ -777,6 +864,45 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const HistoryScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.bar_chart),
+              title: const Text('Reporte de Ventas'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReportSalesScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt_long, color: Colors.purple),
+              title: const Text('Reporte de Compras'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReportPurchasesScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.warning, color: Colors.orange),
+              title: const Text('Bajo Inventario'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LowStockScreen(),
                   ),
                 );
               },

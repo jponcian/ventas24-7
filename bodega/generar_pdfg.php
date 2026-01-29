@@ -35,14 +35,20 @@ class FPDF_CellFit extends FPDF
 // Obtener solo los productos seleccionados si se pasa ?ids=1,2,3
 $ids = isset($_GET['ids']) ? explode(',', $_GET['ids']) : [];
 $ids = array_filter(array_map('intval', $ids));
+$negocio_id = isset($_GET['negocio_id']) ? intval($_GET['negocio_id']) : 1;
+
 if ($ids) {
-    $productos = array_filter(obtenerProductos(), function ($p) use ($ids) {
-        return in_array($p['id'], $ids);
-    });
+    // If selected IDs
+    $params = implode(',', $ids);
+    // Use direct query to be safe or update obtenerProductos usage.
+    // obtainProductos expects ($negocio_id, $q), doesn't filter by IDs easily.
+    // Let's do a custom query for these IDs to ensure we get exactly what we asked for.
+    $stmt = $db->query("SELECT * FROM productos WHERE negocio_id = $negocio_id AND id IN ($params)");
+    $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } else {
     // Si no hay selección, mostrar los últimos 12 productos modificados (updated_at)
-    // Esto es útil para imprimir etiquetas solo de lo que cambió de precio.
-    $stmt = $db->query("SELECT * FROM productos ORDER BY updated_at DESC LIMIT 12");
+    $stmt = $db->prepare("SELECT * FROM productos WHERE negocio_id = ? ORDER BY updated_at DESC LIMIT 12");
+    $stmt->execute([$negocio_id]);
     $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

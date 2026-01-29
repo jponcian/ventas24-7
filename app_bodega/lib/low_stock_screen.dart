@@ -71,61 +71,112 @@ class _LowStockScreenState extends State<LowStockScreen> {
                 ],
               ),
             )
-          : ListView.separated(
+          : ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: _lowStockProducts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final p = _lowStockProducts[index];
-                return Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        shape: BoxShape.circle,
+              children: (() {
+                // Agrupar por proveedor
+                final Map<String, List<Product>> grouped = {};
+                for (var p in _lowStockProducts) {
+                  final prov = (p.proveedor != null && p.proveedor!.isNotEmpty)
+                      ? p.proveedor!
+                      : 'Sin Proveedor';
+                  if (!grouped.containsKey(prov)) {
+                    grouped[prov] = [];
+                  }
+                  grouped[prov]!.add(p);
+                }
+
+                // Ordenar proveedores alfabéticamente
+                final sortedKeys = grouped.keys.toList()..sort();
+
+                return sortedKeys.map((provKey) {
+                  final products = grouped[provKey]!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 4,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.business,
+                              size: 18,
+                              color: Color(0xFF1E3A8A),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              provKey.toUpperCase(),
+                              style: GoogleFonts.outfit(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF1E3A8A),
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.red,
-                      ),
-                    ),
-                    title: Text(
-                      p.nombre,
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      'Proveedor: ${p.proveedor ?? "N/A"}',
-                      style: GoogleFonts.outfit(fontSize: 12),
-                    ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Stock: ${p.stock?.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: Colors.red[700],
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                      ...products.map(
+                        (p) => Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red[50],
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.red,
+                              ),
+                            ),
+                            title: Text(
+                              p.nombre,
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Proveedor: ${p.proveedor ?? "N/A"}',
+                              style: GoogleFonts.outfit(fontSize: 12),
+                            ),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Stock: ${p.stock?.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color: Colors.red[700],
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  'Mín: ${p.bajoInventario?.toStringAsFixed(0)}',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        Text(
-                          'Mín: ${p.bajoInventario?.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  );
+                }).toList();
+              })(),
             ),
     );
   }

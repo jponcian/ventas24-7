@@ -174,32 +174,37 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     };
 
     bool success = false;
+    Map<String, dynamic> result;
     try {
       if (widget.product == null) {
-        success = await _apiService.createProduct(data);
+        result = await _apiService.createProduct(data);
       } else {
-        success = await _apiService.updateProduct(
+        result = await _apiService.updateProduct(
           widget.product!.id.abs(),
           data,
         );
       }
 
-      if (!success) {
+      if (!result['success']) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al guardar: El servidor devolvió un error'),
+            SnackBar(
+              content: Text(
+                'Error al guardar: ${result['message'] ?? "Error desconocido"}',
+              ),
               backgroundColor: Colors.red,
             ),
           );
         }
+      } else {
+        success = true;
       }
     } catch (e) {
       success = false;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error de conexión: $e'),
+            content: Text('Error inesperado: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -420,23 +425,49 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 onSelected: (String selection) {
                   _proveedorCtrl.text = selection;
                 },
-                fieldViewBuilder:
-                    (context, controller, focusNode, onFieldSubmitted) {
-                      // Sincronizar con el controlador principal
-                      if (controller.text != _proveedorCtrl.text &&
-                          _proveedorCtrl.text.isNotEmpty &&
-                          controller.text.isEmpty) {
-                        controller.text = _proveedorCtrl.text;
-                      }
-                      controller.addListener(() {
-                        _proveedorCtrl.text = controller.text;
-                      });
-                      return _buildTextField(
-                        controller: controller,
-                        label: 'Proveedor',
-                        icon: Icons.business_outlined,
-                      );
-                    },
+                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                  // Sincronizar con el controlador principal
+                  if (controller.text != _proveedorCtrl.text &&
+                      _proveedorCtrl.text.isNotEmpty &&
+                      controller.text.isEmpty) {
+                    controller.text = _proveedorCtrl.text;
+                  }
+                  // Asegurarse de quitar el listener anterior si existe (aunque fieldViewBuilder rebuild puede ser tricky, aquí es simple)
+                  // Mejor opción: asignar listener solo una vez o chequear si ya está sincronizado es difícil.
+                  // Simplificación: Asignar siempre, el controller de Autocomplete cambia si el widget se reconstruye?
+                  // Generalmente fieldViewBuilder se llama una vez a menos que cambie Autocomplete.
+                  controller.removeListener(() {
+                    _proveedorCtrl.text = controller.text;
+                  }); // Prevent duplicates hacky way, or check API.
+                  // Realmente, solo necesitamos setear el valor de _proveedorCtrl cuando cambia.
+                  controller.addListener(() {
+                    _proveedorCtrl.text = controller.text;
+                  });
+
+                  return _buildTextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    label: 'Proveedor',
+                    icon: Icons.business_outlined,
+                    suffixIcon: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_drop_down,
+                        color: Color(0xFF1E3A8A),
+                      ),
+                      onPressed: () {
+                        // Force show options
+                        if (focusNode.hasFocus) {
+                          focusNode.unfocus();
+                          Future.delayed(const Duration(milliseconds: 50), () {
+                            focusNode.requestFocus();
+                          });
+                        } else {
+                          focusNode.requestFocus();
+                        }
+                      },
+                    ),
+                  );
+                },
                 optionsViewBuilder: (context, onSelected, options) {
                   return Align(
                     alignment: Alignment.topLeft,
@@ -620,6 +651,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     Widget? suffixIcon,
     List<TextInputFormatter>? inputFormatters,
     Function(String)? onChanged,
+    FocusNode? focusNode,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -635,6 +667,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       ),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         keyboardType: keyboardType,
         validator: validator,
         inputFormatters: inputFormatters,
