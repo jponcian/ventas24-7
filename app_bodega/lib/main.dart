@@ -285,81 +285,98 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
                             children: [
-                              // Botones de cantidad
-                              Column(
-                                children: [
-                                  // Botón incrementar
-                                  InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        p.qty++;
-                                      });
-                                      setModalState(() {});
-                                    },
-                                    child: Container(
-                                      width: 32,
-                                      height: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.green[50],
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: Colors.green[300]!,
+                              // Selector de cantidad horizontal
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Botón decrementar
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          if (p.qty > 1) {
+                                            p.qty--;
+                                          }
+                                        });
+                                        setModalState(() {});
+                                      },
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.05,
+                                              ),
+                                              blurRadius: 2,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.remove,
+                                          size: 16,
+                                          color: Colors.orange,
                                         ),
                                       ),
-                                      child: Icon(
-                                        Icons.add,
-                                        size: 18,
-                                        color: Colors.green[700],
-                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  // Cantidad
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue[50],
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
+                                    const SizedBox(width: 12),
+                                    // Cantidad
+                                    Text(
                                       '${p.qty}',
-                                      style: const TextStyle(
+                                      style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.blue,
+                                        fontSize: 16,
+                                        color: const Color(0xFF1E3A8A),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  // Botón decrementar
-                                  InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        if (p.qty > 1) {
-                                          p.qty--;
-                                        }
-                                      });
-                                      setModalState(() {});
-                                    },
-                                    child: Container(
-                                      width: 32,
-                                      height: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange[50],
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: Colors.orange[300]!,
+                                    const SizedBox(width: 12),
+                                    // Botón incrementar
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          p.qty++;
+                                        });
+                                        setModalState(() {});
+                                      },
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.05,
+                                              ),
+                                              blurRadius: 2,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.add,
+                                          size: 16,
+                                          color: Colors.green,
                                         ),
                                       ),
-                                      child: Icon(
-                                        Icons.remove,
-                                        size: 18,
-                                        color: Colors.orange[700],
-                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
