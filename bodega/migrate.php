@@ -104,6 +104,11 @@ if (!columnExists($pdo, $dbname, $table, 'codigo_barras')) {
 if (!columnExists($pdo, $dbname, $table, 'vende_media')) {
     $changes[] = "ADD COLUMN `vende_media` TINYINT(1) NOT NULL DEFAULT 0";
 }
+
+// Añadir fecha_vencimiento
+if (!columnExists($pdo, $dbname, $table, 'fecha_vencimiento')) {
+    $changes[] = "ADD COLUMN `fecha_vencimiento` DATE NULL";
+}
 // Eliminar cantidad
 $dropCantidad = false;
 if (columnExists($pdo, $dbname, $table, 'cantidad')) {

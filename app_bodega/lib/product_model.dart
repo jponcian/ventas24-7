@@ -15,7 +15,7 @@ class Product {
   final String? proveedor;
 
   // Campo local para la app
-  int qty = 0;
+  double qty = 0.0;
 
   Product({
     required this.id,
@@ -32,6 +32,7 @@ class Product {
     this.codigoBarras,
     this.proveedor,
     this.stock,
+    this.fechaVencimiento,
     this.qty = 0,
   });
 
@@ -61,13 +62,26 @@ class Product {
       codigoBarras: json['codigo_barras'],
       proveedor: json['proveedor_nombre'] ?? json['proveedor'],
       stock: double.tryParse(json['stock']?.toString() ?? '0'),
+      fechaVencimiento: json['fecha_vencimiento'],
     );
   }
 
   final double? stock;
+  final String? fechaVencimiento;
 
   // Helpers para lógica de negocio
   bool get isPaquete => unidadMedida == 'paquete';
+
+  bool get isByWeight {
+    final u = (unidadMedida ?? '').toLowerCase();
+    return u == 'kg' ||
+        u == 'kilo' ||
+        u == 'kilogramo' ||
+        u == 'gramo' ||
+        u == 'g' ||
+        u == 'libra' ||
+        u == 'lb';
+  }
 
   double get precioReal {
     // Prioridad: Unitario > Venta normal

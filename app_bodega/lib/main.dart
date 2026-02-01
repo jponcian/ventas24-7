@@ -16,6 +16,9 @@ import 'purchase_screen.dart';
 import 'market_mode_screen.dart';
 import 'history_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +36,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bodega Ponciano',
+      title: 'Ventas 24/7',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -76,6 +79,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   String _searchQuery = '';
   String _userName = '';
   String _negocioName = '';
+  String _userRol = 'vendedor';
   final ApiService _apiService = ApiService();
   final TextEditingController _searchCtrl = TextEditingController();
 
@@ -90,7 +94,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _userName = prefs.getString('user_name') ?? 'Usuario';
-      _negocioName = prefs.getString('negocio_nombre') ?? 'Bodega';
+      _negocioName = prefs.getString('negocio_nombre') ?? 'Ventas 24/7';
+      _userRol = prefs.getString('user_rol') ?? 'vendedor';
     });
   }
 
@@ -162,6 +167,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
         _loading = false;
       });
       _filter(_searchQuery);
+      _checkExpirations();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -187,6 +193,63 @@ class _ProductListScreenState extends State<ProductListScreen> {
         }).toList();
       }
     });
+  }
+
+  void _checkExpirations() {
+    final now = DateTime.now();
+    final sevenDaysFromNow = now.add(const Duration(days: 7));
+    List<Product> expiring = [];
+
+    for (var p in _allProducts) {
+      if (p.fechaVencimiento != null && p.fechaVencimiento!.isNotEmpty) {
+        try {
+          final expDate = DateTime.parse(p.fechaVencimiento!);
+          if (expDate.isBefore(sevenDaysFromNow) &&
+              expDate.isAfter(now.subtract(const Duration(days: 1)))) {
+            expiring.add(p);
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (expiring.isNotEmpty) {
+      Future.delayed(const Duration(seconds: 1), () {
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                SizedBox(width: 10),
+                Text('Productos por Vencer'),
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: expiring.length,
+                itemBuilder: (context, i) => ListTile(
+                  title: Text(expiring[i].nombre),
+                  subtitle: Text('Vence el: ${expiring[i].fechaVencimiento}'),
+                  leading: const Icon(
+                    Icons.timer_off_outlined,
+                    color: Colors.orange,
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('ENTENDIDO'),
+              ),
+            ],
+          ),
+        );
+      });
+    }
   }
 
   void _showTicket() {
@@ -334,7 +397,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                     const SizedBox(width: 12),
                                     // Cantidad
                                     Text(
-                                      '${p.qty}',
+                                      p.qty % 1 == 0
+                                          ? p.qty.toInt().toString()
+                                          : p.qty.toStringAsFixed(3),
                                       style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
@@ -632,19 +697,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                // Opción 1: Últimos modificados (comportamiento por defecto)
                 leading: const Icon(
                   Icons.history,
                   color: Colors.blue,
                   size: 32,
                 ),
                 title: const Text('Últimos Modificados'),
-                subtitle: const Text('Genera 1 hoja con los cambios recientes'),
+                subtitle: const Text(
+                  'Genera etiquetas para los últimos 12 cambios',
+                ),
                 onTap: () => Navigator.pop(ctx, 'last'),
               ),
               const Divider(),
               ListTile(
-                // Opción 2: Selección Manual
                 leading: const Icon(
                   Icons.touch_app,
                   color: Colors.green,
@@ -658,65 +723,113 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx, null), // Cancelar
+              onPressed: () => Navigator.pop(ctx, null),
               child: const Text('Cancelar'),
             ),
           ],
         ),
       );
 
-      if (choice == null) return; // Cancelado
+      if (choice == null) return;
 
       if (choice == 'manual') {
         ids = await _showSelectionDialog();
-        if (ids == null || ids.isEmpty) return; // Cancelado o vacío
+        if (ids == null || ids.isEmpty) return;
+      } else if (choice == 'last') {
+        // En modo nativo, simplemente tomamos los últimos 12 de la lista actual
+        // (Asumimos que la lista está ordenada o simplemente tomamos los primeros 12)
+        ids = _allProducts.take(12).map((p) => p.id.abs()).toList();
       }
-      // si choice == 'last', ids se mantiene null, lo que dispara el LIMIT 12 en backend
     }
 
-    try {
-      final pdfUrl = await _apiService.generarEtiquetasPDF(ids);
-      if (pdfUrl != null && mounted) {
-        // Open PDF directly
-        final Uri uri = Uri.parse(pdfUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } else {
-          // Fallback if cannot launch
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Etiquetas PDF'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('No se pudo abrir automáticamente.'),
-                  const SizedBox(height: 8),
-                  SelectableText(pdfUrl),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cerrar'),
-                ),
-              ],
+    final List<Product> productsToPrint = _allProducts
+        .where((p) => ids!.contains(p.id.abs()))
+        .toList();
+    if (productsToPrint.isEmpty) return;
+
+    final doc = pw.Document();
+
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(10),
+        build: (pw.Context context) {
+          return [
+            pw.GridView(
+              crossAxisCount: 3,
+              childAspectRatio: 0.8,
+              children: productsToPrint.map((p) {
+                double precio = p.precioReal;
+                bool esDolar = p.monedaCompra != 'BS';
+                double precioBs = esDolar ? precio * _tasa : precio;
+
+                return pw.Container(
+                  margin: const pw.EdgeInsets.all(5),
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey300),
+                    borderRadius: const pw.BorderRadius.all(
+                      pw.Radius.circular(8),
+                    ),
+                  ),
+                  child: pw.Column(
+                    mainAxisAlignment: pw.MainAxisAlignment.center,
+                    children: [
+                      pw.Text(
+                        p.nombre,
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                        textAlign: pw.TextAlign.center,
+                        maxLines: 2,
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        '${precioBs.toStringAsFixed(2)} Bs',
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          fontSize: 14,
+                          color: PdfColors.blue900,
+                        ),
+                      ),
+                      if (esDolar)
+                        pw.Text(
+                          '(${precio.toStringAsFixed(2)} USD)',
+                          style: const pw.TextStyle(
+                            fontSize: 8,
+                            color: PdfColors.grey700,
+                          ),
+                        ),
+                      pw.SizedBox(height: 8),
+                      if (p.codigoBarras != null && p.codigoBarras!.isNotEmpty)
+                        pw.Container(
+                          height: 30,
+                          width: 80,
+                          child: pw.BarcodeWidget(
+                            barcode: pw.Barcode.code128(),
+                            data: p.codigoBarras!,
+                            drawText: false,
+                          ),
+                        ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        p.codigoBarras ?? '',
+                        style: const pw.TextStyle(fontSize: 7),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
             ),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al generar PDF'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
-    }
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => doc.save(),
+    );
   }
 
   // Diálogo para buscar y seleccionar productos manualmente
@@ -840,96 +953,94 @@ class _ProductListScreenState extends State<ProductListScreen> {
           children: [
             UserAccountsDrawerHeader(
               accountName: Text(_negocioName),
-              accountEmail: Text(_userName),
+              accountEmail: Text('$_userName ($_userRol)'),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Text(
-                  _negocioName.isNotEmpty ? _negocioName[0] : 'B',
+                  _negocioName.isNotEmpty ? _negocioName[0] : 'V',
                   style: const TextStyle(
                     fontSize: 40.0,
                     color: Color(0xFF1E3A8A),
                   ),
                 ),
               ),
-              decoration: const BoxDecoration(color: Color(0xFF1E3A8A)),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+                ),
+              ),
             ),
             ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Inicio'),
-              onTap: () {
-                Navigator.pop(context); // Close drawer
-                // Already on Home, do nothing else
-              },
+              leading: const Icon(Icons.home_outlined),
+              title: const Text('Panel de Ventas'),
+              onTap: () => Navigator.pop(context),
             ),
-            ListTile(
-              leading: const Icon(Icons.add_shopping_cart, color: Colors.green),
-              title: const Text('Cargar Compras'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => PurchaseScreen()),
-                );
-              },
+            if (_userRol == 'administrador' || _userRol == 'superadmin') ...[
+              _buildDrawerItem(
+                context,
+                icon: Icons.add_shopping_cart,
+                title: 'Cargar Compras',
+                color: Colors.green,
+                route: (context) => PurchaseScreen(),
+              ),
+              _buildDrawerItem(
+                context,
+                icon: Icons.history,
+                title: 'Historial Cargas',
+                color: Colors.blueGrey,
+                route: (context) => const HistoryScreen(),
+              ),
+              _buildDrawerItem(
+                context,
+                icon: Icons.receipt_long,
+                title: 'Reporte de Compras',
+                color: Colors.purple,
+                route: (context) => const ReportPurchasesScreen(),
+              ),
+              _buildDrawerItem(
+                context,
+                icon: Icons.warning_amber_rounded,
+                title: 'Stock Bajo',
+                color: Colors.orange,
+                route: (context) => const LowStockScreen(),
+              ),
+            ],
+            _buildDrawerItem(
+              context,
+              icon: Icons.bar_chart_rounded,
+              title: 'Mis Ventas',
+              color: Colors.blue,
+              route: (context) => const ReportSalesScreen(),
             ),
-            ListTile(
-              leading: const Icon(Icons.history, color: Colors.blueGrey),
-              title: const Text('Historial Cargas'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HistoryScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.bar_chart),
-              title: const Text('Reporte de Ventas'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ReportSalesScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.receipt_long, color: Colors.purple),
-              title: const Text('Reporte de Compras'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ReportPurchasesScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.warning, color: Colors.orange),
-              title: const Text('Bajo Inventario'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LowStockScreen(),
-                  ),
-                );
-              },
-            ),
+            if (_userRol == 'superadmin') ...[
+              const Divider(),
+              ListTile(
+                leading: const Icon(
+                  Icons.business_center,
+                  color: Colors.indigo,
+                ),
+                title: const Text('GESTIÓN DE NEGOCIOS'),
+                subtitle: const Text('Administrar suscripciones'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Implementar pantalla de superadmin
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Módulo Superadmin en desarrollo'),
+                    ),
+                  );
+                },
+              ),
+            ],
             const Divider(),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
                 'Cerrar Sesión',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               onTap: () async {
                 await _apiService.logout();
@@ -960,11 +1071,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.shopping_basket_outlined,
-              color: Color(0xFF10B981),
-            ),
-            tooltip: 'Modo Supermercado',
+            icon: const Icon(Icons.bolt_rounded, color: Color(0xFF10B981)),
+            tooltip: 'Venta Rápida',
             onPressed: () => _openMarketMode(),
           ),
           IconButton(
@@ -977,11 +1085,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
               MaterialPageRoute(builder: (context) => CalcScreen(tasa: _tasa)),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.print_outlined, color: Color(0xFFEF4444)),
-            tooltip: 'Generar Etiquetas PDF',
-            onPressed: () => _generarEtiquetasPDF(),
-          ),
+          if (_userRol == 'administrador' || _userRol == 'superadmin')
+            IconButton(
+              icon: const Icon(Icons.print_outlined, color: Color(0xFFEF4444)),
+              tooltip: 'Generar Etiquetas PDF',
+              onPressed: () => _generarEtiquetasPDF(),
+            ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
             onPressed: () async {
@@ -1113,20 +1222,35 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
+  Widget _buildDrawerItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required Color color,
+    required Widget Function(BuildContext) route,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title),
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.push(context, MaterialPageRoute(builder: route));
+      },
+    );
+  }
+
   void _openMarketMode() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MarketModeScreen(
+        builder: (context) => QuickSaleScreen(
           products: _allProducts,
-          onProductScanned: (p) {
+          onProductScanned: (p, weight) {
             setState(() {
-              // Buscar el producto original en la lista general para actualizar su qty
-              // Usamos p.id para encontrarlo exactamente
               final original = _allProducts.firstWhere(
                 (item) => item.id == p.id,
               );
-              original.qty += 1;
+              original.qty += weight;
             });
           },
         ),
@@ -1230,7 +1354,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             : null,
                       ),
                       Text(
-                        '${p.qty}',
+                        p.qty % 1 == 0
+                            ? p.qty.toInt().toString()
+                            : p.qty.toStringAsFixed(3),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,

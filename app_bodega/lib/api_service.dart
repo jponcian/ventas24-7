@@ -27,6 +27,10 @@ class ApiService {
         await prefs.setInt('negocio_id', data['user']['negocio_id']);
         await prefs.setString('negocio_nombre', data['user']['negocio_nombre']);
         await prefs.setString('user_name', data['user']['nombre']);
+        await prefs.setString(
+          'user_rol',
+          data['user']['rol'].toString().toLowerCase(),
+        );
         await prefs.setBool('is_logged_in', true);
         return {'ok': true, 'user': data['user']};
       }

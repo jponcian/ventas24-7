@@ -32,6 +32,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _precioCompraUnidadCtrl;
   late TextEditingController _tamPaqueteCtrl;
   late TextEditingController _stockCtrl;
+  late TextEditingController _vencimientoCtrl;
 
   bool _isLoading = false;
   String _monedaCompra = 'USD';
@@ -47,8 +48,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _unidadMedidaCtrl = TextEditingController(
       text: widget.product?.unidadMedida ?? 'unidad',
     );
+    double cpUnitario = widget.product?.precioCompra ?? 0;
+    double tamPack = widget.product?.tamPaquete ?? 1;
+    if (tamPack <= 0) tamPack = 1;
+
     _precioCompraCtrl = TextEditingController(
-      text: widget.product?.precioCompra?.toString() ?? '',
+      text: (cpUnitario * tamPack).toStringAsFixed(2),
     );
     _precioVentaCtrl = TextEditingController(
       text: widget.product?.precioVenta?.toString() ?? '',
@@ -68,16 +73,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _precioVentaUnidadCtrl = TextEditingController(
       text: widget.product?.precioVentaUnidad?.toString() ?? '',
     );
-    double cp = widget.product?.precioCompra ?? 0;
-    double tp = widget.product?.tamPaquete ?? 1;
     _precioCompraUnidadCtrl = TextEditingController(
-      text: (cp / tp).toStringAsFixed(2),
+      text: cpUnitario.toStringAsFixed(2),
     );
     _tamPaqueteCtrl = TextEditingController(
       text: widget.product?.tamPaquete?.toString() ?? '1',
     );
     _stockCtrl = TextEditingController(
       text: widget.product?.stock?.toString() ?? '0',
+    );
+    _vencimientoCtrl = TextEditingController(
+      text: widget.product?.fechaVencimiento ?? '',
     );
     _monedaCompra = widget.product?.monedaCompra ?? 'USD';
 
@@ -110,6 +116,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _precioCompraUnidadCtrl.dispose();
     _tamPaqueteCtrl.dispose();
     _stockCtrl.dispose();
+    _vencimientoCtrl.dispose();
     super.dispose();
   }
 
@@ -146,6 +153,40 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
+  Future<void> _selectDate() async {
+    DateTime initialDate = DateTime.now();
+    if (_vencimientoCtrl.text.isNotEmpty) {
+      try {
+        initialDate = DateTime.parse(_vencimientoCtrl.text);
+      } catch (_) {}
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF1E3A8A),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF1E3A8A),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _vencimientoCtrl.text = picked.toString().split(' ')[0];
+      });
+    }
+  }
+
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -171,6 +212,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       'moneda_compra': _monedaCompra,
       'vende_media': 0,
       'stock': double.tryParse(_stockCtrl.text) ?? 0.0,
+      'fecha_vencimiento': _vencimientoCtrl.text.isEmpty
+          ? null
+          : _vencimientoCtrl.text,
     };
 
     bool success = false;
@@ -520,6 +564,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 label: 'Stock Actual (Inventario)',
                 icon: Icons.inventory,
                 keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _vencimientoCtrl,
+                label: 'Fecha de Vencimiento',
+                icon: Icons.event_available_outlined,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.date_range, color: Color(0xFF1E3A8A)),
+                  onPressed: _selectDate,
+                ),
+                onChanged:
+                    (_) {}, // Prevent manual editing if desired, or let it be
               ),
               const SizedBox(height: 48),
               SizedBox(
