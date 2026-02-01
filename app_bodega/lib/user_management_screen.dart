@@ -116,6 +116,21 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 if (ok) {
                   Navigator.pop(context);
                   _loadUsers();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Usuario procesado correctamente'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Error al guardar usuario. Verifique los datos o conexión.',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               },
               child: Text(isEdit ? 'GUARDAR' : 'CREAR'),

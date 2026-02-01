@@ -13,6 +13,8 @@ class Product {
   final String? monedaCompra;
   final String? codigoBarras;
   final String? proveedor;
+  final String? updatedAt;
+  final String? monedaBase;
 
   // Campo local para la app
   double qty = 0.0;
@@ -33,7 +35,9 @@ class Product {
     this.proveedor,
     this.stock,
     this.fechaVencimiento,
-    this.qty = 0,
+    this.updatedAt,
+    this.monedaBase,
+    this.qty = 0.0,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -63,6 +67,8 @@ class Product {
       proveedor: json['proveedor_nombre'] ?? json['proveedor'],
       stock: double.tryParse(json['stock']?.toString() ?? '0'),
       fechaVencimiento: json['fecha_vencimiento'],
+      updatedAt: json['updated_at'],
+      monedaBase: json['moneda_base'] ?? json['moneda_compra'],
     );
   }
 

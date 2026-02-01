@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'user_management_screen.dart';
+import 'business_management_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -737,15 +738,28 @@ class _ProductListScreenState extends State<ProductListScreen> {
         ids = await _showSelectionDialog();
         if (ids == null || ids.isEmpty) return;
       } else if (choice == 'last') {
-        // En modo nativo, simplemente tomamos los últimos 12 de la lista actual
-        // (Asumimos que la lista está ordenada o simplemente tomamos los primeros 12)
-        ids = _allProducts.take(12).map((p) => p.id.abs()).toList();
+        // Ordenar por fecha de actualización (descendente) y tomar los últimos 12
+        List<Product> sorted = List.from(_allProducts);
+        sorted.sort((a, b) {
+          final dateA = DateTime.tryParse(a.updatedAt ?? '') ?? DateTime(2000);
+          final dateB = DateTime.tryParse(b.updatedAt ?? '') ?? DateTime(2000);
+          return dateB.compareTo(dateA); // Más recientes primero
+        });
+        ids = sorted.take(12).map((p) => p.id.abs()).toList();
       }
     }
 
-    final List<Product> productsToPrint = _allProducts
+    List<Product> productsToPrint = _allProducts
         .where((p) => ids!.contains(p.id.abs()))
         .toList();
+
+    // Asegurar que se impriman en orden de actualización descendente
+    productsToPrint.sort((a, b) {
+      final dateA = DateTime.tryParse(a.updatedAt ?? '') ?? DateTime(2000);
+      final dateB = DateTime.tryParse(b.updatedAt ?? '') ?? DateTime(2000);
+      return dateB.compareTo(dateA);
+    });
+
     if (productsToPrint.isEmpty) return;
 
     final doc = pw.Document();
@@ -761,8 +775,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               childAspectRatio: 0.8,
               children: productsToPrint.map((p) {
                 double precio = p.precioReal;
-                bool esDolar = p.monedaCompra != 'BS';
-                double precioBs = esDolar ? precio * _tasa : precio;
+                bool baseEsBs = p.monedaBase == 'BS';
 
                 return pw.Container(
                   margin: const pw.EdgeInsets.all(5),
@@ -780,44 +793,39 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         p.nombre,
                         style: pw.TextStyle(
                           fontWeight: pw.FontWeight.bold,
-                          fontSize: 10,
+                          fontSize: 13,
                         ),
                         textAlign: pw.TextAlign.center,
                         maxLines: 2,
+                        overflow: pw.TextOverflow.clip,
                       ),
-                      pw.SizedBox(height: 5),
-                      pw.Text(
-                        '${precioBs.toStringAsFixed(2)} Bs',
-                        style: pw.TextStyle(
-                          fontWeight: pw.FontWeight.bold,
-                          fontSize: 14,
-                          color: PdfColors.blue900,
-                        ),
-                      ),
-                      if (esDolar)
+                      pw.Spacer(),
+                      if (!baseEsBs)
                         pw.Text(
-                          '(${precio.toStringAsFixed(2)} USD)',
-                          style: const pw.TextStyle(
-                            fontSize: 8,
-                            color: PdfColors.grey700,
+                          '${precio.toStringAsFixed(2)} USD',
+                          style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.bold,
+                            fontSize: 26,
+                            color: PdfColors.blue900,
                           ),
                         ),
-                      pw.SizedBox(height: 8),
+                      pw.Spacer(),
                       if (p.codigoBarras != null && p.codigoBarras!.isNotEmpty)
                         pw.Container(
-                          height: 30,
-                          width: 80,
+                          height: 45,
+                          width: 120,
                           child: pw.BarcodeWidget(
                             barcode: pw.Barcode.code128(),
                             data: p.codigoBarras!,
                             drawText: false,
                           ),
                         ),
-                      pw.SizedBox(height: 4),
+                      pw.SizedBox(height: 2),
                       pw.Text(
                         p.codigoBarras ?? '',
-                        style: const pw.TextStyle(fontSize: 7),
+                        style: const pw.TextStyle(fontSize: 9),
                       ),
+                      pw.SizedBox(height: 5),
                     ],
                   ),
                 );
@@ -971,14 +979,28 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 ),
               ),
             ),
+            _buildSectionHeader('OPERACIONES'),
             ListTile(
-              leading: const Icon(Icons.home_outlined),
+              leading: const Icon(
+                Icons.home_outlined,
+                color: Color(0xFF1E3A8A),
+              ),
               title: const Text('Panel de Ventas'),
               onTap: () => Navigator.pop(context),
             ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.bar_chart_rounded,
+              title: 'Mis Ventas',
+              color: Colors.blue,
+              route: (context) => const ReportSalesScreen(),
+            ),
+
             if (_userRol == 'administrador' ||
                 _userRol == 'admin' ||
                 _userRol == 'superadmin') ...[
+              const Divider(),
+              _buildSectionHeader('INVENTARIO Y COMPRAS'),
               _buildDrawerItem(
                 context,
                 icon: Icons.add_shopping_cart,
@@ -1007,6 +1029,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 color: Colors.orange,
                 route: (context) => const LowStockScreen(),
               ),
+
+              const Divider(),
+              _buildSectionHeader('CONFIGURACIÓN'),
               _buildDrawerItem(
                 context,
                 icon: Icons.people_outline,
@@ -1026,28 +1051,23 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 },
               ),
             ],
-            _buildDrawerItem(
-              context,
-              icon: Icons.bar_chart_rounded,
-              title: 'Mis Ventas',
-              color: Colors.blue,
-              route: (context) => const ReportSalesScreen(),
-            ),
+
             if (_userRol == 'superadmin') ...[
               const Divider(),
+              _buildSectionHeader('SUPERVISIÓN GLOBAL'),
               ListTile(
                 leading: const Icon(
                   Icons.business_center,
-                  color: Colors.indigo,
+                  color: Colors.blueGrey,
                 ),
                 title: const Text('GESTIÓN DE NEGOCIOS'),
                 subtitle: const Text('Administrar suscripciones'),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Implementar pantalla de superadmin
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Módulo Superadmin en desarrollo'),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BusinessManagementScreen(),
                     ),
                   );
                 },
@@ -1240,6 +1260,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, top: 16, bottom: 8),
+      child: Text(
+        title,
+        style: GoogleFonts.outfit(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[500],
+          letterSpacing: 1.2,
         ),
       ),
     );

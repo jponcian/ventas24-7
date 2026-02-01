@@ -339,4 +339,34 @@ class ApiService {
       return false;
     }
   }
+
+  // --- Negocios ---
+  Future<List<Map<String, dynamic>>> getNegocios() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/negocios.php'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return List<Map<String, dynamic>>.from(data['negocios']);
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> saveNegocio(Map<String, dynamic> data) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/negocios.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      final body = jsonDecode(response.body);
+      return response.statusCode == 200 && body['ok'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
 }
