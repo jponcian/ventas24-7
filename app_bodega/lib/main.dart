@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'user_management_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -975,7 +976,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
               title: const Text('Panel de Ventas'),
               onTap: () => Navigator.pop(context),
             ),
-            if (_userRol == 'administrador' || _userRol == 'superadmin') ...[
+            if (_userRol == 'administrador' ||
+                _userRol == 'admin' ||
+                _userRol == 'superadmin') ...[
               _buildDrawerItem(
                 context,
                 icon: Icons.add_shopping_cart,
@@ -1003,6 +1006,24 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 title: 'Stock Bajo',
                 color: Colors.orange,
                 route: (context) => const LowStockScreen(),
+              ),
+              _buildDrawerItem(
+                context,
+                icon: Icons.people_outline,
+                title: 'Gestión de Usuarios',
+                color: Colors.indigo,
+                route: (context) => const UserManagementScreen(),
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.print_outlined,
+                  color: Color(0xFFEF4444),
+                ),
+                title: const Text('Etiquetas de Precios (PDF)'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _generarEtiquetasPDF();
+                },
               ),
             ],
             _buildDrawerItem(
@@ -1085,7 +1106,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
               MaterialPageRoute(builder: (context) => CalcScreen(tasa: _tasa)),
             ),
           ),
-          if (_userRol == 'administrador' || _userRol == 'superadmin')
+          if (_userRol == 'administrador' ||
+              _userRol == 'admin' ||
+              _userRol == 'superadmin')
             IconButton(
               icon: const Icon(Icons.print_outlined, color: Color(0xFFEF4444)),
               tooltip: 'Generar Etiquetas PDF',

@@ -305,4 +305,38 @@ class ApiService {
       return null;
     }
   }
+
+  // --- Usuarios ---
+  Future<List<Map<String, dynamic>>> getUsers() async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/usuarios.php?negocio_id=$nid'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return List<Map<String, dynamic>>.from(data['usuarios']);
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> saveUser(Map<String, dynamic> userData) async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.post(
+        Uri.parse('$baseUrl/usuarios.php?negocio_id=$nid'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(userData),
+      );
+      final data = jsonDecode(response.body);
+      return response.statusCode == 200 && data['ok'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
 }
