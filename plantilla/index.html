@@ -2,409 +2,240 @@
 <html lang="es">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Ing. En Informática | Portfolio Profesional</title>
-
-    <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="css/bulma.min.css">
-    <link rel="stylesheet" href="css/material-design-iconic-font.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ventas 24/7 - Tu Negocio en el Bolsillo</title>
+    <link rel="stylesheet" href="css/landing.css">
+    <!-- Iconos Phosphor -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        /* Professional enhancements */
-        .hero-professional {
-            background: linear-gradient(rgba(2, 21, 35, 0.85), rgba(2, 21, 35, 0.9)), url('img/slider-1.jpg') center center no-repeat;
-            background-size: cover;
-            background-attachment: fixed;
+        /* Ajustes específicos para el Mockup CSS con la nueva paleta */
+        .dashboard-mockup {
+            width: 100%;
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%);
         }
 
-        .card-module {
-            transition: all 0.3s ease;
-            height: 100%;
-            border-top: 4px solid transparent;
+        .mockup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .card-module:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-            border-top: 4px solid var(--danger);
-        }
-
-        .icon-box {
-            background: rgba(239, 87, 52, 0.1);
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
+        .stat-card {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem auto;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
         }
 
-        .section-header {
-            margin-bottom: 3rem;
-            position: relative;
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
         }
 
-        .section-header::after {
-            content: '';
-            display: block;
-            width: 60px;
-            height: 4px;
-            background: var(--danger);
-            margin: 1rem auto 0;
-            border-radius: 2px;
+        .stat-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
         }
 
-        /* Tech Stack Icons Hover */
-        .tech-icon {
-            transition: transform 0.3s ease, color 0.3s ease;
-        }
-
-        .tech-icon:hover {
-            transform: scale(1.2);
-            color: var(--primary) !important;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        .footer-premium {
-            background: linear-gradient(180deg, #021523 0%, #010d16 100%);
-            border-top: 1px solid rgba(239, 87, 52, 0.2);
+        .chart-placeholder {
+            height: 90px;
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%);
+            border-radius: 10px;
+            margin-top: 15px;
             position: relative;
             overflow: hidden;
+            border-top: 1px solid rgba(16, 185, 129, 0.3);
         }
 
-        .footer-premium::before {
-            content: '';
+        /* Update graph color to Green */
+        .chart-line {
             position: absolute;
-            top: 0;
+            bottom: 0;
             left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--danger), transparent);
-            opacity: 0.5;
-        }
-
-        .footer-logo {
-            font-family: 'poppins', sans-serif;
-            letter-spacing: 1px;
-        }
-
-        .do-badge-container {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px 20px;
-            border-radius: 12px;
-            display: inline-block;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .do-badge-container:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-            border-color: rgba(239, 87, 52, 0.4);
+            width: 100%;
+            height: 60%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 25" preserveAspectRatio="none"><path d="M0,25 L10,20 L20,22 L30,10 L40,15 L50,5 L60,12 L70,8 L80,18 L90,10 L100,20 L100,25 L0,25 Z" fill="rgba(16, 185, 129, 0.4)"/></svg>');
+            background-size: cover;
         }
     </style>
 </head>
 
 <body>
-    <div id="top"></div>
 
-    <!-- Navigation -->
-    <nav class="navbar" role="navigation" aria-label="main navigation">
-        <div class="navbar-header" id="navbar-header">
-            <a href="#" class="brand-link is-size-4 has-text-weight-bold" style="font-family: 'poppins', sans-serif;">
-                <span class="has-text-danger">DEV</span>PROFILE
-            </a>
-            <button class="navbar-menu-mobile open is-size-3 is-hidden-desktop" id="navbar-menu-mobile">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-        </div>
-
-        <ul class="navbar-container" id="navbar-container">
-            <li class="navbar-item">
-                <a data-scroll href="#top" class="navbar-a">Inicio</a>
-            </li>
-            <li class="navbar-item">
-                <a data-scroll href="#projects" class="navbar-a">Módulos</a>
-            </li>
-            <li class="navbar-item">
-                <a data-scroll href="#stack" class="navbar-a">Tecnologías</a>
-            </li>
-            <li class="navbar-item">
-                <a data-scroll href="#about" class="navbar-a">Perfil</a>
-            </li>
-        </ul>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="hero is-medium hero-professional is-bold"
-        style="background: radial-gradient(circle at 60% 50%, #0a3d62 0%, #021523 100%); position: relative; overflow: hidden;">
-        <!-- CSS Pattern Overlay -->
-        <div
-            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1; background-image: radial-gradient(#33cc99 1px, transparent 1px); background-size: 30px 30px;">
-        </div>
-
-        <div class="hero-body" style="position: relative; z-index: 1;">
-            <div class="container has-text-centered">
-                <span class="tag is-danger is-medium is-rounded mb-4 is-uppercase"
-                    style="letter-spacing: 2px;">Ingeniería en Informática</span>
-                <h1 class="title is-1 has-text-white is-size-2-mobile has-text-weight-bold mb-4">
-                    Soluciones Tecnológicas & <br>Desarrollo de Software
-                </h1>
-                <h2 class="subtitle is-4 has-text-grey-light is-size-6-mobile mb-6">
-                    Módulos unificados para la gestión de Bodega y Encomiendas.
-                </h2>
-                <div class="buttons is-centered">
-                    <a href="#projects" class="button is-danger is-rounded is-medium">
-                        <span class="icon"><i class="fa-solid fa-layer-group"></i></span>
-                        <span>Ver Módulos</span>
-                    </a>
-                    <a href="#about" class="button is-white is-outlined is-rounded is-medium">
-                        <span class="icon"><i class="fa-solid fa-user"></i></span>
-                        <span>Conóceme</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Modules Section -->
-    <section id="projects" class="section" style="background-color: #f8fafd; position: relative;">
-        <!-- Decorative background element -->
-        <div
-            style="position: absolute; top: 0; right: 0; width: 300px; height: 300px; background: radial-gradient(circle, rgba(51, 204, 153, 0.1) 0%, transparent 70%); border-radius: 50%; pointer-events: none;">
-        </div>
-
-        <div class="container">
-            <div class="has-text-centered section-header mb-6">
-                <h2 class="title is-2 has-text-primary has-text-weight-bold">Módulos del Sistema</h2>
-                <div
-                    style="width: 60px; height: 4px; background: linear-gradient(90deg, #ef5734, #ffbd2e); margin: 1rem auto; border-radius: 2px;">
-                </div>
-                <p class="subtitle is-5 has-text-grey">Plataformas operativas integradas</p>
-            </div>
-
-            <div class="columns is-multiline is-centered is-variable is-6">
-
-                <!-- Bodega Card (MercadoLibre Style: Yellow/Blue) -->
-                <div class="column is-4-desktop is-6-tablet">
-                    <div class="card card-module"
-                        style="border: none; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); overflow: visible; height: 100%; transition: all 0.4s ease;"
-                        onmouseover="this.style.transform='translateY(-10px)'"
-                        onmouseout="this.style.transform='translateY(0)'">
-                        <div class="card-content has-text-centered p-6"
-                            style="height: 100%; display: flex; flex-direction: column;">
-                            <div class="icon-box mb-5"
-                                style="background: linear-gradient(135deg, #ffe600 0%, #f2d000 100%); width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 8px 20px rgba(255, 230, 0, 0.4);">
-                                <i class="fa-solid fa-warehouse fa-3x" style="color: #2d3277;"></i>
-                            </div>
-                            <h3 class="title is-4 has-text-primary mb-4">Ventas360</h3>
-                            <p class="content is-size-6 has-text-grey mb-5" style="flex-grow: 1;">
-                                Sistema integral de gestión comercial. Control de productos, stock, precios y
-                                proveedores con una visión de 360 grados de su negocio.
-                                <br><br>
-                                <strong class="has-text-info">Estado del módulo:</strong>
-                                <span class="tag is-info is-light is-small">Versión Premium</span>
-                                <br>
-                                <span class="is-size-7">
-                                    ✓ Reporte de ventas avanzado<br>
-                                    ✓ Gestión multi-usuario<br>
-                                    ✓ Soporte técnico incluido
-                                </span>
-                            </p>
-                            <div class="field">
-                                <p class="control is-expanded">
-                                    <a href="app-bodega.apk"
-                                        class="button is-small is-rounded is-fullwidth is-outlined is-info" download>
-                                        <span class="icon is-small"><i class="fa-brands fa-android"></i></span>
-                                        <span>Descargar App Android</span>
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Encomiendas Card (MRW/Zoom Style: Red) -->
-                <div class="column is-4-desktop is-6-tablet">
-                    <div class="card card-module"
-                        style="border: none; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); overflow: visible; height: 100%; transition: all 0.4s ease;"
-                        onmouseover="this.style.transform='translateY(-10px)'"
-                        onmouseout="this.style.transform='translateY(0)'">
-                        <div class="card-content has-text-centered p-6"
-                            style="height: 100%; display: flex; flex-direction: column;">
-                            <div class="icon-box mb-5"
-                                style="background: linear-gradient(135deg, #e52d27 0%, #b31217 100%); width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 8px 20px rgba(229, 45, 39, 0.4);">
-                                <i class="fa-solid fa-truck-fast fa-3x has-text-white"></i>
-                            </div>
-                            <h3 class="title is-4 has-text-primary mb-4">Encomiendas</h3>
-                            <p class="content is-size-6 has-text-grey mb-5" style="flex-grow: 1;">
-                                Generación de autorizaciones de retiro. Gestión de destinatarios y permisos para la
-                                entrega de paquetes.
-                            </p>
-                            <a href="../encomiendas/"
-                                class="button is-rounded is-fullwidth has-text-weight-bold has-text-white"
-                                style="background: linear-gradient(90deg, #e52d27, #b31217); border: none; box-shadow: 0 4px 15px rgba(229, 45, 39, 0.3);">
-                                <span>Ingresar</span>
-                                <span class="icon is-small ml-2"><i class="fa-solid fa-arrow-right"></i></span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- Tech Stack Section -->
-    <section id="stack" class="section has-background-white">
-        <div class="container">
-            <div class="has-text-centered mb-6">
-                <h2 class="title is-3 has-text-primary">Stack Tecnológico</h2>
-            </div>
-            <div class="columns is-centered is-mobile is-multiline is-variable is-8">
-                <div class="column has-text-centered p-5">
-                    <span class="has-text-grey-light tech-icon d-block mb-3" style="display: block;">
-                        <i class="fa-brands fa-html5 fa-4x"></i>
-                    </span>
-                    <p class="heading has-text-weight-bold">HTML5</p>
-                </div>
-                <div class="column has-text-centered p-5">
-                    <span class="has-text-grey-light tech-icon d-block mb-3" style="display: block;">
-                        <i class="fa-brands fa-css3-alt fa-4x"></i>
-                    </span>
-                    <p class="heading has-text-weight-bold">CSS3</p>
-                </div>
-                <div class="column has-text-centered p-5">
-                    <span class="has-text-grey-light tech-icon d-block mb-3" style="display: block;">
-                        <i class="fa-brands fa-js fa-4x"></i>
-                    </span>
-                    <p class="heading has-text-weight-bold">JavaScript</p>
-                </div>
-                <div class="column has-text-centered p-5">
-                    <span class="has-text-grey-light tech-icon d-block mb-3" style="display: block;">
-                        <i class="fa-brands fa-php fa-4x"></i>
-                    </span>
-                    <p class="heading has-text-weight-bold">PHP</p>
-                </div>
-                <div class="column has-text-centered p-5">
-                    <span class="has-text-grey-light tech-icon d-block mb-3" style="display: block;">
-                        <i class="fa-solid fa-database fa-4x"></i>
-                    </span>
-                    <p class="heading has-text-weight-bold">SQL</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Profile/About Section -->
-    <div class="container section" id="about">
-        <div class="columns is-vcentered">
-            <div class="column is-half">
-                <!-- Code Terminal Component -->
-                <div class="box has-background-dark p-0"
-                    style="border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-                    <div class="has-background-black-ter px-4 py-2" style="display: flex; gap: 8px;">
-                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></div>
-                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></div>
-                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></div>
-                    </div>
-                    <div class="p-5">
-                        <pre class="has-background-dark has-text-white p-0"
-                            style="font-family: 'Fira Code', monospace; font-size: 0.9rem;">
-<span class="has-text-info">class</span> <span class="has-text-warning">Ingeniero</span> {
-    <span class="has-text-info">constructor</span>() {
-        <span class="has-text-danger">this</span>.nombre = <span class="has-text-success">'Javier Ponciano'</span>;
-        <span class="has-text-danger">this</span>.rol = <span class="has-text-success">'Funcionario & Dev'</span>;
-        <span class="has-text-danger">this</span>.skills = [<span class="has-text-success">'PHP'</span>, <span class="has-text-success">'SQL'</span>, <span class="has-text-success">'JS'</span>];
-    }
-
-    <span class="has-text-info">buildSolutions</span>() {
-        <span class="has-text-danger">return</span> <span class="has-text-success">'Optimización de Procesos'</span>;
-    }
-}</pre>
-                    </div>
-                </div>
-            </div>
-            <div class="column is-half section-about-me pl-6-desktop">
-                <h4 class="subtitle is-6 has-text-danger is-uppercase has-text-weight-bold mb-2">Acerca de mí</h4>
-                <h1 class="title is-2 has-text-primary has-text-weight-bold mb-4">Ingeniero en Informática</h1>
-                <div class="content">
-                    <p class="is-size-6 has-text-grey">
-                        Profesional dedicado a la ingeniería de software y la administración pública.
-                        Este portal unifica los accesos a los sistemas críticos desarrollados para optimizar la gestión
-                        de <strong>Bodega y Logística (Encomiendas)</strong>.
-                    </p>
-                    <p class="is-size-6 has-text-grey">
-                        Mi objetivo es proveer interfaces intuitivas y sistemas eficientes que faciliten la toma de
-                        decisiones y el flujo operativo.
-                    </p>
-                </div>
-                <div class="buttons mt-5">
-                    <a href="tel:+584144679693" class="button is-medium is-rounded has-text-white"
-                        style="background: linear-gradient(135deg, #021523 0%, #0a3d62 100%); border: none; box-shadow: 0 4px 15px rgba(2, 21, 35, 0.3); transition: transform 0.2s;"
-                        onmouseover="this.style.transform='translateY(-2px)'"
-                        onmouseout="this.style.transform='translateY(0)'">
-                        <span class="icon mr-2"><i class="fa-solid fa-phone"></i></span>
-                        <span style="font-weight: 600;">+58-4144679693</span>
-                    </a>
-                </div>
-            </div>
-        </div>
+    <!-- Fondo Sutil -->
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer footer-premium has-text-white pt-6 pb-6 mt-6">
-        <div class="container">
-            <div class="columns is-vcentered">
-                <div class="column is-6">
-                    <div class="footer-logo mb-4">
-                        <span class="has-text-weight-bold is-size-4">
-                            <span class="has-text-danger">DEV</span>PROFILE
-                        </span>
-                    </div>
-                    <p class="subtitle is-size-6 has-text-grey-light mb-4">
-                        Soluciones tecnológicas a medida para la gestión empresarial.
-                    </p>
-                    <p class="is-size-7 has-text-grey">
-                        Ingeniería en Informática &copy; 2026 | Javier Ponciano
-                    </p>
+    <div class="container">
+        <!-- Navegación Compacta -->
+        <nav>
+            <div class="logo">
+                <i class="ph-fill ph-rocket-launch" style="color: var(--primary);"></i>
+                Ventas 24/7
+            </div>
+
+            <div class="nav-links">
+                <a href="#inicio" class="nav-item">Inicio</a>
+                <a href="#beneficios" class="nav-item">Beneficios</a>
+                <a href="#precios" class="nav-item">Precios</a>
+            </div>
+
+            <a href="app-bodega.apk" class="btn btn-primary">
+                <i class="ph ph-download-simple"></i>
+                Descargar App
+            </a>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero" id="inicio">
+            <div class="hero-content">
+                <div class="hero-badge">🚀 Versión 2.0 Disponible</div>
+                <h1>Gestiona tu negocio <span>sin límites</span>.</h1>
+                <p>Inventario, ventas y reportes en tiempo real. La herramienta definitiva para emprendedores que no se
+                    detienen.</p>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="#precios" class="btn btn-primary">
+                        Comenzar Ahora <i class="ph ph-arrow-right"></i>
+                    </a>
+                    <a href="app-bodega.apk" class="btn btn-outline">
+                        <i class="ph ph-android-logo"></i>
+                        APK
+                    </a>
                 </div>
-                <div class="column is-6 has-text-right-tablet">
-                    <div class="mb-5">
-                        <div class="do-badge-container">
-                            <a
-                                href="https://www.digitalocean.com/?refcode=004d8c71908f&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge">
-                                <img src="https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%202.svg"
-                                    alt="DigitalOcean Referral Badge" style="height: 32px; display: block;" />
-                            </a>
+            </div>
+
+            <div class="hero-visual">
+                <div class="glass-card dashboard-mockup">
+                    <div class="mockup-header">
+                        <div>
+                            <div style="font-size: 0.9rem; font-weight: bold; color:#fff;">Mi Negocio</div>
+                            <div style="font-size: 0.7rem; color: #64748b;">Estado: En línea</div>
+                        </div>
+                        <i class="ph ph-bell" style="color: #64748b;"></i>
+                    </div>
+
+                    <!-- Sales Stat -->
+                    <div class="stat-card">
+                        <div style="background: rgba(16, 185, 129, 0.15); padding: 8px; border-radius: 8px;">
+                            <i class="ph-fill ph-currency-dollar" style="color: #10b981; font-size: 1.2rem;"></i>
+                        </div>
+                        <div>
+                            <div class="stat-value">$1,250.00</div>
+                            <div class="stat-label">Ventas Hoy</div>
                         </div>
                     </div>
-                    <div class="social-links">
-                        <p class="is-size-7 has-text-grey mb-3">CONECTA CONMIGO</p>
-                        <div class="buttons is-right">
-                            <a href="#" class="button is-small is-white is-outlined is-rounded mx-1">
-                                <span class="icon"><i class="fa-brands fa-github"></i></span>
-                            </a>
-                            <a href="#" class="button is-small is-white is-outlined is-rounded mx-1">
-                                <span class="icon"><i class="fa-brands fa-linkedin"></i></span>
-                            </a>
+
+                    <!-- Products Stat -->
+                    <div class="stat-card">
+                        <div style="background: rgba(59, 130, 246, 0.15); padding: 8px; border-radius: 8px;">
+                            <i class="ph-fill ph-package" style="color: #3b82f6; font-size: 1.2rem;"></i>
                         </div>
+                        <div>
+                            <div class="stat-value">148</div>
+                            <div class="stat-label">Productos Movidos</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-placeholder">
+                        <div class="chart-line"></div>
                     </div>
                 </div>
             </div>
-        </div>
-    </footer>
+        </section>
 
-    <!-- Scripts -->
-    <script src="js/smooth-scroll.min.js"></script>
-    <script src="js/main.js"></script>
+        <!-- Beneficios Compactos (Vertical List / Grid) -->
+        <section class="features" id="beneficios">
+            <div class="section-title">
+                <h2>Todo en orden</h2>
+            </div>
+
+            <div class="grid-3">
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <i class="ph ph-cloud-check"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Hosting Incluido</h3>
+                        <p>Nosotros ponemos el servidor. Base de datos segura y siempre online.</p>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <i class="ph ph-headset"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Soporte Técnico</h3>
+                        <p>Tu mensualidad te garantiza ayuda rápida ante cualquier falla.</p>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="icon-box">
+                        <i class="ph ph-shield-check"></i>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Sin Costos Extra</h3>
+                        <p>Suscripción única + mantenimiento mensual. Sin comisiones por venta.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Precios Compactos -->
+        <section class="pricing" id="precios">
+            <div class="pricing-container">
+                <div class="pricing-left">
+                    <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Plan Profesional</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">La solución completa para tu crecimiento.
+                    </p>
+
+                    <div class="benefits-grid">
+                        <div class="benefit-item"><i class="ph-fill ph-check-circle"></i> App Android Nativa</div>
+                        <div class="benefit-item"><i class="ph-fill ph-check-circle"></i> Base de Datos Remota</div>
+                        <div class="benefit-item"><i class="ph-fill ph-check-circle"></i> Soporte Prioritario</div>
+                        <div class="benefit-item"><i class="ph-fill ph-check-circle"></i> Backups Automáticos</div>
+                        <div class="benefit-item"><i class="ph-fill ph-check-circle"></i> Sin Límite de Ventas</div>
+                        <div class="benefit-item"><i class="ph-fill ph-check-circle"></i> Actualizaciones Futuras</div>
+                    </div>
+                </div>
+
+                <div class="pricing-right">
+                    <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">Suscripción Inicial</p>
+                    <div class="price-tag">$30</div>
+                    <div class="monthly">+ $10 / mes</div>
+                    <a href="https://wa.me/584144679693?text=Hola,%20estoy%20interesado%20en%20el%20Plan%20Profesional%20de%20Ventas%2024/7"
+                        class="btn btn-primary" target="_blank" style="width: 100%;">
+                        <i class="ph-fill ph-whatsapp-logo" style="margin-right: 8px; font-size: 1.2rem;"></i>
+                        Contratar al +58 414-4679693
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <footer
+            style="text-align: center; padding: 2rem 0; color: #64748b; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.05);">
+            <p style="margin-bottom: 0.5rem;">&copy; 2024 Ventas 24/7. Control total.</p>
+            <p>
+                <a href="https://wa.me/584144679693"
+                    style="color: #64748b; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                    <i class="ph-fill ph-whatsapp-logo"></i> +58 414-4679693
+                </a>
+            </p>
+        </footer>
+    </div>
 </body>
 
 </html>

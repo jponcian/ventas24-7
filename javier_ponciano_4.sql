@@ -1,17 +1,17 @@
 /*
- Navicat Premium Data Transfer
+ Navicat Premium Dump SQL
 
- Source Server         : ZZ - ponciano
+ Source Server         : ZZ Miranda
  Source Server Type    : MySQL
- Source Server Version : 101114
+ Source Server Version : 101114 (10.11.14-MariaDB-0+deb12u2)
  Source Host           : zz.com.ve:3306
  Source Schema         : javier_ponciano_4
 
  Target Server Type    : MySQL
- Target Server Version : 101114
+ Target Server Version : 101114 (10.11.14-MariaDB-0+deb12u2)
  File Encoding         : 65001
 
- Date: 01/02/2026 18:13:54
+ Date: 02/02/2026 09:51:26
 */
 
 SET NAMES utf8mb4;
@@ -32,12 +32,11 @@ CREATE TABLE `compras`  (
   `total` decimal(10, 2) NULL DEFAULT 0.00,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_compras_negocio`(`negocio_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of compras
 -- ----------------------------
-INSERT INTO `compras` VALUES (1, 2, 26, 'BS', 363.6623, 'completada', '2026-01-29 19:19:06', 2.50);
 
 -- ----------------------------
 -- Table structure for compras_items
@@ -52,12 +51,11 @@ CREATE TABLE `compras_items`  (
   `costo_origen` decimal(10, 2) NULL DEFAULT NULL,
   `moneda_origen` varchar(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of compras_items
 -- ----------------------------
-INSERT INTO `compras_items` VALUES (1, 1, 354, 2.00, 0.00, 1.25, 'BS');
 
 -- ----------------------------
 -- Table structure for detalle_ventas
@@ -71,21 +69,13 @@ CREATE TABLE `detalle_ventas`  (
   `precio_unitario_bs` decimal(10, 2) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `venta_id`(`venta_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+) ENGINE = MyISAM AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
 
 -- ----------------------------
 -- Records of detalle_ventas
 -- ----------------------------
-INSERT INTO `detalle_ventas` VALUES (1, 1, 47, 2.00, 74.05);
-INSERT INTO `detalle_ventas` VALUES (2, 2, 234, 1.00, 796.05);
-INSERT INTO `detalle_ventas` VALUES (3, 2, 12, 1.00, 2221.53);
-INSERT INTO `detalle_ventas` VALUES (4, 2, 14, 1.00, 662.76);
-INSERT INTO `detalle_ventas` VALUES (5, 2, 261, 1.00, 444.31);
-INSERT INTO `detalle_ventas` VALUES (6, 2, 226, 1.00, 481.33);
-INSERT INTO `detalle_ventas` VALUES (7, 2, 206, 1.00, 692.38);
-INSERT INTO `detalle_ventas` VALUES (8, 2, 271, 1.00, 610.92);
-INSERT INTO `detalle_ventas` VALUES (9, 3, 234, 1.00, 796.05);
-INSERT INTO `detalle_ventas` VALUES (10, 3, 198, 1.00, 1029.31);
+INSERT INTO `detalle_ventas` VALUES (1, 1, 63, 1.00, 507.25);
+INSERT INTO `detalle_ventas` VALUES (2, 2, 63, 1.00, 507.25);
 
 -- ----------------------------
 -- Table structure for negocios
@@ -132,14 +122,14 @@ CREATE TABLE `productos`  (
   INDEX `idx_negocio`(`negocio_id`) USING BTREE,
   INDEX `idx_proveedor`(`proveedor_id`) USING BTREE,
   INDEX `idx_codigo`(`codigo_barras`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 359 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 360 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of productos
 -- ----------------------------
 INSERT INTO `productos` VALUES (1, 1, 2, 'QUESO', NULL, NULL, 'unidad', 1.00, 0.00, NULL, 0, 'USD', 4.80, 7.00, NULL, '2026-01-27 18:05:01', '2026-01-27 18:19:43', 0);
 INSERT INTO `productos` VALUES (2, 1, 3, 'CLUB SOCIAL', '', '7590011205158', 'unidad', 6.00, 0.00, NULL, 0, 'USD', 1.58, 0.40, 2.15, '2026-01-27 18:05:01', '2026-01-31 22:56:44', 0);
-INSERT INTO `productos` VALUES (63, 1, 4, 'GLUP 2LTS', NULL, NULL, 'paquete', 6.00, 0.00, NULL, 0, 'USD', 1.08, 1.41, 1.41, '2026-01-27 18:05:01', '2026-01-27 18:05:01', 0);
+INSERT INTO `productos` VALUES (63, 1, 4, 'GLUP 2LTS', '', '', 'unidad', 6.00, -2.00, NULL, 0, 'USD', 1.05, 1.37, 1.41, '2026-01-27 18:05:01', '2026-02-02 02:28:56', 0);
 INSERT INTO `productos` VALUES (4, 1, 5, 'CATALINAS', NULL, NULL, 'unidad', 10.00, -1.00, NULL, 0, 'USD', 3.00, 0.40, 3.50, '2026-01-27 18:05:01', '2026-01-27 21:38:11', 0);
 INSERT INTO `productos` VALUES (5, 1, 6, 'PAN SALADO', NULL, NULL, 'unidad', 1.00, -1.00, NULL, 0, 'USD', 0.80, 1.00, NULL, '2026-01-27 18:05:01', '2026-01-27 21:38:11', 0);
 INSERT INTO `productos` VALUES (6, 1, 7, 'PAN CLINEJA', NULL, NULL, 'unidad', 1.00, 0.00, NULL, 1, 'USD', 1.30, 1.60, NULL, '2026-01-27 18:05:01', '2026-01-27 18:05:01', 0);
@@ -453,6 +443,7 @@ INSERT INTO `productos` VALUES (350, 1, 1, 'CREMA ALIDENT', '', '7597257001650',
 INSERT INTO `productos` VALUES (356, 1, 18, 'J. espalda con todo', '', '100400001567', 'unidad', 1.00, 0.00, NULL, 0, 'USD', 0.00, 6.80, 0.00, '2026-01-29 21:17:36', '2026-01-29 21:17:36', 0);
 INSERT INTO `productos` VALUES (355, 1, 18, 'Carne Molida', '', '103004004392', 'unidad', 1.00, 0.00, NULL, 0, 'USD', 0.00, 8.00, 0.00, '2026-01-29 21:15:48', '2026-01-29 21:15:48', 0);
 INSERT INTO `productos` VALUES (357, 1, 18, 'q. amarillo ortiz', '', '121002001748', 'unidad', 1.00, 0.00, NULL, 0, 'USD', 0.00, 1.74, 0.00, '2026-01-29 21:18:19', '2026-01-29 21:18:19', 0);
+INSERT INTO `productos` VALUES (359, 1, 27, 'prueba', '', 'https://consultaqr.seniat.gob.ve/qr/459f8f1a-0f15-454a-b3df-1bddcf9638f4', 'unidad', 1.00, 0.00, NULL, 0, 'USD', 0.00, 5.00, 0.00, '2026-02-02 12:52:17', '2026-02-02 12:52:17', 0);
 
 -- ----------------------------
 -- Table structure for proveedores
@@ -592,13 +583,12 @@ CREATE TABLE `ventas`  (
   `tasa` decimal(10, 2) NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `fk_venta_negocio`(`negocio_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
+) ENGINE = MyISAM AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Fixed;
 
 -- ----------------------------
 -- Records of ventas
 -- ----------------------------
-INSERT INTO `ventas` VALUES (1, 1, '2026-01-31 14:58:44', 148.10, 0.40, 370.25);
-INSERT INTO `ventas` VALUES (2, 1, '2026-01-31 15:27:04', 5909.26, 15.96, 370.25);
-INSERT INTO `ventas` VALUES (3, 1, '2026-02-01 13:33:32', 1825.35, 4.93, 370.25);
+INSERT INTO `ventas` VALUES (1, 1, '2026-02-02 02:25:53', 507.25, 1.37, 370.25);
+INSERT INTO `ventas` VALUES (2, 1, '2026-02-02 02:28:56', 507.25, 1.37, 370.25);
 
 SET FOREIGN_KEY_CHECKS = 1;
