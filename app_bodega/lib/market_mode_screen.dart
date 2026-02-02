@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 import 'product_model.dart';
+import 'utils.dart';
 
 class QuickSaleScreen extends StatefulWidget {
   final List<Product> products;
@@ -102,10 +104,9 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: weightCtrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+              keyboardType: TextInputType.number,
               autofocus: true,
+              inputFormatters: [WeightDecimalFormatter()],
               decoration: InputDecoration(
                 labelText: 'Peso / Cantidad',
                 suffixText: p.unidadMedida,

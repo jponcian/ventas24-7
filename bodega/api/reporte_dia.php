@@ -49,11 +49,17 @@ try {
     $stmtDetalle->execute([$negocio_id, $fecha]);
     $productos = $stmtDetalle->fetchAll(PDO::FETCH_ASSOC);
 
+    // Listado de ventas individuales
+    $stmtVentas = $db->prepare("SELECT id, total_usd, total_bs, fecha FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ? ORDER BY fecha DESC");
+    $stmtVentas->execute([$negocio_id, $fecha]);
+    $ventas = $stmtVentas->fetchAll(PDO::FETCH_ASSOC);
+
     echo json_encode([
         'ok' => true,
         'fecha' => $fecha,
         'resumen' => $resumen,
-        'productos' => $productos
+        'productos' => $productos,
+        'ventas' => $ventas
     ]);
 
 } catch (Exception $e) {

@@ -110,12 +110,107 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                     ),
                     const SizedBox(height: 12),
                     _buildGroupedProductList(),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Ventas del Día',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E3A8A),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildIndividualSalesList(),
                   ],
                 ),
               ),
             ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showVentaDetalle(int ventaId) async {
+    showDialog(
+      context: context,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final detalles = await _apiService.getVentaDetalle(ventaId);
+
+    if (mounted) Navigator.pop(context); // Cerrar loading
+
+    if (detalles.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay detalles para esta venta')),
+        );
+      }
+      return;
+    }
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Detalle Venta #$ventaId'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: detalles.length,
+              itemBuilder: (context, i) {
+                final d = detalles[i];
+                double cant = double.tryParse(d['cantidad'].toString()) ?? 0;
+                double precio =
+                    double.tryParse(d['precio_unitario_bs'].toString()) ?? 0;
+                return ListTile(
+                  title: Text(d['nombre'] ?? 'Producto'),
+                  subtitle: Text(
+                    '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x ${precio.toStringAsFixed(2)} Bs',
+                  ),
+                  trailing: Text(
+                    '${(cant * precio).toStringAsFixed(2)} Bs',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CERRAR'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _buildIndividualSalesList() {
+    final ventas = _reportData!['ventas'] as List? ?? [];
+    if (ventas.isEmpty) {
+      return const Center(child: Text('No hay ventas individuales'));
+    }
+
+    return Column(
+      children: ventas.map((sale) {
+        final dateUtc = DateTime.parse(sale['fecha']);
+        final dateLocal = dateUtc.toLocal();
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            onTap: () => _showVentaDetalle(sale['id']),
+            title: Text('Venta #${sale['id']}'),
+            subtitle: Text(DateFormat('hh:mm a').format(dateLocal)),
+            trailing: Text(
+              '\$${(double.tryParse(sale['total_usd'].toString()) ?? 0).toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 

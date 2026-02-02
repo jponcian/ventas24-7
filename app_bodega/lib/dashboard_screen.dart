@@ -179,6 +179,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<void> _showVentaDetalle(int ventaId) async {
+    showDialog(
+      context: context,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final detalles = await _apiService.getVentaDetalle(ventaId);
+
+    if (mounted) Navigator.pop(context); // Close loading
+
+    if (detalles.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay detalles para esta venta')),
+        );
+      }
+      return;
+    }
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Detalle Venta #$ventaId'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: detalles.length,
+              itemBuilder: (context, i) {
+                final d = detalles[i];
+                double cant = double.tryParse(d['cantidad'].toString()) ?? 0;
+                double precio =
+                    double.tryParse(d['precio_unitario_bs'].toString()) ?? 0;
+                return ListTile(
+                  title: Text(d['nombre'] ?? 'Producto'),
+                  subtitle: Text(
+                    '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x ${precio.toStringAsFixed(2)} Bs',
+                  ),
+                  trailing: Text(
+                    '${(cant * precio).toStringAsFixed(2)} Bs',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CERRAR'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -299,6 +357,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: ListTile(
+                              onTap: () => _showVentaDetalle(sale['id']),
                               leading: const CircleAvatar(
                                 backgroundColor: Color(0xFFEFF6FF),
                                 child: Icon(

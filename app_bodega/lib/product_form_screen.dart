@@ -35,6 +35,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _vencimientoCtrl;
 
   bool _isLoading = false;
+  bool _vendePorPeso = false;
   String _monedaCompra = 'USD';
   List<String> _providers = [];
 
@@ -86,6 +87,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       text: widget.product?.fechaVencimiento ?? '',
     );
     _monedaCompra = widget.product?.monedaCompra ?? 'USD';
+    _vendePorPeso = widget.product?.vendePorPeso ?? false;
 
     _loadProviders();
   }
@@ -217,6 +219,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       'bajo_inventario': int.tryParse(_stockBajoCtrl.text) ?? 0,
       'moneda_compra': _monedaCompra,
       'vende_media': 0,
+      'vende_por_peso': _vendePorPeso ? 1 : 0,
       'stock': double.tryParse(_stockCtrl.text) ?? 0.0,
       'fecha_vencimiento': _vencimientoCtrl.text.isEmpty
           ? null
@@ -424,6 +427,25 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ),
 
               const SizedBox(height: 24),
+              Row(
+                children: [
+                  const Text(
+                    '¿Vende por Peso?',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  Switch(
+                    value: _vendePorPeso,
+                    onChanged: (val) {
+                      setState(() {
+                        _vendePorPeso = val;
+                      });
+                    },
+                    activeThumbColor: const Color(0xFF1E3A8A),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   const Text(

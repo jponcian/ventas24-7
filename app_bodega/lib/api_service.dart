@@ -152,6 +152,23 @@ class ApiService {
         jsonDecode(response.body)['ok'] == true;
   }
 
+  Future<List<Map<String, dynamic>>> getVentaDetalle(int ventaId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/venta_detalle.php?id=$ventaId'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return List<Map<String, dynamic>>.from(data['detalles']);
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   Future<List<String>> getProviders() async {
     try {
       final nid = await getNegocioId();
@@ -176,6 +193,21 @@ class ApiService {
       final nid = await getNegocioId();
       final response = await http.get(
         Uri.parse('$baseUrl/reporte_dia.php?negocio_id=$nid&fecha=$fecha'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {'ok': false, 'error': 'Error ${response.statusCode}'};
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> getReporteInventario() async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/reporte_inventario.php?negocio_id=$nid'),
       );
       if (response.statusCode == 200) {
         return jsonDecode(response.body);

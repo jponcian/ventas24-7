@@ -22,6 +22,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'dashboard_screen.dart';
+import 'utils.dart';
+import 'inventory_report_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -126,7 +128,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             id: p.id,
             nombre: p.nombre,
             descripcion: p.descripcion,
-            unidadMedida: 'unidad',
+            unidadMedida: p.unidadMedida,
             precioVenta: p.precioReal,
             precioCompra: p.precioCompra,
             monedaCompra: p.monedaCompra,
@@ -139,6 +141,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             stock: p.stock,
             updatedAt: p.updatedAt,
             monedaBase: p.monedaBase,
+            vendePorPeso: p.vendePorPeso,
             qty: 0,
           ),
         );
@@ -164,6 +167,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               stock: p.stock,
               updatedAt: p.updatedAt,
               monedaBase: p.monedaBase,
+              vendePorPeso: p.vendePorPeso,
               qty: 0,
             ),
           );
@@ -1156,6 +1160,59 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
+  void _showWeightEntryDialog(Product p) {
+    final TextEditingController weightCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Ingresar Peso (${p.unidadMedida})'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(p.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: weightCtrl,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              inputFormatters: [WeightDecimalFormatter()],
+              decoration: InputDecoration(
+                labelText: 'Peso / Cantidad',
+                suffixText: p.unidadMedida,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCELAR'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final double? weight = double.tryParse(weightCtrl.text);
+              if (weight != null && weight > 0) {
+                setState(() {
+                  p.qty += weight;
+                });
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1E3A8A),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('AÑADIR'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProductCard(Product p) {
     bool esBajo =
         p.stock != null &&
@@ -1265,7 +1322,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           Icons.add_circle,
                           color: Color(0xFF1E3A8A),
                         ),
-                        onPressed: () => setState(() => p.qty++),
+                        onPressed: () {
+                          if (p.isByWeight) {
+                            _showWeightEntryDialog(p);
+                          } else {
+                            setState(() => p.qty++);
+                          }
+                        },
                       ),
                     ],
                   ),
@@ -1398,6 +1461,13 @@ class _MainDrawerState extends State<MainDrawer> {
               color: Colors.orange,
               route: (context) => const LowStockScreen(),
             ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.inventory_outlined,
+              title: 'Inventario Actual',
+              color: Colors.blueAccent,
+              route: (context) => const InventoryReportScreen(),
+            ),
             const Divider(),
             _buildSectionHeader('CONFIGURACIÓN'),
             _buildDrawerItem(
@@ -1428,9 +1498,12 @@ class _MainDrawerState extends State<MainDrawer> {
             ),
             onTap: () async {
               await _apiService.logout();
+              if (mounted)
+                Navigator.popUntil(context, (route) => route.isFirst);
               if (mounted) Navigator.pushReplacementNamed(context, '/login');
             },
           ),
+          const SizedBox(height: 50), // Espacio para botones de Android
         ],
       ),
     );

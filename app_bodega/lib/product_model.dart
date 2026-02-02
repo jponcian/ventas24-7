@@ -15,6 +15,7 @@ class Product {
   final String? proveedor;
   final String? updatedAt;
   final String? monedaBase;
+  final bool vendePorPeso;
 
   // Campo local para la app
   double qty = 0.0;
@@ -37,6 +38,7 @@ class Product {
     this.fechaVencimiento,
     this.updatedAt,
     this.monedaBase,
+    this.vendePorPeso = false,
     this.qty = 0.0,
   });
 
@@ -69,6 +71,8 @@ class Product {
       fechaVencimiento: json['fecha_vencimiento'],
       updatedAt: json['updated_at'],
       monedaBase: json['moneda_base'] ?? json['moneda_compra'],
+      vendePorPeso:
+          (json['vende_por_peso'] == 1 || json['vende_por_peso'] == true),
     );
   }
 
@@ -79,6 +83,7 @@ class Product {
   bool get isPaquete => unidadMedida == 'paquete';
 
   bool get isByWeight {
+    if (vendePorPeso) return true;
     final u = (unidadMedida ?? '').toLowerCase();
     return u == 'kg' ||
         u == 'kilo' ||

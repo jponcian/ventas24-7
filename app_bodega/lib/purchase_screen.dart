@@ -232,9 +232,10 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                   ],
                   TextField(
                     controller: qtyCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: p.isByWeight
+                        ? [WeightDecimalFormatter()]
+                        : null,
                     autofocus: true,
                     decoration: InputDecoration(
                       labelText: modoCarga == 'paquete'
