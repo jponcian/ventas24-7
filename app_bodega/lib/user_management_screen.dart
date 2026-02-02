@@ -59,6 +59,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       );
     }
 
+    bool _saving = false;
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -144,34 +146,65 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: _saving ? null : () => Navigator.pop(context),
               child: const Text('CANCELAR'),
             ),
             ElevatedButton(
-              onPressed: () async {
-                final userData = {
-                  'action': isEdit ? 'update' : 'create',
-                  'id': user?['id'],
-                  'cedula': cedulaCtrl.text,
-                  'nombre_completo': nameCtrl.text,
-                  'rol': selectedRol,
-                  'password': passCtrl.text,
-                  'activo': isActive ? 1 : 0,
-                  'negocios': assignedNegocios,
-                };
-                final ok = await _apiService.saveUser(userData);
-                if (ok) {
-                  Navigator.pop(context);
-                  _loadUsers();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Usuario procesado correctamente'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              },
-              child: Text(isEdit ? 'GUARDAR' : 'CREAR'),
+              onPressed: _saving
+                  ? null
+                  : () async {
+                      if (cedulaCtrl.text.isEmpty ||
+                          (nameCtrl.text.isEmpty) ||
+                          (!isEdit && passCtrl.text.isEmpty)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Por favor completa los campos'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+
+                      setDialogState(() => _saving = true);
+                      final userData = {
+                        'action': isEdit ? 'update' : 'create',
+                        'id': user?['id'],
+                        'cedula': cedulaCtrl.text,
+                        'nombre_completo': nameCtrl.text,
+                        'rol': selectedRol,
+                        'password': passCtrl.text,
+                        'activo': isActive ? 1 : 0,
+                        'negocios': assignedNegocios,
+                      };
+                      final res = await _apiService.saveUser(userData);
+                      if (mounted) {
+                        if (res['ok'] == true) {
+                          Navigator.pop(context);
+                          _loadUsers();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Usuario procesado correctamente'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } else {
+                          setDialogState(() => _saving = false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: ${res['error']}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              child: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(isEdit ? 'GUARDAR' : 'CREAR'),
             ),
           ],
         ),

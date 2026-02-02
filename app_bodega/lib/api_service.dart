@@ -373,7 +373,7 @@ class ApiService {
     }
   }
 
-  Future<bool> saveUser(Map<String, dynamic> userData) async {
+  Future<Map<String, dynamic>> saveUser(Map<String, dynamic> userData) async {
     try {
       final nid = await getNegocioId();
       final response = await http.post(
@@ -382,9 +382,12 @@ class ApiService {
         body: jsonEncode(userData),
       );
       final data = jsonDecode(response.body);
-      return response.statusCode == 200 && data['ok'] == true;
+      if (response.statusCode == 200 && data['ok'] == true) {
+        return {'ok': true};
+      }
+      return {'ok': false, 'error': data['error'] ?? 'Error desconocido'};
     } catch (e) {
-      return false;
+      return {'ok': false, 'error': e.toString()};
     }
   }
 
