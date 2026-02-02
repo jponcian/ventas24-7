@@ -28,7 +28,43 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (result['ok'] == true) {
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
+      if (!mounted) return;
+      final negocios = result['negocios'] as List<dynamic>?;
+
+      if (negocios != null && negocios.length > 1) {
+        // Mostrar diálogo de selección
+        final selected = await showDialog<Map<String, dynamic>>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Seleccionar Negocio'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: negocios.length,
+                itemBuilder: (context, i) {
+                  return ListTile(
+                    leading: const Icon(Icons.business),
+                    title: Text(negocios[i]['nombre']),
+                    onTap: () => Navigator.pop(context, negocios[i]),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+
+        if (selected != null) {
+          await _apiService.setNegocio(selected['id'], selected['nombre']);
+          if (mounted) Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          // Si cancela (aunque pusimos barrierDismissible: false), no hacemos nada
+        }
+      } else {
+        // Ya se guardó en ApiService si era solo 1
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } else {
       if (mounted) {
         final String errorMessage =

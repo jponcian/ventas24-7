@@ -17,64 +17,52 @@ if (empty($cedula) || empty($password)) {
 
 try {
     global $db;
-    error_log("Login attempt: Cedula=$cedula, Pass=" . (empty($password) ? 'EMPTY' : 'PROVIDED'));
     $stmt = $db->prepare("SELECT * FROM users WHERE cedula = ? LIMIT 1");
     $stmt->execute([$cedula]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        error_log("User not found: $cedula");
         http_response_code(401);
         echo json_encode(['ok' => false, 'error' => 'Usuario no encontrado']);
         exit;
     }
 
     if (!password_verify($password, $user['password_hash'])) {
-        error_log("Invalid password for user: $cedula");
         http_response_code(401);
         echo json_encode(['ok' => false, 'error' => 'Contraseña incorrecta']);
         exit;
     }
 
-    // Buscar negocio
-    $stmtNeg = $db->prepare("SELECT nombre FROM negocios WHERE id = ?");
-    $stmtNeg->execute([$user['negocio_id']]);
-    $negocio = $stmtNeg->fetch(PDO::FETCH_ASSOC);
+    // Obtener negocios asignados
+    $stmtNeg = $db->prepare("
+        SELECT n.id, n.nombre 
+        FROM negocios n 
+        INNER JOIN user_negocios un ON n.id = un.negocio_id 
+        WHERE un.user_id = ? AND n.activo = 1
+    ");
+    $stmtNeg->execute([$user['id']]);
+    $negocios = $stmtNeg->fetchAll(PDO::FETCH_ASSOC);
 
-    if (!$negocio) {
-        error_log("User $cedula has invalid negocio_id: " . $user['negocio_id']);
-         // Para mantener compatibilidad, quizás asignar un negocio default o dar error
-         // Daremos error para que se sepa qué pasa
-         // OJO: Si es el admin global (ID 1), tal vez queramos dejarlo pasar con valores dummy?
-         // Pero el app espera negocio_id y nombre.
-         
-         // Si es un fix rápido para usuario JAVIER (ID 1) que tiene negocio 0:
-         if ($user['negocio_id'] == 0) {
-             $negocio = ['nombre' => 'Admin Global'];
-             $user['negocio_id'] = 1; // Fallback to 1? Or keep 0? App might break with 0 if using FKs.
-             // Mejor devolvemos error por ahora.
-             http_response_code(401);
-             echo json_encode(['ok' => false, 'error' => 'Usuario sin negocio asignado']);
-             exit;
-         } else {
-             http_response_code(401);
-             echo json_encode(['ok' => false, 'error' => 'Negocio no encontrado']);
-             exit;
-         }
+    // Si es superadmin y no tiene negocios asignados explícitamente, ver todos
+    if ($user['rol'] === 'superadmin' && empty($negocios)) {
+        $negocios = $db->query("SELECT id, nombre FROM negocios WHERE activo = 1")->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    error_log("Login success: " . $user['nombre_completo']);
-    
+    if (empty($negocios)) {
+        http_response_code(401);
+        echo json_encode(['ok' => false, 'error' => 'Usuario sin negocios activos asignados']);
+        exit;
+    }
+
     echo json_encode([
         'ok' => true,
         'user' => [
             'id' => $user['id'],
             'cedula' => $user['cedula'],
             'nombre' => $user['nombre_completo'],
-            'rol' => $user['rol'],
-            'negocio_id' => $user['negocio_id'],
-            'negocio_nombre' => $negocio['nombre']
-        ]
+            'rol' => $user['rol']
+        ],
+        'negocios' => $negocios
     ]);
 } catch (Exception $e) {
     http_response_code(500);

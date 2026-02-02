@@ -24,15 +24,21 @@ class ApiService {
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['ok'] == true) {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('negocio_id', data['user']['negocio_id']);
-        await prefs.setString('negocio_nombre', data['user']['negocio_nombre']);
         await prefs.setString('user_name', data['user']['nombre']);
         await prefs.setString(
           'user_rol',
           data['user']['rol'].toString().toLowerCase(),
         );
-        await prefs.setBool('is_logged_in', true);
-        return {'ok': true, 'user': data['user']};
+        // Si solo hay un negocio, lo guardamos de una vez
+        if (data['negocios'] != null && data['negocios'].length == 1) {
+          await prefs.setInt('negocio_id', data['negocios'][0]['id']);
+          await prefs.setString(
+            'negocio_nombre',
+            data['negocios'][0]['nombre'],
+          );
+          await prefs.setBool('is_logged_in', true);
+        }
+        return {'ok': true, 'user': data['user'], 'negocios': data['negocios']};
       }
       return {'ok': false, 'error': data['error'] ?? 'Error desconocido'};
     } catch (e) {
@@ -43,6 +49,13 @@ class ApiService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+  }
+
+  Future<void> setNegocio(int id, String nombre) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('negocio_id', id);
+    await prefs.setString('negocio_nombre', nombre);
+    await prefs.setBool('is_logged_in', true);
   }
 
   Future<double> getTasa({String? fecha}) async {
@@ -310,8 +323,11 @@ class ApiService {
   Future<List<Map<String, dynamic>>> getUsers() async {
     try {
       final nid = await getNegocioId();
+      final prefs = await SharedPreferences.getInstance();
+      final rol = prefs.getString('user_rol') ?? 'vendedor';
+
       final response = await http.get(
-        Uri.parse('$baseUrl/usuarios.php?negocio_id=$nid'),
+        Uri.parse('$baseUrl/usuarios.php?negocio_id=$nid&requester_rol=$rol'),
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -337,6 +353,21 @@ class ApiService {
       return response.statusCode == 200 && data['ok'] == true;
     } catch (e) {
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> getDashboardData() async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/dashboard.php?negocio_id=$nid'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {'ok': false, 'error': 'Error ${response.statusCode}'};
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
     }
   }
 

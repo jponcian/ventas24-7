@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 class UserManagementScreen extends StatefulWidget {
@@ -12,12 +13,23 @@ class UserManagementScreen extends StatefulWidget {
 class _UserManagementScreenState extends State<UserManagementScreen> {
   final ApiService _apiService = ApiService();
   List<Map<String, dynamic>> _users = [];
+  List<Map<String, dynamic>> _allNegocios = [];
   bool _loading = true;
+  String _myRol = 'vendedor';
 
   @override
   void initState() {
     super.initState();
-    _loadUsers();
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    final prefs = await SharedPreferences.getInstance();
+    _myRol = prefs.getString('user_rol') ?? 'vendedor';
+    await _loadUsers();
+    if (_myRol == 'superadmin') {
+      _allNegocios = await _apiService.getNegocios();
+    }
   }
 
   Future<void> _loadUsers() async {
@@ -38,6 +50,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final passCtrl = TextEditingController();
     String selectedRol = user?['rol'] ?? 'vendedor';
     bool isActive = (user?['activo']?.toString() == '1');
+
+    // Negocios asignados (lista de IDs)
+    List<int> assignedNegocios = [];
+    if (user != null && user['negocios'] != null) {
+      assignedNegocios = List<int>.from(
+        user['negocios'].map((e) => int.parse(e.toString())),
+      );
+    }
 
     showDialog(
       context: context,
@@ -71,23 +91,49 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 ),
                 DropdownButtonFormField<String>(
                   value: selectedRol,
-                  items: const [
-                    DropdownMenuItem(
+                  items: [
+                    const DropdownMenuItem(
                       value: 'vendedor',
                       child: Text('Vendedor'),
                     ),
-                    DropdownMenuItem(
+                    const DropdownMenuItem(
                       value: 'admin',
                       child: Text('Administrador'),
                     ),
-                    DropdownMenuItem(
-                      value: 'superadmin',
-                      child: Text('Superadmin'),
-                    ),
+                    if (_myRol == 'superadmin')
+                      const DropdownMenuItem(
+                        value: 'superadmin',
+                        child: Text('Superadmin'),
+                      ),
                   ],
                   onChanged: (v) => setDialogState(() => selectedRol = v!),
                   decoration: const InputDecoration(labelText: 'Rol'),
                 ),
+                if (_myRol == 'superadmin') ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Asignar Negocios:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  ..._allNegocios.map((n) {
+                    final int nId = int.parse(n['id'].toString());
+                    return CheckboxListTile(
+                      title: Text(n['nombre']),
+                      value: assignedNegocios.contains(nId),
+                      dense: true,
+                      onChanged: (val) {
+                        setDialogState(() {
+                          if (val == true) {
+                            assignedNegocios.add(nId);
+                          } else {
+                            assignedNegocios.remove(nId);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ],
                 SwitchListTile(
                   title: const Text('Activo'),
                   value: isActive,
@@ -111,6 +157,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   'rol': selectedRol,
                   'password': passCtrl.text,
                   'activo': isActive ? 1 : 0,
+                  'negocios': assignedNegocios,
                 };
                 final ok = await _apiService.saveUser(userData);
                 if (ok) {
@@ -120,15 +167,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     const SnackBar(
                       content: Text('Usuario procesado correctamente'),
                       backgroundColor: Colors.green,
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Error al guardar usuario. Verifique los datos o conexión.',
-                      ),
-                      backgroundColor: Colors.red,
                     ),
                   );
                 }
@@ -182,7 +220,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     subtitle: Text(
                       '${u['cedula']} • ${u['rol'].toString().toUpperCase()}',
                     ),
-                    trailing: isSuper
+                    trailing: isSuper && _myRol != 'superadmin'
                         ? const Icon(Icons.verified, color: Colors.indigo)
                         : IconButton(
                             icon: const Icon(Icons.edit),

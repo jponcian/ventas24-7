@@ -192,13 +192,19 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
     setState(() => _isLoading = true);
 
+    // Calcular el costo unitario real
+    double costoPaquete = double.tryParse(_precioCompraCtrl.text) ?? 0.0;
+    double tamPaquete = double.tryParse(_tamPaqueteCtrl.text) ?? 1.0;
+    if (tamPaquete <= 0) tamPaquete = 1.0;
+    double costoUnitarioReal = costoPaquete / tamPaquete;
+
     Map<String, dynamic> data = {
       'nombre': _nombreCtrl.text,
       'descripcion': _descCtrl.text,
       'codigo_barras': _codigoBarrasCtrl.text,
       'unidad_medida': _unidadMedidaCtrl.text,
-      'tam_paquete': double.tryParse(_tamPaqueteCtrl.text) ?? 1.0,
-      'precio_compra': double.tryParse(_precioCompraCtrl.text) ?? 0.0,
+      'tam_paquete': tamPaquete,
+      'precio_compra': costoUnitarioReal, // Enviar el costo unitario calculado
       'precio_venta': double.tryParse(_precioVentaCtrl.text) ?? 0.0,
       'precio_venta_paquete':
           double.tryParse(_precioVentaPaqueteCtrl.text) ?? 0.0,

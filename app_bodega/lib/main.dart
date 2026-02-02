@@ -21,6 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,7 +53,8 @@ class MyApp extends StatelessWidget {
       initialRoute: isLoggedIn ? '/home' : '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
-        '/home': (context) => const ProductListScreen(),
+        '/home': (context) => const DashboardScreen(),
+        '/sales': (context) => const ProductListScreen(),
       },
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -135,6 +137,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
             precioVentaPaquete: p.precioVentaPaquete,
             precioVentaUnidad: p.precioVentaUnidad,
             stock: p.stock,
+            updatedAt: p.updatedAt,
+            monedaBase: p.monedaBase,
             qty: 0,
           ),
         );
@@ -158,6 +162,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
               precioVentaPaquete: p.precioVentaPaquete,
               precioVentaUnidad: p.precioVentaUnidad,
               stock: p.stock,
+              updatedAt: p.updatedAt,
+              monedaBase: p.monedaBase,
               qty: 0,
             ),
           );
@@ -738,14 +744,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
         ids = await _showSelectionDialog();
         if (ids == null || ids.isEmpty) return;
       } else if (choice == 'last') {
-        // Ordenar por fecha de actualización (descendente) y tomar los últimos 12
+        // Ordenar por fecha de actualización (descendente) y tomar los últimos 15
         List<Product> sorted = List.from(_allProducts);
         sorted.sort((a, b) {
           final dateA = DateTime.tryParse(a.updatedAt ?? '') ?? DateTime(2000);
           final dateB = DateTime.tryParse(b.updatedAt ?? '') ?? DateTime(2000);
           return dateB.compareTo(dateA); // Más recientes primero
         });
-        ids = sorted.take(12).map((p) => p.id.abs()).toList();
+        ids = sorted.take(15).map((p) => p.id.abs()).toList();
       }
     }
 
@@ -766,13 +772,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     doc.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(10),
+        pageFormat: PdfPageFormat.letter,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 20),
         build: (pw.Context context) {
           return [
             pw.GridView(
               crossAxisCount: 3,
-              childAspectRatio: 0.8,
+              childAspectRatio: 0.75,
               children: productsToPrint.map((p) {
                 double precio = p.precioReal;
                 bool baseEsBs = p.monedaBase == 'BS';
@@ -956,141 +962,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            UserAccountsDrawerHeader(
-              accountName: Text(_negocioName),
-              accountEmail: Text('$_userName ($_userRol)'),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(
-                  _negocioName.isNotEmpty ? _negocioName[0] : 'V',
-                  style: const TextStyle(
-                    fontSize: 40.0,
-                    color: Color(0xFF1E3A8A),
-                  ),
-                ),
-              ),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
-                ),
-              ),
-            ),
-            _buildSectionHeader('OPERACIONES'),
-            ListTile(
-              leading: const Icon(
-                Icons.home_outlined,
-                color: Color(0xFF1E3A8A),
-              ),
-              title: const Text('Panel de Ventas'),
-              onTap: () => Navigator.pop(context),
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.bar_chart_rounded,
-              title: 'Mis Ventas',
-              color: Colors.blue,
-              route: (context) => const ReportSalesScreen(),
-            ),
-
-            if (_userRol == 'administrador' ||
-                _userRol == 'admin' ||
-                _userRol == 'superadmin') ...[
-              const Divider(),
-              _buildSectionHeader('INVENTARIO Y COMPRAS'),
-              _buildDrawerItem(
-                context,
-                icon: Icons.add_shopping_cart,
-                title: 'Cargar Compras',
-                color: Colors.green,
-                route: (context) => PurchaseScreen(),
-              ),
-              _buildDrawerItem(
-                context,
-                icon: Icons.history,
-                title: 'Historial Cargas',
-                color: Colors.blueGrey,
-                route: (context) => const HistoryScreen(),
-              ),
-              _buildDrawerItem(
-                context,
-                icon: Icons.receipt_long,
-                title: 'Reporte de Compras',
-                color: Colors.purple,
-                route: (context) => const ReportPurchasesScreen(),
-              ),
-              _buildDrawerItem(
-                context,
-                icon: Icons.warning_amber_rounded,
-                title: 'Stock Bajo',
-                color: Colors.orange,
-                route: (context) => const LowStockScreen(),
-              ),
-
-              const Divider(),
-              _buildSectionHeader('CONFIGURACIÓN'),
-              _buildDrawerItem(
-                context,
-                icon: Icons.people_outline,
-                title: 'Gestión de Usuarios',
-                color: Colors.indigo,
-                route: (context) => const UserManagementScreen(),
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.print_outlined,
-                  color: Color(0xFFEF4444),
-                ),
-                title: const Text('Etiquetas de Precios (PDF)'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _generarEtiquetasPDF();
-                },
-              ),
-            ],
-
-            if (_userRol == 'superadmin') ...[
-              const Divider(),
-              _buildSectionHeader('SUPERVISIÓN GLOBAL'),
-              ListTile(
-                leading: const Icon(
-                  Icons.business_center,
-                  color: Colors.blueGrey,
-                ),
-                title: const Text('GESTIÓN DE NEGOCIOS'),
-                subtitle: const Text('Administrar suscripciones'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BusinessManagementScreen(),
-                    ),
-                  );
-                },
-              ),
-            ],
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text(
-                'Cerrar Sesión',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              onTap: () async {
-                await _apiService.logout();
-                if (mounted) Navigator.pushReplacementNamed(context, '/login');
-              },
-            ),
-          ],
-        ),
-      ),
+      drawer: const MainDrawer(),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -1265,38 +1137,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, top: 16, bottom: 8),
-      child: Text(
-        title,
-        style: GoogleFonts.outfit(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey[500],
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required Color color,
-    required Widget Function(BuildContext) route,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(title),
-      onTap: () {
-        Navigator.pop(context);
-        Navigator.push(context, MaterialPageRoute(builder: route));
-      },
-    );
-  }
-
   void _openMarketMode() {
     Navigator.push(
       context,
@@ -1435,6 +1275,196 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class MainDrawer extends StatefulWidget {
+  const MainDrawer({super.key});
+
+  @override
+  State<MainDrawer> createState() => _MainDrawerState();
+}
+
+class _MainDrawerState extends State<MainDrawer> {
+  String _userName = '';
+  String _negocioName = '';
+  String _userRol = 'vendedor';
+  final ApiService _apiService = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('user_name') ?? 'Usuario';
+      _negocioName = prefs.getString('negocio_nombre') ?? 'Ventas 24/7';
+      _userRol = prefs.getString('user_rol') ?? 'vendedor';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          UserAccountsDrawerHeader(
+            accountName: Text(_negocioName),
+            accountEmail: Text('$_userName ($_userRol)'),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Text(
+                _negocioName.isNotEmpty ? _negocioName[0] : 'V',
+                style: const TextStyle(
+                  fontSize: 40.0,
+                  color: Color(0xFF1E3A8A),
+                ),
+              ),
+            ),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+              ),
+            ),
+          ),
+          _buildSectionHeader('GENERAL'),
+          ListTile(
+            leading: const Icon(
+              Icons.dashboard_outlined,
+              color: Color(0xFF1E3A8A),
+            ),
+            title: const Text('Resumen Dashboard'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/home');
+            },
+          ),
+          _buildSectionHeader('OPERACIONES'),
+          ListTile(
+            leading: const Icon(
+              Icons.shopping_cart_outlined,
+              color: Color(0xFF1E3A8A),
+            ),
+            title: const Text('Panel de Ventas'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/sales');
+            },
+          ),
+          _buildDrawerItem(
+            context,
+            icon: Icons.bar_chart_rounded,
+            title: 'Mis Ventas',
+            color: Colors.blue,
+            route: (context) => const ReportSalesScreen(),
+          ),
+          if (_userRol == 'administrador' ||
+              _userRol == 'admin' ||
+              _userRol == 'superadmin') ...[
+            const Divider(),
+            _buildSectionHeader('INVENTARIO Y COMPRAS'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.add_shopping_cart,
+              title: 'Cargar Compras',
+              color: Colors.green,
+              route: (context) => PurchaseScreen(),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.history,
+              title: 'Historial Cargas',
+              color: Colors.blueGrey,
+              route: (context) => const HistoryScreen(),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.receipt_long,
+              title: 'Reporte de Compras',
+              color: Colors.purple,
+              route: (context) => const ReportPurchasesScreen(),
+            ),
+            const Divider(),
+            _buildSectionHeader('REPORTES'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.warning_amber_rounded,
+              title: 'Stock Bajo',
+              color: Colors.orange,
+              route: (context) => const LowStockScreen(),
+            ),
+            const Divider(),
+            _buildSectionHeader('CONFIGURACIÓN'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.people_outline,
+              title: 'Gestión de Usuarios',
+              color: Colors.indigo,
+              route: (context) => const UserManagementScreen(),
+            ),
+          ],
+          if (_userRol == 'superadmin') ...[
+            const Divider(),
+            _buildSectionHeader('SUPERVISIÓN GLOBAL'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.business_center,
+              title: 'GESTIÓN DE NEGOCIOS',
+              color: Colors.blueGrey,
+              route: (context) => const BusinessManagementScreen(),
+            ),
+          ],
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text(
+              'Cerrar Sesión',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+            onTap: () async {
+              await _apiService.logout();
+              if (mounted) Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, top: 16, bottom: 8),
+      child: Text(
+        title,
+        style: GoogleFonts.outfit(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey[600],
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required Color color,
+    required Widget Function(BuildContext) route,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title),
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.push(context, MaterialPageRoute(builder: route));
+      },
     );
   }
 }
