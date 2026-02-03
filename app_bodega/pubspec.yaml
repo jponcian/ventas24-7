@@ -42,10 +42,12 @@ dependencies:
   mobile_scanner: ^7.1.4
   shared_preferences: ^2.3.5
   url_launcher: ^6.3.2
+  package_info_plus: ^8.1.2
   pdf: ^3.11.1
   printing: ^5.13.2
   barcode: ^2.2.8
   barcode_widget: ^2.0.4
+  fl_chart: ^0.69.0
 
 dev_dependencies:
   flutter_test:

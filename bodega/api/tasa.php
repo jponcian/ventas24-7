@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/cors.php';
-require __DIR__ . '/../db.php'; 
+require_once __DIR__ . '/../db.php'; 
 require_once __DIR__ . '/class_bcv_fetcher.php'; // Fetcher logic
 
 header('Content-Type: application/json; charset=utf-8');

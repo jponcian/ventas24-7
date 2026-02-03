@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'product_model.dart';
+import 'fiado_model.dart';
 
 class ApiService {
   static const String baseUrl = 'https://ponciano.zz.com.ve/bodega/api';
@@ -433,6 +434,190 @@ class ApiService {
       return response.statusCode == 200 && body['ok'] == true;
     } catch (e) {
       return false;
+    }
+  }
+
+  // --- Dashboard Administrativo ---
+  Future<Map<String, dynamic>> getAdminDashboardData(String fecha) async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin_dashboard.php?negocio_id=$nid&fecha=$fecha'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {'ok': false, 'error': 'Error ${response.statusCode}'};
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  // --- Clientes ---
+  Future<List<Cliente>> getClientes() async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/clientes.php?negocio_id=$nid'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          final List<dynamic> list = data['clientes'] ?? [];
+          return list.map((e) => Cliente.fromJson(e)).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Cliente?> getCliente(int id) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/clientes.php?id=$id'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return Cliente.fromJson(data['cliente']);
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> crearCliente(Map<String, dynamic> data) async {
+    try {
+      final nid = await getNegocioId();
+      data['negocio_id'] = nid;
+      final response = await http.post(
+        Uri.parse('$baseUrl/clientes.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      final body = jsonDecode(response.body);
+      return body;
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> actualizarCliente(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      data['id'] = id;
+      final response = await http.put(
+        Uri.parse('$baseUrl/clientes.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      final body = jsonDecode(response.body);
+      return body;
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  // --- Fiados ---
+  Future<List<Fiado>> getFiados() async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/fiados.php?negocio_id=$nid'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          final List<dynamic> list = data['fiados'] ?? [];
+          return list.map((e) => Fiado.fromJson(e)).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Fiado?> getFiadoDetalle(int id) async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/fiados.php?id=$id'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return Fiado.fromJson(data['fiado']);
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> crearFiado(Map<String, dynamic> data) async {
+    try {
+      final nid = await getNegocioId();
+      data['negocio_id'] = nid;
+      final response = await http.post(
+        Uri.parse('$baseUrl/fiados.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      final body = jsonDecode(response.body);
+      return body;
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  // --- Abonos ---
+  Future<List<Abono>> getAbonosFiado(int fiadoId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/abonos.php?fiado_id=$fiadoId'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          final List<dynamic> list = data['abonos'] ?? [];
+          return list.map((e) => Abono.fromJson(e)).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> registrarAbono(Map<String, dynamic> data) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/abonos.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      final body = jsonDecode(response.body);
+      return body;
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  // --- Versión del Sistema ---
+  Future<Map<String, dynamic>> checkVersion() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/check_version.php'));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {'ok': false};
+    } catch (e) {
+      return {'ok': false};
     }
   }
 }

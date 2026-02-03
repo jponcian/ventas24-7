@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/cors.php';
-require __DIR__ . '/../db.php';
+require_once __DIR__ . '/../db.php';
 header('Content-Type: application/json; charset=utf-8');
 
 $json = file_get_contents('php://input');

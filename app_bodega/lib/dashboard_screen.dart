@@ -9,6 +9,8 @@ import 'api_service.dart';
 import 'main.dart';
 import 'calc_screen.dart';
 
+import 'update_helper.dart';
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -29,6 +31,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _loadUserInfo();
     _loadDashboard();
+    // Verificar actualizaciones
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateHelper.checkUpdate(context);
+    });
   }
 
   Future<void> _loadUserInfo() async {

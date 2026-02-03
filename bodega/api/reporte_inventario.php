@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/cors.php';
-require __DIR__ . '/../db.php';
+require_once __DIR__ . '/../db.php';
 header('Content-Type: application/json; charset=utf-8');
 
 $nid = $_GET['negocio_id'] ?? null;
@@ -21,6 +21,7 @@ try {
             p.nombre, 
             p.stock, 
             p.costo_unitario, 
+            p.precio_venta_unidad as precio_venta, 
             p.moneda_base,
             pr.nombre as proveedor
         FROM productos p

@@ -17,26 +17,30 @@ import 'report_purchases_screen.dart';
 import 'purchase_screen.dart';
 import 'market_mode_screen.dart';
 import 'history_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'dashboard_screen.dart';
 import 'utils.dart';
 import 'inventory_report_screen.dart';
+import 'admin_dashboard_screen.dart';
+import 'fiados_screen.dart';
+import 'fiado_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es_ES', null);
   final prefs = await SharedPreferences.getInstance();
   final bool isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+  final String userRol = prefs.getString('user_rol') ?? 'vendedor';
 
-  runApp(MyApp(isLoggedIn: isLoggedIn));
+  runApp(MyApp(isLoggedIn: isLoggedIn, userRol: userRol));
 }
 
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
-  const MyApp({super.key, required this.isLoggedIn});
+  final String userRol;
+  const MyApp({super.key, required this.isLoggedIn, required this.userRol});
 
   @override
   Widget build(BuildContext context) {
@@ -52,10 +56,13 @@ class MyApp extends StatelessWidget {
         ),
         textTheme: GoogleFonts.outfitTextTheme(),
       ),
-      initialRoute: isLoggedIn ? '/home' : '/login',
+      initialRoute: isLoggedIn
+          ? (userRol == 'admin' ? '/admin' : '/home')
+          : '/login',
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const DashboardScreen(),
+        '/admin': (context) => const AdminDashboardScreen(),
         '/sales': (context) => const ProductListScreen(),
       },
       localizationsDelegates: const [
@@ -86,6 +93,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
   String _userName = '';
   String _negocioName = '';
   String _userRol = 'vendedor';
+  List<Cliente> _clientes = [];
+  bool _esFiado = false;
+  Cliente? _selectedCliente;
   final ApiService _apiService = ApiService();
   final TextEditingController _searchCtrl = TextEditingController();
 
@@ -265,6 +275,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   void _showTicket() {
+    _esFiado = false;
+    _selectedCliente = null;
+    if (_clientes.isEmpty) {
+      _apiService.getClientes().then((list) {
+        if (mounted) setState(() => _clientes = list);
+      });
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -578,6 +596,69 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 16),
+                          // OPCION FIADO
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _esFiado
+                                    ? const Color(0xFF1E3A8A).withOpacity(0.5)
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                SwitchListTile(
+                                  title: const Text(
+                                    'CONVERTIR A FIADO',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      letterSpacing: 1.1,
+                                    ),
+                                  ),
+                                  subtitle: const Text(
+                                    'Asignar esta venta como deuda a un cliente',
+                                    style: TextStyle(fontSize: 11),
+                                  ),
+                                  value: _esFiado,
+                                  activeColor: const Color(0xFF1E3A8A),
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      _esFiado = val;
+                                    });
+                                  },
+                                ),
+                                if (_esFiado) ...[
+                                  const SizedBox(height: 8),
+                                  DropdownButtonFormField<Cliente>(
+                                    value: _selectedCliente,
+                                    decoration: InputDecoration(
+                                      labelText: 'Seleccionar Cliente',
+                                      prefixIcon: const Icon(Icons.person),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    items: _clientes.map((c) {
+                                      return DropdownMenuItem(
+                                        value: c,
+                                        child: Text(c.nombre),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      setModalState(() {
+                                        _selectedCliente = val;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                           const SizedBox(height: 24),
                           SizedBox(
                             width: double.infinity,
@@ -613,15 +694,40 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
                                 if (confirm != true) return;
 
+                                if (_esFiado && _selectedCliente == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Debes seleccionar un cliente para el fiado',
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 final items = selected.map((p) {
                                   double precio = p.precioVenta ?? 0;
                                   bool esDolar = p.monedaCompra != 'BS';
                                   double precioBs = esDolar
                                       ? precio * _tasa
                                       : precio;
+                                  double precioUsd = esDolar
+                                      ? precio
+                                      : precio / _tasa;
                                   double cantDescuento = (p.id < 0)
                                       ? p.qty * (p.tamPaquete ?? 1.0)
                                       : p.qty.toDouble();
+
+                                  if (_esFiado) {
+                                    return {
+                                      'producto_id': p.id.abs(),
+                                      'cantidad': cantDescuento,
+                                      'precio_unitario_bs': precioBs,
+                                      'precio_unitario_usd': precioUsd,
+                                    };
+                                  }
+
                                   return {
                                     'id': p.id.abs(),
                                     'cantidad': cantDescuento,
@@ -636,12 +742,31 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   'detalles': items,
                                 };
 
+                                if (_esFiado) {
+                                  ventaData['cliente_id'] =
+                                      _selectedCliente!.id;
+                                }
+
                                 Navigator.pop(context);
                                 setState(() => _loading = true);
-                                bool ok = await _apiService.registrarVenta(
-                                  ventaData,
-                                );
-                                if (ok) {
+
+                                bool success = false;
+                                try {
+                                  if (_esFiado) {
+                                    final res = await _apiService.crearFiado(
+                                      ventaData,
+                                    );
+                                    success = res['ok'] == true;
+                                  } else {
+                                    success = await _apiService.registrarVenta(
+                                      ventaData,
+                                    );
+                                  }
+                                } catch (e) {
+                                  success = false;
+                                }
+
+                                if (success) {
                                   setState(() {
                                     for (var p in _allProducts) {
                                       p.qty = 0;
@@ -649,9 +774,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   });
                                   _loadData();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
+                                    SnackBar(
                                       content: Text(
-                                        'Venta registrada con éxito',
+                                        _esFiado
+                                            ? 'Fiado registrado con éxito'
+                                            : 'Venta registrada con éxito',
                                       ),
                                       backgroundColor: Colors.green,
                                     ),
@@ -661,7 +788,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
-                                        'Error al procesar la venta',
+                                        'Error al procesar la operación',
                                       ),
                                       backgroundColor: Colors.red,
                                     ),
@@ -1404,7 +1531,19 @@ class _MainDrawerState extends State<MainDrawer> {
             title: const Text('Resumen Dashboard'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/home');
+              // Si es admin, abre dashboard administrativo, si no, el normal
+              if (_userRol == 'administrador' ||
+                  _userRol == 'admin' ||
+                  _userRol == 'superadmin') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdminDashboardScreen(),
+                  ),
+                );
+              } else {
+                Navigator.pushReplacementNamed(context, '/home');
+              }
             },
           ),
           _buildSectionHeader('OPERACIONES'),
@@ -1426,6 +1565,19 @@ class _MainDrawerState extends State<MainDrawer> {
             color: Colors.blue,
             route: (context) => const ReportSalesScreen(),
           ),
+          if (_userRol == 'administrador' ||
+              _userRol == 'admin' ||
+              _userRol == 'superadmin') ...[
+            const Divider(),
+            _buildSectionHeader('CRÉDITOS Y FIADOS'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.credit_card,
+              title: 'Gestión de Fiados',
+              color: Colors.deepOrange,
+              route: (context) => const FiadosScreen(),
+            ),
+          ],
           if (_userRol == 'administrador' ||
               _userRol == 'admin' ||
               _userRol == 'superadmin') ...[

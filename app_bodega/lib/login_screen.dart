@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -57,13 +58,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (selected != null) {
           await _apiService.setNegocio(selected['id'], selected['nombre']);
-          if (mounted) Navigator.pushReplacementNamed(context, '/home');
+          final prefs = await SharedPreferences.getInstance();
+          final String rol = prefs.getString('user_rol') ?? 'vendedor';
+          if (mounted) {
+            Navigator.pushReplacementNamed(
+              context,
+              rol == 'admin' ? '/admin' : '/home',
+            );
+          }
         } else {
           // Si cancela (aunque pusimos barrierDismissible: false), no hacemos nada
         }
       } else {
         // Ya se guardó en ApiService si era solo 1
-        Navigator.pushReplacementNamed(context, '/home');
+        final prefs = await SharedPreferences.getInstance();
+        final String rol = prefs.getString('user_rol') ?? 'vendedor';
+        Navigator.pushReplacementNamed(
+          context,
+          rol == 'admin' ? '/admin' : '/home',
+        );
       }
     } else {
       if (mounted) {
