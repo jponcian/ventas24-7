@@ -9,9 +9,9 @@ header('Access-Control-Allow-Origin: *');
 
 echo json_encode([
     "ok" => true,
-    "latest_version" => "1.1.0",
-    "latest_version_code" => 2,
+    "latest_version" => "1.1.1",
+    "latest_version_code" => 3,
     "download_url" => "https://ponciano.zz.com.ve/ventas247.apk",
-    "release_notes" => "Mejoras en el reporte de inventario y optimización de velocidad.",
+    "release_notes" => "Nuevas funciones: Búsqueda por proveedor, gestión de fiados por cliente y cobranza automática vía WhatsApp.",
     "force_update" => false
 ]);
