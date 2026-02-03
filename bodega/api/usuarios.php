@@ -62,8 +62,8 @@ try {
             }
             $hash = password_hash($password, PASSWORD_BCRYPT);
             
-            $stmt = $db->prepare("INSERT INTO users (cedula, nombre_completo, rol, password_hash, activo, negocio_id) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$cedula, $nombre, $rol, $hash, $activo, $negocios_asignados[0] ?? 0]);
+            $stmt = $db->prepare("INSERT INTO users (cedula, nombre_completo, rol, password_hash, activo) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$cedula, $nombre, $rol, $hash, $activo]);
             $new_uid = $db->lastInsertId();
 
             foreach ($negocios_asignados as $nbid) {
@@ -78,13 +78,13 @@ try {
                 exit;
             }
             
-            $sql = "UPDATE users SET cedula = ?, nombre_completo = ?, rol = ?, activo = ?, negocio_id = ? WHERE id = ?";
-            $params = [$cedula, $nombre, $rol, $activo, $negocios_asignados[0] ?? 0, $uid];
+            $sql = "UPDATE users SET cedula = ?, nombre_completo = ?, rol = ?, activo = ? WHERE id = ?";
+            $params = [$cedula, $nombre, $rol, $activo, $uid];
             
             if (!empty($password)) {
                 $hash = password_hash($password, PASSWORD_BCRYPT);
-                $sql = "UPDATE users SET cedula = ?, nombre_completo = ?, rol = ?, activo = ?, negocio_id = ?, password_hash = ? WHERE id = ?";
-                $params = [$cedula, $nombre, $rol, $activo, $negocios_asignados[0] ?? 0, $hash, $uid];
+                $sql = "UPDATE users SET cedula = ?, nombre_completo = ?, rol = ?, activo = ?, password_hash = ? WHERE id = ?";
+                $params = [$cedula, $nombre, $rol, $activo, $hash, $uid];
             }
             
             $stmt = $db->prepare($sql);

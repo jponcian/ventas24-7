@@ -207,11 +207,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
         _filteredProducts = _allProducts;
       } else {
         _filteredProducts = _allProducts.where((p) {
-          return p.nombre.toLowerCase().contains(_searchQuery) ||
-              (p.codigoBarras != null &&
-                  p.codigoBarras!.contains(_searchQuery)) ||
+          final query = _searchQuery.toLowerCase();
+          return p.nombre.toLowerCase().contains(query) ||
+              (p.codigoBarras != null && p.codigoBarras!.contains(query)) ||
               (p.descripcion != null &&
-                  p.descripcion!.toLowerCase().contains(_searchQuery));
+                  p.descripcion!.toLowerCase().contains(query)) ||
+              (p.proveedor != null &&
+                  p.proveedor!.toLowerCase().contains(query));
         }).toList();
       }
     });
@@ -1408,6 +1410,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             fontSize: 16,
                           ),
                         ),
+                        if (p.proveedor != null && p.proveedor!.isNotEmpty)
+                          Text(
+                            p.proveedor!,
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         Text(
                           precioStr,
                           style: const TextStyle(

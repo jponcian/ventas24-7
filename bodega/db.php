@@ -42,15 +42,7 @@ try {
     }
 
     // Normalizar precios entrantes para llenar los nuevos campos
-    $costo_unitario = 0;
-    if ($precio_compra > 0) {
-        // Asumimos que precio_compra viene acorde a la unidad de medida (si es pack, es precio pack)
-        if ($unidad_medida === 'paquete' && $tam_paquete > 1) {
-            $costo_unitario = $precio_compra / $tam_paquete;
-        } else {
-            $costo_unitario = $precio_compra;
-        }
-    }
+    $costo_unitario = $precio_compra;
 
     $pv_unidad = $precio_venta_unidad ?? 0;
     $pv_paquete = $precio_venta_paquete ?? 0;
@@ -88,15 +80,7 @@ function editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida,
         }
     }
 
-    // Normalizar precios (similar a agregar)
-    $costo_unitario = 0;
-    if ($precio_compra > 0) {
-        if ($unidad_medida === 'paquete' && $tam_paquete > 1) {
-            $costo_unitario = $precio_compra / $tam_paquete;
-        } else {
-            $costo_unitario = $precio_compra;
-        }
-    }
+    $costo_unitario = $precio_compra;
     
     $pv_unidad = $precio_venta_unidad ?? 0;
     $pv_paquete = $precio_venta_paquete ?? 0;

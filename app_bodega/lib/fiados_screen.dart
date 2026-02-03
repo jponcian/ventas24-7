@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import 'api_service.dart';
 import 'fiado_model.dart';
 import 'fiado_detail_screen.dart';
-import 'nuevo_fiado_screen.dart';
 import 'cliente_form_screen.dart';
 
 class FiadosScreen extends StatefulWidget {
@@ -15,10 +14,8 @@ class FiadosScreen extends StatefulWidget {
   State<FiadosScreen> createState() => _FiadosScreenState();
 }
 
-class _FiadosScreenState extends State<FiadosScreen>
-    with SingleTickerProviderStateMixin {
+class _FiadosScreenState extends State<FiadosScreen> {
   final ApiService _apiService = ApiService();
-  late TabController _tabController;
   List<Cliente> _clientes = [];
   List<Fiado> _fiados = [];
   bool _loading = true;
@@ -27,14 +24,7 @@ class _FiadosScreenState extends State<FiadosScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -59,7 +49,6 @@ class _FiadosScreenState extends State<FiadosScreen>
       return;
     }
 
-    // Obtener fiados pendientes del cliente
     final fiadosPendientes = _fiados
         .where(
           (f) =>
@@ -79,7 +68,6 @@ class _FiadosScreenState extends State<FiadosScreen>
       return;
     }
 
-    // Construir mensaje
     String mensaje = '¡Hola ${cliente.nombre}! 👋\n\n';
     mensaje += '📋 *Estado de Cuenta*\n\n';
 
@@ -96,28 +84,49 @@ class _FiadosScreenState extends State<FiadosScreen>
     mensaje += '*TOTAL ADEUDADO: \$${totalDeuda.toStringAsFixed(2)} USD*\n\n';
     mensaje += '¡Gracias por tu preferencia! 🙏';
 
-    // Limpiar número de teléfono
-    String telefono = cliente.telefono!.replaceAll(RegExp(r'[^\d]'), '');
-    if (!telefono.startsWith('58')) {
-      telefono = '58$telefono';
-    }
-
-    final url = Uri.parse(
-      'https://wa.me/$telefono?text=${Uri.encodeComponent(mensaje)}',
+    setState(() => _loading = true);
+    final res = await _apiService.enviarNotificacionDeuda(
+      telefono: cliente.telefono!,
+      cliente: cliente.nombre,
+      deuda: totalDeuda.toStringAsFixed(2),
+      mensaje: mensaje,
     );
+    setState(() => _loading = false);
 
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
+    if (mounted) {
+      if (res['ok'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No se pudo abrir WhatsApp'),
+            content: Text('Notificación enviada por WhatsApp correctamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res['error'] ?? 'Error al enviar notificación'),
             backgroundColor: Colors.red,
           ),
         );
       }
     }
+  }
+
+  void _verCuentaCliente(Cliente cliente) {
+    final fiadosCliente = _fiados
+        .where((f) => f.clienteId == cliente.id)
+        .toList();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ClienteCuentaScreen(
+          cliente: cliente,
+          fiados: fiadosCliente,
+          onRefresh: _loadData,
+        ),
+      ),
+    );
   }
 
   @override
@@ -143,50 +152,25 @@ class _FiadosScreenState extends State<FiadosScreen>
             ),
           ],
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: const Color(0xFF1E3A8A),
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: const Color(0xFF1E3A8A),
-          tabs: const [
-            Tab(text: 'Clientes'),
-            Tab(text: 'Fiados'),
-          ],
-        ),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
-              children: [_buildClientesTab(), _buildFiadosTab()],
-            ),
+          : _buildClientesTab(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          if (_tabController.index == 0) {
-            // Agregar cliente
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ClienteFormScreen(),
-              ),
-            );
-            if (result == true) _loadData();
-          } else {
-            // Nuevo fiado
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NuevoFiadoScreen()),
-            );
-            if (result == true) _loadData();
-          }
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ClienteFormScreen()),
+          );
+          if (result == true) _loadData();
         },
         backgroundColor: const Color(0xFF1E3A8A),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.person_add_alt_1),
         label: Text(
-          _tabController.index == 0 ? 'Nuevo Cliente' : 'Nuevo Fiado',
+          'Nuevo Cliente',
           style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
         ),
       ),
@@ -209,7 +193,6 @@ class _FiadosScreenState extends State<FiadosScreen>
 
     return Column(
       children: [
-        // Buscador
         Padding(
           padding: const EdgeInsets.all(16),
           child: TextField(
@@ -226,8 +209,6 @@ class _FiadosScreenState extends State<FiadosScreen>
             ),
           ),
         ),
-
-        // Lista de clientes
         Expanded(
           child: filteredClientes.isEmpty
               ? Center(
@@ -302,7 +283,7 @@ class _FiadosScreenState extends State<FiadosScreen>
                             if (cliente.telefono != null &&
                                 cliente.deudaTotal > 0)
                               IconButton(
-                                icon: Icon(
+                                icon: const Icon(
                                   Icons.chat_bubble_outline,
                                   color: Color(0xFF25D366),
                                 ),
@@ -313,9 +294,7 @@ class _FiadosScreenState extends State<FiadosScreen>
                             const Icon(Icons.chevron_right),
                           ],
                         ),
-                        onTap: () {
-                          // TODO: Ver detalle del cliente
-                        },
+                        onTap: () => _verCuentaCliente(cliente),
                       ),
                     );
                   },
@@ -324,85 +303,148 @@ class _FiadosScreenState extends State<FiadosScreen>
       ],
     );
   }
+}
 
-  Widget _buildFiadosTab() {
-    final fiadosPendientes = _fiados
-        .where((f) => f.estado == 'pendiente')
-        .toList();
+class ClienteCuentaScreen extends StatelessWidget {
+  final Cliente cliente;
+  final List<Fiado> fiados;
+  final VoidCallback onRefresh;
 
-    return fiadosPendientes.isEmpty
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.receipt_long_outlined,
-                  size: 80,
-                  color: Colors.grey[300],
+  const ClienteCuentaScreen({
+    super.key,
+    required this.cliente,
+    required this.fiados,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: Text(
+          'Cuenta: ${cliente.nombre}',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: const Color(0xFF1E3A8A),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Editar Cliente',
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ClienteFormScreen(clienteId: cliente.id),
                 ),
-                const SizedBox(height: 16),
+              );
+              if (result == true) {
+                onRefresh();
+                Navigator.pop(
+                  context,
+                ); // Volver atrás ya que el nombre pudo cambiar
+              }
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+            ),
+            child: Column(
+              children: [
                 Text(
-                  'No hay fiados pendientes',
+                  'DEUDA TOTAL',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '\$${cliente.deudaTotal.toStringAsFixed(2)} USD',
                   style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    color: Colors.grey[500],
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: cliente.deudaTotal > 0 ? Colors.red : Colors.green,
                   ),
                 ),
               ],
             ),
-          )
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: fiadosPendientes.length,
-            itemBuilder: (context, i) {
-              final fiado = fiadosPendientes[i];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: CircleAvatar(
-                    backgroundColor: const Color(0xFFEFF6FF),
-                    child: const Icon(Icons.receipt, color: Color(0xFF1E3A8A)),
-                  ),
-                  title: Text(
-                    fiado.clienteNombre ?? 'Cliente #${fiado.clienteId}',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(DateFormat('dd/MM/yyyy HH:mm').format(fiado.fecha)),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Total: \$${fiado.totalUsd.toStringAsFixed(2)}',
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      Text(
-                        'Pendiente: \$${fiado.saldoPendiente.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red[700],
+          ),
+          Expanded(
+            child: fiados.isEmpty
+                ? const Center(child: Text('No hay registros de fiados'))
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: fiados.length,
+                    itemBuilder: (context, i) {
+                      final fiado = fiados[i];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                      ),
-                    ],
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          leading: CircleAvatar(
+                            backgroundColor: const Color(0xFFEFF6FF),
+                            child: const Icon(
+                              Icons.receipt,
+                              color: Color(0xFF1E3A8A),
+                            ),
+                          ),
+                          title: Text(
+                            DateFormat('dd/MM/yyyy HH:mm').format(fiado.fecha),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text(
+                                'Total: \$${fiado.totalUsd.toStringAsFixed(2)}',
+                              ),
+                              Text(
+                                'Pendiente: \$${fiado.saldoPendiente.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: fiado.saldoPendiente > 0
+                                      ? Colors.red[700]
+                                      : Colors.green[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    FiadoDetailScreen(fiadoId: fiado.id),
+                              ),
+                            );
+                            if (result == true) onRefresh();
+                          },
+                        ),
+                      );
+                    },
                   ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            FiadoDetailScreen(fiadoId: fiado.id),
-                      ),
-                    );
-                    if (result == true) _loadData();
-                  },
-                ),
-              );
-            },
-          );
+          ),
+        ],
+      ),
+    );
   }
 }

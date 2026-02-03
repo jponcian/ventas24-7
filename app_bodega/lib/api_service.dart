@@ -620,4 +620,28 @@ class ApiService {
       return {'ok': false};
     }
   }
+
+  // --- Notificaciones ---
+  Future<Map<String, dynamic>> enviarNotificacionDeuda({
+    required String telefono,
+    required String cliente,
+    required String deuda,
+    String? mensaje,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/enviar_deuda.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'telefono': telefono,
+          'cliente': cliente,
+          'deuda': deuda,
+          'mensaje': mensaje,
+        }),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
 }
