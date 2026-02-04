@@ -36,9 +36,10 @@ $moneda_compra = $body['moneda_compra'] ?? 'USD';
 $stock = isset($body['stock']) ? floatval($body['stock']) : null;
 $fecha_vencimiento = $body['fecha_vencimiento'] ?? null;
 $vende_por_peso = $body['vende_por_peso'] ?? 0;
+$imagen = $body['imagen'] ?? null;
 
 try {
-    $ok = editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $moneda_compra, $bajo_inventario, $vende_media, $codigo_barras, $stock, $fecha_vencimiento, $vende_por_peso);
+    $ok = editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete, $precio_venta_mediopaquete, $precio_venta_unidad, $moneda_compra, $bajo_inventario, $vende_media, $codigo_barras, $stock, $fecha_vencimiento, $vende_por_peso, $imagen);
     echo json_encode(['ok' => (bool)$ok]);
 } catch (Exception $e) {
     http_response_code(500);

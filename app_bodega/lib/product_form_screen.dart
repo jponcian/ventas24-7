@@ -5,6 +5,8 @@ import 'product_model.dart';
 import 'api_service.dart';
 import 'scanner_screen.dart';
 import 'utils.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? product;
@@ -38,6 +40,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   bool _vendePorPeso = false;
   String _monedaCompra = 'USD';
   List<String> _providers = [];
+  File? _imageFile;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -189,10 +193,27 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+
+    String? imageUrl;
+    if (_imageFile != null) {
+      imageUrl = await _apiService.uploadProductImage(_imageFile!);
+    }
 
     // Calcular el costo unitario real
     double costoPaquete = double.tryParse(_precioCompraCtrl.text) ?? 0.0;
@@ -224,6 +245,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       'fecha_vencimiento': _vencimientoCtrl.text.isEmpty
           ? null
           : _vencimientoCtrl.text,
+      'imagen': imageUrl,
     };
 
     bool success = false;
@@ -302,6 +324,32 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildSectionTitle('IMAGEN DEL PRODUCTO'),
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: _imageFile != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: Image.file(_imageFile!, fit: BoxFit.cover),
+                          )
+                        : const Icon(
+                            Icons.add_a_photo_outlined,
+                            size: 50,
+                            color: Color(0xFF1E3A8A),
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               _buildSectionTitle('INFORMACIÓN GENERAL'),
               _buildTextField(
                 controller: _nombreCtrl,

@@ -23,7 +23,7 @@ try {
 }
 
 // --- Productos ---
-     function agregarProducto($negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = 0, $fecha_vencimiento = null, $vende_por_peso = 0)
+     function agregarProducto($negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = 0, $fecha_vencimiento = null, $vende_por_peso = 0, $imagen = null)
 {
     global $db;
     
@@ -56,12 +56,12 @@ try {
         $pv_paquete = $precio_venta;
     }
 
-    $stmt = $db->prepare("INSERT INTO productos (negocio_id, nombre, codigo_barras, descripcion, unidad_medida, tam_paquete, costo_unitario, precio_venta_unidad, precio_venta_paquete, proveedor_id, moneda_base, bajo_inventario, stock, fecha_vencimiento, vende_por_peso) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$negocio_id, $nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $stock, $fecha_vencimiento, $vende_por_peso]);
+    $stmt = $db->prepare("INSERT INTO productos (negocio_id, nombre, codigo_barras, descripcion, unidad_medida, tam_paquete, costo_unitario, precio_venta_unidad, precio_venta_paquete, proveedor_id, moneda_base, bajo_inventario, stock, fecha_vencimiento, vende_por_peso, imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$negocio_id, $nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $stock, $fecha_vencimiento, $vende_por_peso, $imagen]);
     return $db->lastInsertId();
 }
 
-function editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = null, $fecha_vencimiento = null, $vende_por_peso = 0)
+function editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = null, $fecha_vencimiento = null, $vende_por_peso = 0, $imagen = null)
 {
     global $db;
     $legacyVenta = ($unidad_medida === 'paquete' && $precio_venta_paquete !== null) ? $precio_venta_paquete : ($precio_venta_unidad ?? $precio_venta ?? 0);
@@ -94,8 +94,8 @@ function editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida,
         $pv_paquete = $precio_venta;
     }
 
-    $sql = "UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, costo_unitario = ?, precio_venta_unidad = ?, precio_venta_paquete = ?, proveedor_id = ?, moneda_base = ?, bajo_inventario = ?, vende_media = ?, fecha_vencimiento = ?, vende_por_peso = ?";
-    $params = [$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $vende_media, $fecha_vencimiento, $vende_por_peso];
+    $sql = "UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, costo_unitario = ?, precio_venta_unidad = ?, precio_venta_paquete = ?, proveedor_id = ?, moneda_base = ?, bajo_inventario = ?, vende_media = ?, fecha_vencimiento = ?, vende_por_peso = ?, imagen = ?";
+    $params = [$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $vende_media, $fecha_vencimiento, $vende_por_peso, $imagen];
 
     if ($stock !== null) {
         $sql .= ", stock = ?";
