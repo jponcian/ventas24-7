@@ -79,8 +79,17 @@ class UpdateHelper {
           FilledButton(
             onPressed: () async {
               final Uri uri = Uri.parse(url);
-              if (await canLaunchUrl(uri)) {
+              try {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } catch (e) {
+                debugPrint('No se pudo abrir la URL: $e');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No se pudo abrir el enlace de descarga.'),
+                    ),
+                  );
+                }
               }
             },
             style: FilledButton.styleFrom(
