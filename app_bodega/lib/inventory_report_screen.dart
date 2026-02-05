@@ -100,7 +100,7 @@ class _InventoryReportScreenState extends State<InventoryReportScreen> {
                 _buildHeader(totalGlobalUsd),
                 if (_showProducts)
                   Expanded(
-                    child: ListView.builder(
+                    child: ListView.builder(padding: EdgeInsets.only(bottom: 90), 
                       padding: const EdgeInsets.all(16),
                       itemCount: _productos.length,
                       itemBuilder: (context, i) {

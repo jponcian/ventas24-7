@@ -232,7 +232,12 @@ class _FiadosScreenState extends State<FiadosScreen> {
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 0,
+                    bottom: 80,
+                  ),
                   itemCount: filteredClientes.length,
                   itemBuilder: (context, i) {
                     final cliente = filteredClientes[i];

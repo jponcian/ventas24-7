@@ -156,7 +156,7 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
           title: Text('Detalle Venta #$ventaId'),
           content: SizedBox(
             width: double.maxFinite,
-            child: ListView.builder(
+            child: ListView.builder(padding: EdgeInsets.only(bottom: 90), 
               shrinkWrap: true,
               itemCount: detalles.length,
               itemBuilder: (context, i) {
@@ -330,7 +330,7 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                 ),
               ),
               // Lista de productos de ese proveedor
-              ListView.builder(
+              ListView.builder(padding: EdgeInsets.only(bottom: 90), 
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: entry.value.length,
