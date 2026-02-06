@@ -170,7 +170,10 @@ function registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles)
 
         foreach ($detalles as $item) {
             $stmtDetalle->execute([$venta_id, $item['id'], $item['cantidad'], $item['precio_bs']]);
-            $stmtUpdateStock->execute([$item['cantidad'], $item['id'], $negocio_id]);
+            
+            // Si el item tiene un multiplicador (ej: venta por paquete), usarlo para el stock
+            $multiplicador = isset($item['multiplicador']) ? floatval($item['multiplicador']) : 1.0;
+            $stmtUpdateStock->execute([$item['cantidad'] * $multiplicador, $item['id'], $negocio_id]);
         }
 
         $db->commit();

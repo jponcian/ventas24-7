@@ -125,77 +125,79 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadDashboard,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Selector de fecha
-                    InkWell(
-                      onTap: _selectDate,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey[200]!),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.calendar_today,
-                                  color: Color(0xFF1E3A8A),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  DateFormat(
-                                    'EEEE, d MMMM yyyy',
-                                    'es_ES',
-                                  ).format(_selectedDate),
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+          : SafeArea(
+              child: RefreshIndicator(
+                onRefresh: _loadDashboard,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Selector de fecha
+                      InkWell(
+                        onTap: _selectDate,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_today,
+                                    color: Color(0xFF1E3A8A),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const Icon(Icons.arrow_drop_down),
-                          ],
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    DateFormat(
+                                      'EEEE, d MMMM yyyy',
+                                      'es_ES',
+                                    ).format(_selectedDate),
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Icon(Icons.arrow_drop_down),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    // Resumen financiero
-                    Text(
-                      'Resumen Financiero',
-                      style: GoogleFonts.outfit(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                      // Resumen financiero
+                      Text(
+                        'Resumen Financiero',
+                        style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Tarjetas de estadísticas principales
-                    _buildFinancialCards(),
-                    const SizedBox(height: 24),
+                      // Tarjetas de estadísticas principales
+                      _buildFinancialCards(),
+                      const SizedBox(height: 24),
 
-                    // Gráfico de ventas
-                    _buildSalesChart(),
-                    const SizedBox(height: 24),
+                      // Gráfico de ventas
+                      _buildSalesChart(),
+                      const SizedBox(height: 24),
 
-                    // Productos más vendidos
-                    _buildTopProducts(),
-                    const SizedBox(height: 24),
+                      // Productos más vendidos
+                      _buildTopProducts(),
+                      const SizedBox(height: 24),
 
-                    // Botones de acción rápida
-                    _buildQuickActions(),
-                  ],
+                      // Botones de acción rápida
+                      _buildQuickActions(),
+                    ],
+                  ),
                 ),
               ),
             ),

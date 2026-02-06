@@ -3,6 +3,9 @@ require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/../db.php';
 header('Content-Type: application/json; charset=utf-8');
 
+// Configurar zona horaria
+date_default_timezone_set('America/Caracas');
+
 $nid = $_GET['negocio_id'] ?? null;
 
 if (!$nid) {

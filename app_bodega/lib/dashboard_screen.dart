@@ -8,6 +8,7 @@ import 'package:printing/printing.dart';
 import 'api_service.dart';
 import 'main.dart';
 import 'calc_screen.dart';
+import 'low_stock_screen.dart';
 
 import 'update_helper.dart';
 
@@ -302,113 +303,127 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadDashboard,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Resumen de Hoy',
-                      style: GoogleFonts.outfit(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildStatCard(
-                            'Ventas Hoy',
-                            '\$${(double.tryParse((_data?['today_total_usd'] ?? 0).toString()) ?? 0).toStringAsFixed(2)}',
-                            Icons.monetization_on_rounded,
-                            Colors.green,
-                          ),
+          : SafeArea(
+              child: RefreshIndicator(
+                onRefresh: _loadDashboard,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Resumen de Hoy',
+                        style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: _buildStatCard(
-                            'Stock Bajo',
-                            '${_data?['low_stock_count'] ?? 0}',
-                            Icons.warning_amber_rounded,
-                            Colors.orange,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    Text(
-                      'Últimas Ventas',
-                      style: GoogleFonts.outfit(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    const SizedBox(height: 15),
-                    if (_data?['latest_sales'] != null &&
-                        (_data!['latest_sales'] as List).isNotEmpty)
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: (_data!['latest_sales'] as List).length,
-                        itemBuilder: (context, i) {
-                          final sale = _data!['latest_sales'][i];
-                          final dateUtc = DateTime.parse(sale['fecha']);
-                          final dateLocal = dateUtc.toLocal();
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildStatCard(
+                              'Ventas Hoy',
+                              '\$${(double.tryParse((_data?['today_total_usd'] ?? 0).toString()) ?? 0).toStringAsFixed(2)}',
+                              Icons.monetization_on_rounded,
+                              Colors.green,
                             ),
-                            child: ListTile(
-                              onTap: () => _showVentaDetalle(sale['id']),
-                              leading: const CircleAvatar(
-                                backgroundColor: Color(0xFFE2E8F0),
-                                child: Icon(
-                                  Icons.receipt_long,
-                                  color: Color(0xFF1E3A8A),
-                                ),
-                              ),
-                              title: Text('Venta #${sale['id']}'),
-                              subtitle: Text(
-                                DateFormat('hh:mm a').format(dateLocal),
-                              ),
-                              trailing: Text(
-                                '\$${(double.tryParse((sale['total_usd'] ?? 0).toString()) ?? 0).toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const LowStockScreen(),
+                                  ),
+                                );
+                              },
+                              child: _buildStatCard(
+                                'Stock Bajo',
+                                '${_data?['low_stock_count'] ?? 0}',
+                                Icons.warning_amber_rounded,
+                                Colors.orange,
                               ),
                             ),
-                          );
-                        },
-                      )
-                    else
-                      const Center(
-                        child: Text('No hay ventas registradas hoy'),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 30),
+                      Text(
+                        'Últimas Ventas',
+                        style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      if (_data?['latest_sales'] != null &&
+                          (_data!['latest_sales'] as List).isNotEmpty)
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: (_data!['latest_sales'] as List).length,
+                          itemBuilder: (context, i) {
+                            final sale = _data!['latest_sales'][i];
+                            final dateUtc = DateTime.parse(sale['fecha']);
+                            final dateLocal = dateUtc.toLocal();
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ListTile(
+                                onTap: () => _showVentaDetalle(sale['id']),
+                                leading: const CircleAvatar(
+                                  backgroundColor: Color(0xFFE2E8F0),
+                                  child: Icon(
+                                    Icons.receipt_long,
+                                    color: Color(0xFF1E3A8A),
+                                  ),
+                                ),
+                                title: Text('Venta #${sale['id']}'),
+                                subtitle: Text(
+                                  DateFormat('hh:mm a').format(dateLocal),
+                                ),
+                                trailing: Text(
+                                  '\$${(double.tryParse((sale['total_usd'] ?? 0).toString()) ?? 0).toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      else
+                        const Center(
+                          child: Text('No hay ventas registradas hoy'),
+                        ),
 
-                    const SizedBox(height: 40),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 60,
-                      child: ElevatedButton.icon(
-                        onPressed: () => Navigator.pushNamed(context, '/sales'),
-                        icon: const Icon(Icons.shopping_cart),
-                        label: const Text('NUEVA VENTA'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E3A8A),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                      const SizedBox(height: 40),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: ElevatedButton.icon(
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/sales'),
+                          icon: const Icon(Icons.shopping_cart),
+                          label: const Text('NUEVA VENTA'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1E3A8A),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

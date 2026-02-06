@@ -168,9 +168,10 @@ try {
                         $subtotal_usd
                     ]);
 
-                    // Descontar del stock
+                    // Descontar del stock usando el multiplicador si existe
+                    $multiplicador = isset($detalle['multiplicador']) ? floatval($detalle['multiplicador']) : 1.0;
                     $stmt2 = $conn->prepare("UPDATE productos SET stock = stock - ? WHERE id = ?");
-                    $stmt2->execute([$detalle['cantidad'], $detalle['producto_id']]);
+                    $stmt2->execute([$detalle['cantidad'] * $multiplicador, $detalle['producto_id']]);
                 }
 
                 $conn->commit();

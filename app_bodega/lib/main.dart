@@ -756,14 +756,17 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   double precioUsd = esDolar
                                       ? precio
                                       : precio / _tasa;
-                                  double cantDescuento = (p.id < 0)
-                                      ? p.qty * (p.tamPaquete ?? 1.0)
-                                      : p.qty.toDouble();
+
+                                  // El multiplicador es el tamaño del paquete si es un item de paquete (ID negativo)
+                                  double multiplicador = (p.id < 0)
+                                      ? (p.tamPaquete ?? 1.0)
+                                      : 1.0;
 
                                   if (_esFiado) {
                                     return {
                                       'producto_id': p.id.abs(),
-                                      'cantidad': cantDescuento,
+                                      'cantidad': p.qty,
+                                      'multiplicador': multiplicador,
                                       'precio_unitario_bs': precioBs,
                                       'precio_unitario_usd': precioUsd,
                                     };
@@ -771,7 +774,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
                                   return {
                                     'id': p.id.abs(),
-                                    'cantidad': cantDescuento,
+                                    'cantidad': p.qty,
+                                    'multiplicador': multiplicador,
                                     'precio_bs': precioBs,
                                   };
                                 }).toList();
