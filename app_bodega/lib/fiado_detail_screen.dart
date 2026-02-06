@@ -43,7 +43,7 @@ class _FiadoDetailScreenState extends State<FiadoDetailScreen> {
     final obsCtrl = TextEditingController();
     String moneda = 'USD';
 
-    final result = await showDialog<bool>(
+    await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(

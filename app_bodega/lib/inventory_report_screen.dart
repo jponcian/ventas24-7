@@ -131,7 +131,7 @@ class _InventoryReportScreenState extends State<InventoryReportScreen> {
                               ),
                             ),
                             subtitle: Text(
-                              'Stock: ${stock % 1 == 0 ? stock.toInt() : stock.toStringAsFixed(3)} | Costo: ${_formatCurrency(costo)} $moneda',
+                              'Stock: ${stock % 1 == 0 ? stock.toInt() : stock.toStringAsFixed(3)} | Costo: ${_formatCurrency(costo)} $moneda\nCódigo: ${p['codigo_interno'] ?? p['codigo_barras'] ?? 'Sin Código'} | Marca: ${p['marca'] ?? 'N/A'}',
                             ),
                             trailing: Column(
                               mainAxisAlignment: MainAxisAlignment.center,

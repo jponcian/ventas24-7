@@ -29,12 +29,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late TextEditingController _proveedorCtrl;
   late TextEditingController _stockBajoCtrl;
   late TextEditingController _codigoBarrasCtrl;
+  late TextEditingController _codigoInternoCtrl;
   late TextEditingController _precioVentaPaqueteCtrl;
   late TextEditingController _precioVentaUnidadCtrl;
   late TextEditingController _precioCompraUnidadCtrl;
   late TextEditingController _tamPaqueteCtrl;
   late TextEditingController _stockCtrl;
   late TextEditingController _vencimientoCtrl;
+  late TextEditingController _marcaCtrl;
 
   bool _isLoading = false;
   bool _vendePorPeso = false;
@@ -49,6 +51,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _nombreCtrl = TextEditingController(
       text: widget.product?.nombre.replaceAll(' (Paquete)', '') ?? '',
     );
+    _marcaCtrl = TextEditingController(text: widget.product?.marca ?? '');
     _descCtrl = TextEditingController(text: widget.product?.descripcion ?? '');
     _unidadMedidaCtrl = TextEditingController(
       text: widget.product?.unidadMedida ?? 'unidad',
@@ -65,6 +68,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     );
     _codigoBarrasCtrl = TextEditingController(
       text: widget.product?.codigoBarras ?? '',
+    );
+    _codigoInternoCtrl = TextEditingController(
+      text: widget.product?.codigoInterno ?? '',
     );
     _proveedorCtrl = TextEditingController(
       text: widget.product?.proveedor ?? '',
@@ -115,6 +121,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _precioCompraCtrl.dispose();
     _precioVentaCtrl.dispose();
     _codigoBarrasCtrl.dispose();
+    _codigoInternoCtrl.dispose();
     _proveedorCtrl.dispose();
     _stockBajoCtrl.dispose();
     _precioVentaPaqueteCtrl.dispose();
@@ -122,6 +129,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _precioCompraUnidadCtrl.dispose();
     _tamPaqueteCtrl.dispose();
     _stockCtrl.dispose();
+    _marcaCtrl.dispose();
     _vencimientoCtrl.dispose();
     super.dispose();
   }
@@ -223,8 +231,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
     Map<String, dynamic> data = {
       'nombre': _nombreCtrl.text,
+      'marca': _marcaCtrl.text,
       'descripcion': _descCtrl.text,
       'codigo_barras': _codigoBarrasCtrl.text,
+      'codigo_interno': _codigoInternoCtrl.text,
       'unidad_medida': _unidadMedidaCtrl.text,
       'tam_paquete': tamPaquete,
       'precio_compra': costoUnitarioReal, // Enviar el costo unitario calculado
@@ -358,18 +368,41 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 validator: (v) => v!.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 16),
-              // CAMPO CON ESCÁNER HABILITADO
               _buildTextField(
-                controller: _codigoBarrasCtrl,
-                label: 'Código de Barras',
-                icon: Icons.qr_code_scanner,
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.camera_alt, color: Color(0xFF1E3A8A)),
-                  onPressed: _scanBarcode,
-                  tooltip: 'Escanear código',
-                ),
+                controller: _marcaCtrl,
+                label: 'Marca',
+                icon: Icons.branding_watermark_outlined,
               ),
               const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _codigoInternoCtrl,
+                      label: 'Código Interno (A001)',
+                      icon: Icons.tag,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTextField(
+                      controller: _codigoBarrasCtrl,
+                      label: 'Código de Barras',
+                      icon: Icons.qr_code_scanner,
+                      suffixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.camera_alt,
+                          color: Color(0xFF1E3A8A),
+                        ),
+                        onPressed: _scanBarcode,
+                        tooltip: 'Escanear código',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // CAMPO DESCRIPCION
               _buildTextField(
                 controller: _descCtrl,
                 label: 'Descripción',
@@ -396,7 +429,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       children: [
                         const Icon(
                           Icons.currency_exchange,
-                          color: Color(0xFF1E3A8A),
+                          color: Color(0xFF10B981),
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -415,6 +448,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                                 value,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  color: Colors.black,
                                 ),
                               ),
                             );
@@ -572,7 +606,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     suffixIcon: IconButton(
                       icon: const Icon(
                         Icons.arrow_drop_down,
-                        color: Color(0xFF1E3A8A),
+                        color: Color(0xFF10B981),
                       ),
                       onPressed: () {
                         // Force show options
@@ -808,7 +842,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         validator: validator,
         inputFormatters: inputFormatters,
         onChanged: onChanged,
-        style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+        style: GoogleFonts.outfit(
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: Colors.grey[400], fontSize: 14),

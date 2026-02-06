@@ -18,12 +18,12 @@ try {
 } catch (Exception $e) {
     error_log('Bodega DB connection error: ' . $e->getMessage());
     header('Content-Type: application/json');
-    echo json_encode(['ok' => false, 'error' => 'Error de conexión']);
+    echo json_encode(['ok' => false, 'error' => 'Error de conexión: ' . $e->getMessage()]);
     exit;
 }
 
 // --- Productos ---
-     function agregarProducto($negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = 0, $fecha_vencimiento = null, $vende_por_peso = 0, $imagen = null)
+     function agregarProducto($negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = 0, $fecha_vencimiento = null, $vende_por_peso = 0, $imagen = null, $marca = null, $codigo_interno = null)
 {
     global $db;
     
@@ -56,12 +56,12 @@ try {
         $pv_paquete = $precio_venta;
     }
 
-    $stmt = $db->prepare("INSERT INTO productos (negocio_id, nombre, codigo_barras, descripcion, unidad_medida, tam_paquete, costo_unitario, precio_venta_unidad, precio_venta_paquete, proveedor_id, moneda_base, bajo_inventario, stock, fecha_vencimiento, vende_por_peso, imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$negocio_id, $nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $stock, $fecha_vencimiento, $vende_por_peso, $imagen]);
+    $stmt = $db->prepare("INSERT INTO productos (negocio_id, nombre, codigo_interno, codigo_barras, descripcion, unidad_medida, tam_paquete, costo_unitario, precio_venta_unidad, precio_venta_paquete, proveedor_id, moneda_base, bajo_inventario, stock, fecha_vencimiento, vende_por_peso, imagen, marca) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$negocio_id, $nombre, $codigo_interno, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $stock, $fecha_vencimiento, $vende_por_peso, $imagen, $marca]);
     return $db->lastInsertId();
 }
 
-function editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = null, $fecha_vencimiento = null, $vende_por_peso = 0, $imagen = null)
+function editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida, $tam_paquete, $precio_compra, $precio_venta, $proveedor, $precio_venta_paquete = null, $precio_venta_mediopaquete = null, $precio_venta_unidad = null, $moneda_compra = 'USD', $bajo_inventario = 0, $vende_media = 0, $codigo_barras = null, $stock = null, $fecha_vencimiento = null, $vende_por_peso = 0, $imagen = null, $marca = null, $codigo_interno = null)
 {
     global $db;
     $legacyVenta = ($unidad_medida === 'paquete' && $precio_venta_paquete !== null) ? $precio_venta_paquete : ($precio_venta_unidad ?? $precio_venta ?? 0);
@@ -94,8 +94,8 @@ function editarProducto($id, $negocio_id, $nombre, $descripcion, $unidad_medida,
         $pv_paquete = $precio_venta;
     }
 
-    $sql = "UPDATE productos SET nombre = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, costo_unitario = ?, precio_venta_unidad = ?, precio_venta_paquete = ?, proveedor_id = ?, moneda_base = ?, bajo_inventario = ?, vende_media = ?, fecha_vencimiento = ?, vende_por_peso = ?, imagen = ?";
-    $params = [$nombre, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $vende_media, $fecha_vencimiento, $vende_por_peso, $imagen];
+    $sql = "UPDATE productos SET nombre = ?, codigo_interno = ?, codigo_barras = ?, descripcion = ?, unidad_medida = ?, tam_paquete = ?, costo_unitario = ?, precio_venta_unidad = ?, precio_venta_paquete = ?, proveedor_id = ?, moneda_base = ?, bajo_inventario = ?, vende_media = ?, fecha_vencimiento = ?, vende_por_peso = ?, imagen = ?, marca = ?";
+    $params = [$nombre, $codigo_interno, $codigo_barras, $descripcion, $unidad_medida, $tam_paquete, $costo_unitario, $pv_unidad, $pv_paquete, $provId, $moneda_compra, $bajo_inventario, $vende_media, $fecha_vencimiento, $vende_por_peso, $imagen, $marca];
 
     if ($stock !== null) {
         $sql .= ", stock = ?";
@@ -138,10 +138,10 @@ function obtenerProductos($negocio_id, $q = null)
         SELECT p.*, pr.nombre as proveedor_nombre 
         FROM productos p 
         LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
-        WHERE p.negocio_id = ? AND (p.nombre LIKE ? OR p.codigo_barras LIKE ? OR p.descripcion LIKE ? OR pr.nombre LIKE ? OR p.unidad_medida LIKE ?) 
+        WHERE p.negocio_id = ? AND (p.nombre LIKE ? OR p.codigo_barras LIKE ? OR p.codigo_interno LIKE ? OR p.descripcion LIKE ? OR pr.nombre LIKE ? OR p.unidad_medida LIKE ?) 
         ORDER BY p.nombre ASC
     ");
-    $stmt->execute([$negocio_id, $like, $q, $like, $like, $like]);
+    $stmt->execute([$negocio_id, $like, $q, $like, $like, $like, $like]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

@@ -85,19 +85,6 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
     double tamPaquete = p.tamPaquete ?? 1;
 
     // Calcular margen actual para sugerir
-    double currentPrice = p.precioReal;
-    double currentCost = p.precioCompra ?? 0;
-
-    // Si el producto está configurado como 'paquete' y tiene tamaño definido,
-    // el precioCompra base es del paquete. Convertirlo a unitario para el margen.
-    if (p.unidadMedida == 'paquete' && tamPaquete > 0) {
-      currentCost = currentCost / tamPaquete;
-    }
-
-    double currentMargin = 0;
-    if (currentCost > 0) {
-      currentMargin = (currentPrice - currentCost) / currentCost;
-    }
 
     await showDialog(
       context: context,

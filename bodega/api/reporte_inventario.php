@@ -23,6 +23,7 @@ try {
             p.costo_unitario, 
             p.precio_venta_unidad as precio_venta, 
             p.moneda_base,
+            p.marca,
             pr.nombre as proveedor
         FROM productos p
         LEFT JOIN proveedores pr ON p.proveedor_id = pr.id

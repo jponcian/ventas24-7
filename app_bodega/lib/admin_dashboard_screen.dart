@@ -24,7 +24,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Map<String, dynamic>? _data;
   bool _loading = true;
   double _tasa = 0.0;
-  String _userName = '';
+
   String _negocioName = '';
   DateTime _selectedDate = DateTime.now();
 
@@ -42,7 +42,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userName = prefs.getString('user_name') ?? 'Usuario';
       _negocioName = prefs.getString('negocio_nombre') ?? 'Ventas 24/7';
     });
     try {
@@ -88,7 +87,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       drawer: const MainDrawer(),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,7 +96,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               _negocioName,
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1E3A8A),
+                color: Color(0xFF1E3A8A),
               ),
             ),
             Text(
@@ -141,7 +140,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey[300]!),
+                          border: Border.all(color: Colors.grey[200]!),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -465,7 +464,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: CircleAvatar(
-                    backgroundColor: const Color(0xFFEFF6FF),
+                    backgroundColor: const Color(0xFFE2E8F0),
                     child: Text(
                       '${i + 1}',
                       style: const TextStyle(

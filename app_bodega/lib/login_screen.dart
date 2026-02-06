@@ -92,15 +92,18 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF020617),
       body: SingleChildScrollView(
         child: Column(
           children: [
             Container(
               height: 380,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+                  colors: [
+                    Color(0xFF0F172A),
+                    Color(0xFF10B981).withValues(alpha: 0.1),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -175,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: GoogleFonts.outfit(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Colors.blue[100],
+                              color: Color(0xFF10B981),
                               letterSpacing: 2,
                             ),
                           ),
@@ -199,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: GoogleFonts.outfit(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF0F172A),
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -216,7 +219,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: _cedulaCtrl,
                     keyboardType: TextInputType.number,
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                     decoration: _inputDecoration(
                       hint: 'Ej. 25123456',
                       icon: Icons.badge_outlined,
@@ -228,7 +234,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: _passCtrl,
                     obscureText: true,
-                    style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                     decoration: _inputDecoration(
                       hint: '••••••••',
                       icon: Icons.lock_outline_rounded,
@@ -242,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF1E3A8A).withValues(alpha: 0.3),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -251,8 +260,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A),
-                        foregroundColor: Colors.white,
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.black,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -292,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
       style: GoogleFonts.outfit(
         fontSize: 12,
         fontWeight: FontWeight.bold,
-        color: const Color(0xFF0F172A),
+        color: Colors.white70,
         letterSpacing: 1.5,
       ),
     );
@@ -305,9 +314,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-      prefixIcon: Icon(icon, color: const Color(0xFF1E3A8A), size: 22),
+      prefixIcon: Icon(icon, color: const Color(0xFF10B981), size: 22),
       filled: true,
-      fillColor: Colors.grey[50],
+      fillColor: const Color(0xFF1E293B),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -319,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFF1E3A8A), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5),
       ),
     );
   }

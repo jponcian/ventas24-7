@@ -222,7 +222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 return ListTile(
                   title: Text(d['nombre'] ?? 'Producto'),
                   subtitle: Text(
-                    '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x ${precio.toStringAsFixed(2)} Bs',
+                    '${d['codigo_barras'] ?? 'Sin Cód.'}\n${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x ${precio.toStringAsFixed(2)} Bs',
                   ),
                   trailing: Text(
                     '${(cant * precio).toStringAsFixed(2)} Bs',
@@ -249,7 +249,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       drawer: const MainDrawer(),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,7 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: ListTile(
                               onTap: () => _showVentaDetalle(sale['id']),
                               leading: const CircleAvatar(
-                                backgroundColor: Color(0xFFEFF6FF),
+                                backgroundColor: Color(0xFFE2E8F0),
                                 child: Icon(
                                   Icons.receipt_long,
                                   color: Color(0xFF1E3A8A),

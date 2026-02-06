@@ -16,6 +16,8 @@ class Product {
   final String? updatedAt;
   final String? monedaBase;
   final bool vendePorPeso;
+  final String? marca;
+  final String? codigoInterno;
 
   // Campo local para la app
   double qty = 0.0;
@@ -39,6 +41,8 @@ class Product {
     this.updatedAt,
     this.monedaBase,
     this.vendePorPeso = false,
+    this.marca,
+    this.codigoInterno,
     this.qty = 0.0,
   });
 
@@ -73,6 +77,8 @@ class Product {
       monedaBase: json['moneda_base'] ?? json['moneda_compra'],
       vendePorPeso:
           (json['vende_por_peso'] == 1 || json['vende_por_peso'] == true),
+      marca: json['marca'],
+      codigoInterno: json['codigo_interno'],
     );
   }
 

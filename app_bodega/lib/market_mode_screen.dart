@@ -43,7 +43,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       if (code != null) {
         try {
           final p = widget.products.firstWhere(
-            (item) => item.codigoBarras == code,
+            (item) => item.codigoBarras == code || item.codigoInterno == code,
           );
 
           if (p.isByWeight) {

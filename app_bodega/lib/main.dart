@@ -94,7 +94,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   double _tasa = 0.0;
   bool _loading = true;
-  String _errorMessage = '';
+
   String _searchQuery = '';
   String _userName = '';
   String _negocioName = '';
@@ -157,7 +157,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
     if (!mounted) return;
     setState(() {
       _loading = true;
-      _errorMessage = '';
     });
 
     try {
@@ -232,7 +231,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _errorMessage = 'Error conectando: $e';
+          _loading = false;
         });
       }
     }
