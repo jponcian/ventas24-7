@@ -31,8 +31,8 @@ try {
     $totalProd = $stmtTotal->fetchColumn();
 
     // 4. Últimas 5 ventas
-    $stmtLast = $db->prepare("SELECT id, total_usd, fecha FROM ventas WHERE negocio_id = ? ORDER BY fecha DESC LIMIT 5");
-    $stmtLast->execute([$nid]);
+    $stmtLast = $db->prepare("SELECT id, total_usd, fecha FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ? ORDER BY fecha DESC LIMIT 5");
+    $stmtLast->execute([$nid, $hoy]);
     $ultimas = $stmtLast->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([

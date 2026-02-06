@@ -39,39 +39,15 @@ if ($mensaje_custom) {
     $mensaje = "Hola $cliente, te saluda la Bodega de Javier. Te informamos que tu saldo pendiente es de *$deuda USD*. ¡Feliz día!";
 }
 
-// Configuración para OpenClaw
-$bot_data = [
-    "to" => $telefono,
-    "message" => $mensaje,
-    "channel" => "whatsapp"
-];
+// Usar la nueva función de envío por base de datos
+require_once __DIR__ . '/../whatsapp.php';
 
-$ch = curl_init('http://167.71.190.19:18789/v1/messages/send');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($bot_data));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Authorization: Bearer bd7db86de454d71848b32e784595f85130e6a484edf7cf19'
-]);
+// El motivo para este tipo de mensajes
+$motivo = "COBRANZA";
 
-$response = curl_exec($ch);
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curl_error = curl_error($ch);
-curl_close($ch);
-
-if ($response === false) {
-    echo json_encode([
-        'ok' => false, 
-        'error' => 'Error de conexión con el bot: ' . $curl_error
-    ]);
+if (enviarWhatsapp($telefono, $mensaje, $motivo)) {
+    echo json_encode(['ok' => true, 'mensaje' => 'Enviado a la cola de Optimus']);
 } else {
-    // Retornamos la respuesta del bot directamente o la procesamos
-    $bot_res = json_decode($response, true);
-    if ($http_code >= 200 && $http_code < 300) {
-        echo json_encode(['ok' => true, 'bot_response' => $bot_res]);
-    } else {
-        echo json_encode(['ok' => false, 'error' => 'El bot respondió con error ' . $http_code, 'details' => $bot_res]);
-    }
+    echo json_encode(['ok' => false, 'error' => 'Error al insertar en DB externa']);
 }
 ?>

@@ -15,6 +15,7 @@ $pass = isset($pass) ? $pass : 'Prueba016.';
 try {
     $db = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db->exec("SET time_zone = '-04:00';");
 } catch (Exception $e) {
     error_log('Bodega DB connection error: ' . $e->getMessage());
     header('Content-Type: application/json');

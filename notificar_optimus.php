@@ -1,32 +1,35 @@
 <?php
-// notificar_optimus.php - Puente de prueba para el sistema
+// notificar_optimus.php - Nueva Versión vía Base de Datos
 header('Content-Type: application/json');
 
-$data = [
-    "to" => "+584144679693",
-    "message" => "🦾 ¡Toque recibido! Javier, el botón de prueba funcionó perfectamente. El sistema y yo ya estamos conectados.",
-    "channel" => "whatsapp"
-];
+$numero_cliente = $_GET['numero'];
+$sistema = "Ventas 24-7";
+$motivo = "PRUEBA_SISTEMA";
+$cuerpo = "🦾 Hola Javier, esta es una prueba de envío mediante base de datos. ¡El puente está funcionando!";
 
-$ch = curl_init('http://167.71.190.19/v1/messages/send');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5); // Timeout de 5 segundos
-curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Authorization: Bearer bd7db86de454d71848b32e784595f85130e6a484edf7cf19'
-]);
+// Datos de conexión al MySQL de Optimus (DigitalOcean)
+$host = '167.71.190.19';
+$db   = 'whatsapp';
+$user = 'whatsapp';
+$pass = 'Whatsapp016.';
 
-$response = curl_exec($ch);
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curl_error = curl_error($ch);
-curl_close($ch);
+try {
+    $conn = new mysqli($host, $user, $pass, $db);
+    if ($conn->connect_error) { throw new Exception("Error de conexión: " . $conn->connect_error); }
 
-echo json_encode([
-    "enviado" => ($http_code == 200),
-    "error_detalle" => $curl_error,
-    "http_code" => $http_code
-]);
+    $stmt = $conn->prepare("INSERT INTO whatsapp (sistema, fecha, destinatario, motivo, cuerpo) VALUES (?, NOW(), ?, ?, ?)");
+    $stmt->bind_param("ssss", $sistema, $numero_cliente, $motivo, $cuerpo);
+    
+    if ($stmt->execute()) {
+        echo json_encode(["exito" => true, "mensaje" => "Orden insertada en la base de datos de Optimus."]);
+    } else {
+        echo json_encode(["exito" => false, "error" => $stmt->error]);
+    }
+    
+    $stmt->close();
+    $conn->close();
+
+} catch (Exception $e) {
+    echo json_encode(["exito" => false, "error" => $e->getMessage()]);
+}
 ?>

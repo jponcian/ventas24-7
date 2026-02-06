@@ -3,35 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba de Conexión Optimus</title>
+    <title>Control de WhatsApp - Optimus</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; }
-        button { padding: 20px 40px; font-size: 18px; cursor: pointer; background: #1E3A8A; color: white; border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        button:active { transform: scale(0.98); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
+        h2 { color: #1E3A8A; margin-bottom: 25px; }
+        input { width: 100%; padding: 15px; margin-bottom: 20px; border: 2px solid #e1e4e8; border-radius: 12px; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: #1E3A8A; }
+        button { width: 100%; padding: 15px; font-size: 16px; font-weight: bold; cursor: pointer; background: #1E3A8A; color: white; border: none; border-radius: 12px; transition: 0.3s; }
+        button:hover { background: #1a337a; transform: translateY(-2px); }
+        #status { margin-top: 20px; font-size: 14px; color: #666; font-weight: 500; }
     </style>
 </head>
 <body>
-    <button onclick="enviarNotificacion()">🦾 LLAMAR A OPTIMUS</button>
+    <div class="card">
+        <h2>🦾 WhatsApp Command</h2>
+        <input type="tel" id="telefono" placeholder="Número (ej. 04243482744)" value="04243482744">
+        <button onclick="enviar()">🚀 ENVIAR PRUEBA</button>
+        <p id="status">Esperando acción...</p>
+    </div>
 
     <script>
-        function enviarNotificacion() {
-            console.log('Iniciando envío...');
-            fetch('notificar_optimus.php')
-                .then(response => {
-                    if(!response.ok) throw new Error('Error HTTP: ' + response.status);
-                    return response.json();
-                })
+        function enviar() {
+            const num = document.getElementById('telefono').value;
+            const status = document.getElementById('status');
+            if(!num) { alert('Ingresa un número'); return; }
+
+            status.innerText = '⏳ Conectando con DigitalOcean...';
+            status.style.color = '#1E3A8A';
+
+            fetch('notificar_optimus.php?numero=' + num)
+                .then(r => r.json())
                 .then(data => {
-                    console.log('Respuesta recibida:', data);
-                    if(data.enviado) {
-                        alert('¡Señal enviada! Revisa tu WhatsApp.');
+                    if(data.exito) {
+                        status.innerText = '✅ ¡ÉXITO! Orden insertada en la base de datos.';
+                        status.style.color = 'green';
                     } else {
-                        alert('Error del Bot: ' + (data.error_detalle || 'Sin detalle'));
+                        status.innerText = '❌ ERROR: ' + data.error;
+                        status.style.color = 'red';
                     }
                 })
-                .catch(err => {
-                    console.error('Error en fetch:', err);
-                    alert('Error: No se pudo encontrar el archivo de notificación.');
+                .catch(e => {
+                    status.innerText = '❌ Error de conexión.';
+                    status.style.color = 'red';
                 });
         }
     </script>
