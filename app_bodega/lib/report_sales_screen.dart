@@ -156,7 +156,8 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
           title: Text('Detalle Venta #$ventaId'),
           content: SizedBox(
             width: double.maxFinite,
-            child: ListView.builder(padding: EdgeInsets.only(bottom: 90), 
+            child: ListView.builder(
+              padding: EdgeInsets.only(bottom: 90),
               shrinkWrap: true,
               itemCount: detalles.length,
               itemBuilder: (context, i) {
@@ -248,7 +249,7 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -330,7 +331,8 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                 ),
               ),
               // Lista de productos de ese proveedor
-              ListView.builder(padding: EdgeInsets.only(bottom: 90), 
+              ListView.builder(
+                padding: EdgeInsets.only(bottom: 90),
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: entry.value.length,
@@ -359,7 +361,9 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E3A8A).withOpacity(0.1),
+                            color: const Color(
+                              0xFF1E3A8A,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           alignment: Alignment.center,

@@ -59,7 +59,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       );
     }
 
-    bool _saving = false;
+    bool saving = false;
 
     showDialog(
       context: context,
@@ -92,7 +92,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   ),
                 ),
                 DropdownButtonFormField<String>(
-                  value: selectedRol,
+                  initialValue: selectedRol,
                   items: [
                     const DropdownMenuItem(
                       value: 'vendedor',
@@ -134,7 +134,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         });
                       },
                     );
-                  }).toList(),
+                  }),
                 ],
                 SwitchListTile(
                   title: const Text('Activo'),
@@ -146,11 +146,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: _saving ? null : () => Navigator.pop(context),
+              onPressed: saving ? null : () => Navigator.pop(context),
               child: const Text('CANCELAR'),
             ),
             ElevatedButton(
-              onPressed: _saving
+              onPressed: saving
                   ? null
                   : () async {
                       if (cedulaCtrl.text.isEmpty ||
@@ -165,7 +165,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         return;
                       }
 
-                      setDialogState(() => _saving = true);
+                      setDialogState(() => saving = true);
                       final userData = {
                         'action': isEdit ? 'update' : 'create',
                         'id': user?['id'],
@@ -179,26 +179,32 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       final res = await _apiService.saveUser(userData);
                       if (mounted) {
                         if (res['ok'] == true) {
-                          Navigator.pop(context);
+                          if (context.mounted) Navigator.pop(context);
                           _loadUsers();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Usuario procesado correctamente'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Usuario procesado correctamente',
+                                ),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
                         } else {
-                          setDialogState(() => _saving = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Error: ${res['error']}'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          setDialogState(() => saving = false);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: ${res['error']}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         }
                       }
                     },
-              child: _saving
+              child: saving
                   ? const SizedBox(
                       width: 20,
                       height: 20,

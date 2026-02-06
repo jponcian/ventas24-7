@@ -152,7 +152,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFF1E3A8A).withOpacity(0.2),
+                    color: const Color(0xFF1E3A8A).withValues(alpha: 0.2),
                   ),
                 ),
                 child: Text(

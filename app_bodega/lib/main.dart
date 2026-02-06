@@ -31,7 +31,6 @@ import 'label_printing_screen.dart';
 import 'sales_charts_screen.dart';
 import 'offline_service.dart';
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
 
 void main() async {
@@ -450,8 +449,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                           ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.05,
+                                              color: Colors.black.withValues(
+                                                alpha: 0.05,
                                               ),
                                               blurRadius: 2,
                                               offset: const Offset(0, 1),
@@ -496,8 +495,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                           ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.05,
+                                              color: Colors.black.withValues(
+                                                alpha: 0.05,
                                               ),
                                               blurRadius: 2,
                                               offset: const Offset(0, 1),
@@ -646,7 +645,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: _esFiado
-                                    ? const Color(0xFF1E3A8A).withOpacity(0.5)
+                                    ? const Color(
+                                        0xFF1E3A8A,
+                                      ).withValues(alpha: 0.5)
                                     : Colors.transparent,
                               ),
                             ),
@@ -666,7 +667,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                     style: TextStyle(fontSize: 11),
                                   ),
                                   value: _esFiado,
-                                  activeColor: const Color(0xFF1E3A8A),
+                                  activeThumbColor: const Color(0xFF1E3A8A),
                                   onChanged: (val) {
                                     setModalState(() {
                                       _esFiado = val;
@@ -676,7 +677,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 if (_esFiado) ...[
                                   const SizedBox(height: 8),
                                   DropdownButtonFormField<Cliente>(
-                                    value: _selectedCliente,
+                                    initialValue: _selectedCliente,
                                     decoration: InputDecoration(
                                       labelText: 'Seleccionar Cliente',
                                       prefixIcon: const Icon(Icons.person),
@@ -831,7 +832,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                       ventaData,
                                     );
                                     setState(() {
-                                      for (var p in _allProducts) p.qty = 0;
+                                      for (var p in _allProducts) {
+                                        p.qty = 0;
+                                      }
                                       _pendingCount++;
                                     });
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1297,7 +1300,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -1437,7 +1440,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
         border: Border.all(color: Colors.grey[100]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1752,8 +1755,9 @@ class _MainDrawerState extends State<MainDrawer> {
             ),
             onTap: () async {
               await _apiService.logout();
-              if (mounted)
+              if (mounted) {
                 Navigator.popUntil(context, (route) => route.isFirst);
+              }
               if (mounted) Navigator.pushReplacementNamed(context, '/login');
             },
           ),
