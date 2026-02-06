@@ -1,4 +1,4 @@
-name: Build Ventas360 APK
+name: Build Ventas247 APK
 
 on:
   push:
@@ -33,5 +33,5 @@ jobs:
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: ventas360-apk
+        name: ventas247-apk
         path: app_bodega/build/app/outputs/flutter-apk/app-release.apk
