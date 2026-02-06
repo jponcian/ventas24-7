@@ -178,7 +178,7 @@ class _FiadosScreenState extends State<FiadosScreen> {
   }
 
   Widget _buildClientesTab() {
-    final filteredClientes = _searchQuery.isEmpty
+    final filteredClientes = (_searchQuery.isEmpty
         ? _clientes
         : _clientes
               .where(
@@ -189,7 +189,9 @@ class _FiadosScreenState extends State<FiadosScreen> {
                     (c.cedula?.contains(_searchQuery) ?? false) ||
                     (c.telefono?.contains(_searchQuery) ?? false),
               )
-              .toList();
+              .toList())
+        .where((c) => c.deudaTotal > 0)
+        .toList();
 
     return Column(
       children: [
