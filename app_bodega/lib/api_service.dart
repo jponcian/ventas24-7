@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'product_model.dart';
@@ -106,7 +107,7 @@ class ApiService {
       );
       final body = jsonDecode(response.body);
       if (response.statusCode == 200 && body['ok'] == true) {
-        return {'success': true};
+        return {'success': true, 'id': body['id']};
       }
       return {
         'success': false,
@@ -642,6 +643,29 @@ class ApiService {
       return jsonDecode(response.body);
     } catch (e) {
       return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<String?> uploadProductImage(File imageFile) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload_imagen.php'),
+      );
+      request.files.add(
+        await http.MultipartFile.fromPath('imagen', imageFile.path),
+      );
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return data['url'];
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }

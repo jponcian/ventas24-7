@@ -27,6 +27,12 @@ import 'inventory_report_screen.dart';
 import 'admin_dashboard_screen.dart';
 import 'fiados_screen.dart';
 import 'fiado_model.dart';
+import 'label_printing_screen.dart';
+import 'sales_charts_screen.dart';
+import 'offline_service.dart';
+import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -105,6 +111,38 @@ class _ProductListScreenState extends State<ProductListScreen> {
     super.initState();
     _loadUserInfo();
     _loadData();
+    _startSyncTimer();
+  }
+
+  Timer? _syncTimer;
+  int _pendingCount = 0;
+
+  void _startSyncTimer() {
+    _syncTimer = Timer.periodic(const Duration(minutes: 1), (timer) async {
+      final pending = await OfflineService.getPendingSales();
+      if (mounted) setState(() => _pendingCount = pending.length);
+
+      if (pending.isNotEmpty) {
+        for (var sale in pending) {
+          try {
+            final data = jsonDecode(sale['venta_data']);
+            final success = await _apiService.registrarVenta(data);
+            if (success) {
+              await OfflineService.deletePendingVenta(sale['id']);
+            }
+          } catch (_) {}
+        }
+        final finalPending = await OfflineService.getPendingSales();
+        if (mounted) setState(() => _pendingCount = finalPending.length);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUserInfo() async {
@@ -787,15 +825,34 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                     ),
                                   );
                                 } else {
-                                  setState(() => _loading = false);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Error al procesar la operación',
+                                  // MODO OFFLINE: Guardar localmente
+                                  if (!_esFiado) {
+                                    await OfflineService.savePendingVenta(
+                                      ventaData,
+                                    );
+                                    setState(() {
+                                      for (var p in _allProducts) p.qty = 0;
+                                      _pendingCount++;
+                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Sin conexión. Venta guardada localmente.',
+                                        ),
+                                        backgroundColor: Colors.orange,
                                       ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
+                                    );
+                                  } else {
+                                    setState(() => _loading = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Error al procesar. Verifique su conexión.',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -846,7 +903,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 ),
                 title: const Text('Últimos Modificados'),
                 subtitle: const Text(
-                  'Genera etiquetas para los últimos 12 cambios',
+                  'Genera etiquetas para los últimos 15 cambios',
                 ),
                 onTap: () => Navigator.pop(ctx, 'last'),
               ),
@@ -915,7 +972,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
               childAspectRatio: 0.75,
               children: productsToPrint.map((p) {
                 double precio = p.precioReal;
-                bool baseEsBs = p.monedaBase == 'BS';
+                bool showAsUsd = (p.monedaBase != 'BS' && precio > 0);
 
                 return pw.Container(
                   margin: const pw.EdgeInsets.all(5),
@@ -940,15 +997,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         overflow: pw.TextOverflow.clip,
                       ),
                       pw.Spacer(),
-                      if (!baseEsBs)
-                        pw.Text(
-                          '${precio.toStringAsFixed(2)} USD',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 26,
-                            color: PdfColors.blue900,
-                          ),
+                      pw.Text(
+                        '${precio.toStringAsFixed(2)} ${showAsUsd ? 'USD' : 'BS'}',
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          fontSize: 24,
+                          color: PdfColors.blue900,
                         ),
+                      ),
                       pw.Spacer(),
                       if (p.codigoBarras != null && p.codigoBarras!.isNotEmpty)
                         pw.Container(
@@ -981,38 +1037,36 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
-  // Diálogo para buscar y seleccionar productos manualmente
   Future<List<int>?> _showSelectionDialog() async {
+    // Variables locales del diálogo
+    Set<int> selectedIds = {};
+    List<Product> displayList = List.from(_allProducts);
+    TextEditingController searchCtrl = TextEditingController();
+
     return showDialog<List<int>>(
       context: context,
       builder: (context) {
-        // Variables locales del diálogo
-        Set<int> selectedIds = {};
-        List<Product> searchResults = [];
-        bool isLoading = false;
-        TextEditingController searchCtrl = TextEditingController();
-
-        // Función interna para buscar
-        Future<void> doSearch(String query, StateSetter setState) async {
-          setState(() => isLoading = true);
-          try {
-            // Reutilizamos getProducts con query search
-            final res = await _apiService.getProducts(query);
-            setState(() {
-              searchResults = res;
-              isLoading = false;
-            });
-          } catch (e) {
-            setState(() => isLoading = false);
-          }
-        }
-
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setModalState) {
+            void filterList(String query) {
+              setModalState(() {
+                if (query.isEmpty) {
+                  displayList = List.from(_allProducts);
+                } else {
+                  displayList = _allProducts.where((p) {
+                    final q = query.toLowerCase();
+                    return p.nombre.toLowerCase().contains(q) ||
+                        (p.codigoBarras ?? '').contains(q);
+                  }).toList();
+                }
+              });
+            }
+
             return AlertDialog(
               title: const Text('Seleccionar Productos'),
               content: SizedBox(
                 width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.6,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1020,35 +1074,36 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       controller: searchCtrl,
                       decoration: InputDecoration(
                         labelText: 'Buscar producto...',
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.search),
-                          onPressed: () => doSearch(searchCtrl.text, setState),
-                        ),
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: searchCtrl.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  searchCtrl.clear();
+                                  filterList('');
+                                },
+                              )
+                            : null,
                       ),
-                      onSubmitted: (val) => doSearch(val, setState),
+                      onChanged: filterList,
                     ),
                     const SizedBox(height: 10),
-                    // Lista de resultados
                     Expanded(
-                      child: isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : searchResults.isEmpty
-                          ? const Center(
-                              child: Text('Busca productos para agregar'),
-                            )
+                      child: displayList.isEmpty
+                          ? const Center(child: Text('No hay resultados'))
                           : ListView.builder(
-                              itemCount: searchResults.length,
+                              itemCount: displayList.length,
                               itemBuilder: (ctx, i) {
-                                final p = searchResults[i];
+                                final p = displayList[i];
                                 final isSelected = selectedIds.contains(p.id);
                                 return CheckboxListTile(
                                   title: Text(p.nombre),
                                   subtitle: Text(
-                                    '${p.precioVentaUnidad?.toStringAsFixed(2) ?? "0.00"} \$ / ${p.precioVentaPaquete?.toStringAsFixed(2) ?? "0.00"} \$ (Paq)',
+                                    'Ref: ${p.precioReal.toStringAsFixed(2)}',
                                   ),
                                   value: isSelected,
                                   onChanged: (val) {
-                                    setState(() {
+                                    setModalState(() {
                                       if (val == true) {
                                         selectedIds.add(p.id);
                                       } else {
@@ -1060,8 +1115,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               },
                             ),
                     ),
-                    const SizedBox(height: 10),
-                    Text('${selectedIds.length} productos seleccionados'),
+                    const Divider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        '${selectedIds.length} productos seleccionados',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1071,8 +1132,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed: () => Navigator.pop(context, selectedIds.toList()),
-                  child: const Text('Imprimir Selección'),
+                  onPressed: selectedIds.isEmpty
+                      ? null
+                      : () => Navigator.pop(context, selectedIds.toList()),
+                  child: const Text('Confirmar Selección'),
                 ),
               ],
             );
@@ -1117,6 +1180,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ],
         ),
         actions: [
+          if (_pendingCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Chip(
+                label: Text(
+                  '$_pendingCount',
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+                backgroundColor: Colors.orange,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.bolt_rounded, color: Color(0xFF10B981)),
             tooltip: 'Venta Rápida',
@@ -1577,6 +1653,13 @@ class _MainDrawerState extends State<MainDrawer> {
             color: Colors.blue,
             route: (context) => const ReportSalesScreen(),
           ),
+          _buildDrawerItem(
+            context,
+            icon: Icons.insights,
+            title: 'Análisis de Ventas',
+            color: Colors.indigo,
+            route: (context) => const SalesChartsScreen(),
+          ),
           if (_userRol == 'administrador' ||
               _userRol == 'admin' ||
               _userRol == 'superadmin') ...[
@@ -1631,6 +1714,13 @@ class _MainDrawerState extends State<MainDrawer> {
               title: 'Inventario Actual',
               color: Colors.blueAccent,
               route: (context) => const InventoryReportScreen(),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.print_outlined,
+              title: 'Imprimir Etiquetas',
+              color: Colors.redAccent,
+              route: (context) => const LabelPrintingScreen(),
             ),
             const Divider(),
             _buildSectionHeader('CONFIGURACIÓN'),
