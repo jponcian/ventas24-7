@@ -13,6 +13,7 @@ import 'low_stock_screen.dart';
 import 'update_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
+  // Comentario de actualización para recarga de Chrome
   const DashboardScreen({super.key});
 
   @override
@@ -218,16 +219,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
               itemBuilder: (context, i) {
                 final d = detalles[i];
                 double cant = double.tryParse(d['cantidad'].toString()) ?? 0;
-                double precio =
+                double precioBs =
                     double.tryParse(d['precio_unitario_bs'].toString()) ?? 0;
-                return ListTile(
-                  title: Text(d['nombre'] ?? 'Producto'),
-                  subtitle: Text(
-                    '${d['codigo_barras'] ?? 'Sin Cód.'}\n${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x ${precio.toStringAsFixed(2)} Bs',
-                  ),
-                  trailing: Text(
-                    '${(cant * precio).toStringAsFixed(2)} Bs',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                double tasa = double.tryParse(d['tasa'].toString()) ?? 0;
+
+                // Verificar si es venta de paquete
+                bool esPaquete =
+                    (d['es_paquete'] == 1 || d['es_paquete'] == true);
+                String unidad = esPaquete ? 'paq' : 'und';
+
+                // Calcular totales (la cantidad ya es la correcta)
+                double subtotalBs = cant * precioBs;
+                double precioUsd = (tasa > 0) ? precioBs / tasa : 0;
+                double subtotalUsd = (tasa > 0) ? subtotalBs / tasa : 0;
+
+                // Formatear la cantidad para mostrar
+                String cantidadStr = cant % 1 == 0
+                    ? cant.toInt().toString()
+                    : cant.toStringAsFixed(3);
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              d['nombre'] ?? 'Producto',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '$cantidadStr $unidad x ${precioBs.toStringAsFixed(2)} Bs' +
+                                  (tasa > 0
+                                      ? ' (\$${precioUsd.toStringAsFixed(2)})'
+                                      : ''),
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${subtotalBs.toStringAsFixed(2)} Bs',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          if (tasa > 0)
+                            Text(
+                              '\$${subtotalUsd.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Color(0xFF1E3A8A),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 );
               },
@@ -301,13 +357,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.pushNamed(context, '/sales'),
+              icon: const Icon(Icons.shopping_cart),
+              label: const Text(
+                'NUEVA VENTA',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E3A8A),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
               child: RefreshIndicator(
                 onRefresh: _loadDashboard,
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 20,
+                    bottom:
+                        40, // Espacio extra al final para que nada se esconda
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -327,6 +424,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               '\$${(double.tryParse((_data?['today_total_usd'] ?? 0).toString()) ?? 0).toStringAsFixed(2)}',
                               Icons.monetization_on_rounded,
                               Colors.green,
+                              subtitle:
+                                  '${(double.tryParse((_data?['today_total_bs'] ?? 0).toString()) ?? 0).toStringAsFixed(2)} Bs',
                             ),
                           ),
                           const SizedBox(width: 15),
@@ -388,12 +487,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 subtitle: Text(
                                   DateFormat('hh:mm a').format(dateLocal),
                                 ),
-                                trailing: Text(
-                                  '\$${(double.tryParse((sale['total_usd'] ?? 0).toString()) ?? 0).toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                                trailing: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '\$${(double.tryParse((sale['total_usd'] ?? 0).toString()) ?? 0).toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Color(0xFF1E3A8A),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${(double.tryParse((sale['total_bs'] ?? 0).toString()) ?? 0).toStringAsFixed(2)} Bs',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
@@ -403,25 +516,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const Center(
                           child: Text('No hay ventas registradas hoy'),
                         ),
-
-                      const SizedBox(height: 40),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 60,
-                        child: ElevatedButton.icon(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/sales'),
-                          icon: const Icon(Icons.shopping_cart),
-                          label: const Text('NUEVA VENTA'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1E3A8A),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -434,8 +528,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String title,
     String value,
     IconData icon,
-    Color color,
-  ) {
+    Color color, {
+    String? subtitle,
+  }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -461,6 +556,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          if (subtitle != null)
+            Text(
+              subtitle,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           const SizedBox(height: 5),
           Text(
             title,

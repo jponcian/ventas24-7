@@ -165,15 +165,27 @@ function registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles)
         $stmt->execute([$negocio_id, $total_bs, $total_usd, $tasa]);
         $venta_id = $db->lastInsertId();
 
-        $stmtDetalle = $db->prepare("INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio_unitario_bs) VALUES (?, ?, ?, ?)");
+        $stmtDetalle = $db->prepare("INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, es_paquete, precio_unitario_bs) VALUES (?, ?, ?, ?, ?)");
         $stmtUpdateStock = $db->prepare("UPDATE productos SET stock = stock - ? WHERE id = ? AND negocio_id = ?");
 
         foreach ($detalles as $item) {
-            $stmtDetalle->execute([$venta_id, $item['id'], $item['cantidad'], $item['precio_bs']]);
-            
             // Si el item tiene un multiplicador (ej: venta por paquete), usarlo para el stock
             $multiplicador = isset($item['multiplicador']) ? floatval($item['multiplicador']) : 1.0;
-            $stmtUpdateStock->execute([$item['cantidad'] * $multiplicador, $item['id'], $negocio_id]);
+            
+            // Determinar si es venta de paquete (multiplicador > 1 indica que es paquete)
+            $esPaquete = $multiplicador > 1 ? 1 : 0;
+            
+            // Guardar la cantidad real vendida (1 paquete = 1, no 20)
+            $cantidadVendida = floatval($item['cantidad']);
+            
+            // El precio_bs que viene del frontend es el precio TOTAL por unidad/paquete
+            // Lo guardamos tal cual como precio_unitario_bs
+            $precioUnitarioBs = floatval($item['precio_bs']);
+            
+            $stmtDetalle->execute([$venta_id, $item['id'], $cantidadVendida, $esPaquete, $precioUnitarioBs]);
+            
+            // Para el stock, multiplicamos por el multiplicador (1 paquete = 20 unidades de stock)
+            $stmtUpdateStock->execute([$cantidadVendida * $multiplicador, $item['id'], $negocio_id]);
         }
 
         $db->commit();
@@ -188,9 +200,10 @@ function obtenerVentaDetalle($venta_id)
 {
     global $db;
     $stmt = $db->prepare("
-        SELECT dv.*, p.nombre 
+        SELECT dv.*, p.nombre, p.tam_paquete, p.unidad_medida, v.tasa
         FROM detalle_ventas dv
         JOIN productos p ON dv.producto_id = p.id
+        JOIN ventas v ON dv.venta_id = v.id
         WHERE dv.venta_id = ?
     ");
     $stmt->execute([$venta_id]);

@@ -19,9 +19,25 @@ try {
 
     // 1. Ventas de hoy
     $hoy = date('Y-m-d');
-    $stmtVentas = $db->prepare("SELECT SUM(total_usd) as total, COUNT(*) as cantidad FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ?");
+    
+    // Obtenemos todas las ventas de hoy para procesar los totales con fallback
+    $stmtVentas = $db->prepare("SELECT total_usd, total_bs, tasa FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ?");
     $stmtVentas->execute([$nid, $hoy]);
-    $resVentas = $stmtVentas->fetch(PDO::FETCH_ASSOC);
+    $ventasHoy = $stmtVentas->fetchAll(PDO::FETCH_ASSOC);
+
+    $totalUsd = 0;
+    $totalBs = 0;
+    $count = count($ventasHoy);
+
+    foreach ($ventasHoy as $v) {
+        $totalUsd += (float)$v['total_usd'];
+        $valBs = (float)$v['total_bs'];
+        // Si el total_bs es 0 pero tenemos usd y tasa, lo recalculamos para el reporte
+        if ($valBs <= 0 && $v['total_usd'] > 0 && $v['tasa'] > 0) {
+            $valBs = $v['total_usd'] * $v['tasa'];
+        }
+        $totalBs += $valBs;
+    }
 
     // 2. Productos con stock bajo
     $stmtBajo = $db->prepare("SELECT COUNT(*) FROM productos WHERE negocio_id = ? AND stock <= bajo_inventario");
@@ -33,15 +49,26 @@ try {
     $stmtTotal->execute([$nid]);
     $totalProd = $stmtTotal->fetchColumn();
 
-    // 4. Últimas 5 ventas
-    $stmtLast = $db->prepare("SELECT id, total_usd, fecha FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ? ORDER BY fecha DESC LIMIT 5");
+    // 4. Últimas 5 ventas (con procesamiento de total_bs)
+    $stmtLast = $db->prepare("SELECT id, total_usd, total_bs, tasa, fecha FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ? ORDER BY fecha DESC LIMIT 5");
     $stmtLast->execute([$nid, $hoy]);
-    $ultimas = $stmtLast->fetchAll(PDO::FETCH_ASSOC);
+    $ultimasRaw = $stmtLast->fetchAll(PDO::FETCH_ASSOC);
+    
+    $ultimas = [];
+    foreach ($ultimasRaw as $u) {
+        $u['total_usd'] = (float)$u['total_usd'];
+        $u['total_bs'] = (float)$u['total_bs'];
+        if ($u['total_bs'] <= 0 && $u['total_usd'] > 0 && $u['tasa'] > 0) {
+            $u['total_bs'] = $u['total_usd'] * $u['tasa'];
+        }
+        $ultimas[] = $u;
+    }
 
     echo json_encode([
         'ok' => true,
-        'today_total_usd' => (float)($resVentas['total'] ?? 0),
-        'today_count' => (int)($resVentas['cantidad'] ?? 0),
+        'today_total_usd' => $totalUsd,
+        'today_total_bs' => $totalBs,
+        'today_count' => $count,
         'low_stock_count' => (int)$bajoStock,
         'total_products' => (int)$totalProd,
         'latest_sales' => $ultimas

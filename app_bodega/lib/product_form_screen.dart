@@ -844,7 +844,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         onChanged: onChanged,
         style: GoogleFonts.outfit(
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: const Color(0xFF1E3A8A),
         ),
         decoration: InputDecoration(
           labelText: label,

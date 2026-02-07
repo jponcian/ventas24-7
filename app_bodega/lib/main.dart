@@ -201,6 +201,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
               id: -p.id,
               nombre: '${p.nombre} (Paquete)',
               descripcion: p.descripcion,
+              marca: p.marca,
+              codigoInterno: p.codigoInterno,
               unidadMedida: 'paquete',
               precioVenta: p.precioVentaPaquete,
               precioCompra: p.precioCompra,
@@ -1455,10 +1457,23 @@ class _ProductListScreenState extends State<ProductListScreen> {
           color: Colors.transparent,
           child: InkWell(
             onLongPress: () async {
+              // Si es un producto de paquete (ID negativo), buscar el original
+              Product productToEdit = p;
+              if (p.id < 0) {
+                // Buscar el producto original con ID positivo
+                final originalId = p.id.abs();
+                final original = _allProducts.firstWhere(
+                  (prod) => prod.id == originalId,
+                  orElse: () => p,
+                );
+                productToEdit = original;
+              }
+
               final res = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProductFormScreen(product: p),
+                  builder: (context) =>
+                      ProductFormScreen(product: productToEdit),
                 ),
               );
               if (res == true) _loadData();
