@@ -29,6 +29,7 @@ import 'fiados_screen.dart';
 import 'fiado_model.dart';
 import 'label_printing_screen.dart';
 import 'sales_charts_screen.dart';
+import 'product_management_screen.dart';
 import 'offline_service.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -1699,7 +1700,14 @@ class _MainDrawerState extends State<MainDrawer> {
               _userRol == 'admin' ||
               _userRol == 'superadmin') ...[
             const Divider(),
-            _buildSectionHeader('INVENTARIO Y COMPRAS'),
+            _buildSectionHeader('INVENTARIO Y PRODUCTOS'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.edit_note,
+              title: 'Gestión de Productos',
+              color: Colors.teal,
+              route: (context) => const ProductManagementScreen(),
+            ),
             _buildDrawerItem(
               context,
               icon: Icons.add_shopping_cart,
