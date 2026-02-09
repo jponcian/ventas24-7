@@ -527,7 +527,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '${precioBs.toStringAsFixed(2)} Bs c/u',
+                                      '${precioBs.toStringAsFixed(2)} Bs (\$${(esDolar ? precio : precio / (_tasa > 0 ? _tasa : 1)).toStringAsFixed(2)}) c/u',
                                       style: TextStyle(
                                         color: Colors.grey[600],
                                         fontSize: 12,
