@@ -1435,7 +1435,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     double precio = p.precioVenta ?? 0;
     bool esDolar = p.monedaCompra != 'BS';
     double precioBs = esDolar ? precio * _tasa : precio;
-    String precioStr = '${precioBs.toStringAsFixed(2)} Bs';
+    double precioUsd = esDolar ? precio : (precio / (_tasa > 0 ? _tasa : 1));
+    String precioStr = '${precioBs.toStringAsFixed(2)} Bs\n(\$${precioUsd.toStringAsFixed(2)})';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
