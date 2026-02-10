@@ -1504,7 +1504,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          p.nombre,
+                          p.codigoInterno != null && p.codigoInterno!.isNotEmpty
+                              ? '(${p.codigoInterno}) ${p.nombre}'
+                              : p.nombre,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
