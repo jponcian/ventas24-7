@@ -64,14 +64,30 @@ try {
         $ultimas[] = $u;
     }
 
+    // 5. Ventas por método de pago (Hoy)
+    $stmtMetodos = $db->prepare("
+        SELECT 
+            COALESCE(m.nombre, 'Sin Definir') as metodo,
+            COUNT(*) as cantidad,
+            COALESCE(SUM(v.total_bs), 0) as total_bs,
+            COALESCE(SUM(v.total_usd), 0) as total_usd
+        FROM ventas v
+        LEFT JOIN metodos_pago m ON v.metodo_pago_id = m.id
+        WHERE v.negocio_id = ? AND DATE(v.fecha) = ?
+        GROUP BY COALESCE(m.nombre, 'Sin Definir')
+    ");
+    $stmtMetodos->execute([$nid, $hoy]);
+    $ventasPorMetodo = $stmtMetodos->fetchAll(PDO::FETCH_ASSOC);
+
     echo json_encode([
         'ok' => true,
-        'today_total_usd' => $totalUsd,
-        'today_total_bs' => $totalBs,
+        'today_total_usd' => (float)$totalUsd,
+        'today_total_bs' => (float)$totalBs,
         'today_count' => $count,
         'low_stock_count' => (int)$bajoStock,
         'total_products' => (int)$totalProd,
-        'latest_sales' => $ultimas
+        'latest_sales' => $ultimas,
+        'payment_methods_summary' => $ventasPorMetodo
     ]);
 
 } catch (Exception $e) {

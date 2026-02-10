@@ -36,6 +36,8 @@ import 'theme_provider.dart';
 import 'expiration_alerts_screen.dart';
 import 'reorder_prediction_screen.dart';
 import 'background_sync_service.dart';
+import 'payment_methods_screen.dart';
+import 'metodo_pago_model.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -56,12 +58,17 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final bool isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+  final bool biometricEnabled = prefs.getBool('biometric_enabled') ?? false;
   final String userRol = prefs.getString('user_rol') ?? 'vendedor';
 
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
-      child: MyApp(isLoggedIn: isLoggedIn, userRol: userRol),
+      child: MyApp(
+        isLoggedIn: isLoggedIn,
+        userRol: userRol,
+        biometricEnabled: biometricEnabled,
+      ),
     ),
   );
 }
@@ -69,12 +76,25 @@ void main() async {
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final String userRol;
-  const MyApp({super.key, required this.isLoggedIn, required this.userRol});
+  final bool biometricEnabled;
+
+  const MyApp({
+    super.key,
+    required this.isLoggedIn,
+    required this.userRol,
+    required this.biometricEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
+        // Si tiene huella activada, siempre mandamos a login para validar
+        // aunque ya esté sesión iniciada técnicamente.
+        final String initialRoute = (isLoggedIn && !biometricEnabled)
+            ? (userRol == 'admin' ? '/admin' : '/home')
+            : '/login';
+
         return MaterialApp(
           title: 'Ventas 24/7',
           debugShowCheckedModeBanner: false,
@@ -89,9 +109,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
           themeMode: themeProvider.themeMode,
-          initialRoute: isLoggedIn
-              ? (userRol == 'admin' ? '/admin' : '/home')
-              : '/login',
+          initialRoute: initialRoute,
           routes: {
             '/login': (context) => const LoginScreen(),
             '/home': (context) => const DashboardScreen(),
@@ -129,8 +147,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
   String _negocioName = '';
   String _userRol = 'vendedor';
   List<Cliente> _clientes = [];
-  bool _esFiado = false;
   Cliente? _selectedCliente;
+  List<MetodoPago> _metodosPago = [];
+  MetodoPago? _selectedMetodo;
+  final TextEditingController _referenciaController = TextEditingController();
   final ApiService _apiService = ApiService();
   final TextEditingController _searchCtrl = TextEditingController();
 
@@ -139,6 +159,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     super.initState();
     _loadUserInfo();
     _loadData();
+    _loadMetodos();
+    _loadClientes();
     _startSyncTimer();
   }
 
@@ -291,6 +313,28 @@ class _ProductListScreenState extends State<ProductListScreen> {
     });
   }
 
+  Future<void> _loadMetodos() async {
+    final list = await _apiService.getMetodosPago();
+    if (mounted) {
+      setState(() {
+        _metodosPago = list;
+        if (_metodosPago.isNotEmpty && _selectedMetodo == null) {
+          _selectedMetodo = _metodosPago.firstWhere(
+            (m) => m.nombre == 'Efectivo',
+            orElse: () => _metodosPago.first,
+          );
+        }
+      });
+    }
+  }
+
+  Future<void> _loadClientes() async {
+    final list = await _apiService.getClientes();
+    if (mounted) {
+      setState(() => _clientes = list);
+    }
+  }
+
   void _checkExpirations() {
     final now = DateTime.now();
     final sevenDaysFromNow = now.add(const Duration(days: 7));
@@ -349,13 +393,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   void _showTicket() {
-    _esFiado = false;
-    _selectedCliente = null;
-    if (_clientes.isEmpty) {
-      _apiService.getClientes().then((list) {
-        if (mounted) setState(() => _clientes = list);
-      });
+    _referenciaController.clear();
+
+    // Asegurar selección por defecto cada vez que se abre
+    if (_metodosPago.isNotEmpty) {
+      _selectedMetodo = _metodosPago.firstWhere(
+        (m) => m.nombre == 'Efectivo',
+        orElse: () => _metodosPago.first,
+      );
     }
+    _selectedCliente = null;
 
     showModalBottomSheet(
       context: context,
@@ -671,50 +718,66 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // OPCION FIADO
+                          // FORMA DE PAGO
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: _esFiado
-                                    ? const Color(
-                                        0xFF1E3A8A,
-                                      ).withValues(alpha: 0.5)
-                                    : Colors.transparent,
-                              ),
+                              border: Border.all(color: Colors.grey[200]!),
                             ),
                             child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SwitchListTile(
-                                  title: const Text(
-                                    'CONVERTIR A FIADO',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      letterSpacing: 1.1,
+                                Text(
+                                  'FORMA DE PAGO',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[600],
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                DropdownButtonFormField<MetodoPago>(
+                                  value: _selectedMetodo,
+                                  decoration: InputDecoration(
+                                    prefixIcon: const Icon(
+                                      Icons.payments_outlined,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
                                     ),
                                   ),
-                                  subtitle: const Text(
-                                    'Asignar esta venta como deuda a un cliente',
-                                    style: TextStyle(fontSize: 11),
-                                  ),
-                                  value: _esFiado,
-                                  activeThumbColor: const Color(0xFF1E3A8A),
+                                  items: _metodosPago.map((m) {
+                                    return DropdownMenuItem(
+                                      value: m,
+                                      child: Text(
+                                        m.nombre,
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                    );
+                                  }).toList(),
                                   onChanged: (val) {
                                     setModalState(() {
-                                      _esFiado = val;
+                                      _selectedMetodo = val;
                                     });
+                                    setState(() {});
                                   },
                                 ),
-                                if (_esFiado) ...[
-                                  const SizedBox(height: 8),
+                                if (_selectedMetodo?.nombre == 'Crédito') ...[
+                                  const SizedBox(height: 12),
                                   DropdownButtonFormField<Cliente>(
-                                    initialValue: _selectedCliente,
+                                    value: _selectedCliente,
                                     decoration: InputDecoration(
                                       labelText: 'Seleccionar Cliente',
-                                      prefixIcon: const Icon(Icons.person),
+                                      prefixIcon: const Icon(
+                                        Icons.person_outline,
+                                      ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -729,7 +792,22 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                       setModalState(() {
                                         _selectedCliente = val;
                                       });
+                                      setState(() {});
                                     },
+                                  ),
+                                ],
+                                if (_selectedMetodo?.requiereReferencia ??
+                                    false) ...[
+                                  const SizedBox(height: 12),
+                                  TextField(
+                                    controller: _referenciaController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Número de Referencia',
+                                      prefixIcon: const Icon(Icons.numbers),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ],
@@ -770,11 +848,26 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
                                 if (confirm != true) return;
 
-                                if (_esFiado && _selectedCliente == null) {
+                                if (_selectedMetodo?.nombre == 'Crédito' &&
+                                    _selectedCliente == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
-                                        'Debes seleccionar un cliente para el fiado',
+                                        'Debes seleccionar un cliente para el crédito',
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                if (_selectedMetodo?.requiereReferencia ==
+                                        true &&
+                                    _referenciaController.text.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Debes ingresar el número de referencia',
                                       ),
                                       backgroundColor: Colors.orange,
                                     ),
@@ -797,7 +890,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                       ? (p.tamPaquete ?? 1.0)
                                       : 1.0;
 
-                                  if (_esFiado) {
+                                  final isCredito =
+                                      _selectedMetodo?.nombre == 'Crédito';
+
+                                  if (isCredito) {
                                     return {
                                       'producto_id': p.id.abs(),
                                       'cantidad': p.qty,
@@ -820,28 +916,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   'total_usd': totalUsd,
                                   'tasa': _tasa,
                                   'detalles': items,
+                                  'metodo_pago_id': _selectedMetodo?.id,
+                                  'cliente_id': _selectedCliente?.id,
+                                  'referencia': _referenciaController.text,
                                 };
-
-                                if (_esFiado) {
-                                  ventaData['cliente_id'] =
-                                      _selectedCliente!.id;
-                                }
 
                                 Navigator.pop(context);
                                 setState(() => _loading = true);
 
                                 bool success = false;
                                 try {
-                                  if (_esFiado) {
-                                    final res = await _apiService.crearFiado(
-                                      ventaData,
-                                    );
-                                    success = res['ok'] == true;
-                                  } else {
-                                    success = await _apiService.registrarVenta(
-                                      ventaData,
-                                    );
-                                  }
+                                  success = await _apiService.registrarVenta(
+                                    ventaData,
+                                  );
                                 } catch (e) {
                                   success = false;
                                 }
@@ -854,18 +941,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   });
                                   _loadData();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
+                                    const SnackBar(
                                       content: Text(
-                                        _esFiado
-                                            ? 'Fiado registrado con éxito'
-                                            : 'Venta registrada con éxito',
+                                        'Venta registrada con éxito',
                                       ),
                                       backgroundColor: Colors.green,
                                     ),
                                   );
                                 } else {
                                   // MODO OFFLINE: Guardar localmente
-                                  if (!_esFiado) {
+                                  if (_selectedMetodo?.nombre != 'Crédito') {
                                     await OfflineService.savePendingVenta(
                                       ventaData,
                                     );
@@ -1316,17 +1401,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final res = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ProductFormScreen()),
-          );
-          if (res == true) _loadData();
-        },
-        backgroundColor: const Color(0xFF1E3A8A),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      // floatingActionButton removed
       bottomNavigationBar: totalBs > 0 ? _buildBottomBar(totalBs) : null,
     );
   }
@@ -1470,32 +1545,30 @@ class _ProductListScreenState extends State<ProductListScreen> {
     double precioBs = esDolar ? precio * _tasa : precio;
     double precioUsd = esDolar ? precio : (precio / (_tasa > 0 ? _tasa : 1));
     String precioStr =
-        '${precioBs.toStringAsFixed(2)} Bs\n(\$${precioUsd.toStringAsFixed(2)})';
+        '${precioBs.toStringAsFixed(2)} Bs (\$${precioUsd.toStringAsFixed(2)})';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey[100]!),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onLongPress: () async {
-              // Si es un producto de paquete (ID negativo), buscar el original
               Product productToEdit = p;
               if (p.id < 0) {
-                // Buscar el producto original con ID positivo
                 final originalId = p.id.abs();
                 final original = _allProducts.firstWhere(
                   (prod) => prod.id == originalId,
@@ -1514,24 +1587,25 @@ class _ProductListScreenState extends State<ProductListScreen> {
               if (res == true) _loadData();
             },
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: esBajo ? Colors.orange[50] : Colors.blue[50],
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       esBajo
                           ? Icons.warning_amber_rounded
                           : Icons.inventory_2_outlined,
                       color: esBajo ? Colors.orange : const Color(0xFF1E3A8A),
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1542,32 +1616,27 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               : p.nombre,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 14,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        if (p.proveedor != null && p.proveedor!.isNotEmpty)
-                          Text(
-                            p.proveedor!,
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
+                        const SizedBox(height: 2),
                         Text(
                           precioStr,
                           style: const TextStyle(
                             color: Color(0xFF1E3A8A),
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 13,
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           'Stock: ${p.stock?.toStringAsFixed(p.stock! % 1 == 0 ? 0 : 2) ?? "0"}',
                           style: TextStyle(
                             color: esBajo ? Colors.red : Colors.green[700],
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
                           ),
                         ),
                       ],
@@ -1723,10 +1792,13 @@ class _MainDrawerState extends State<MainDrawer> {
               color: Colors.blueGrey,
               route: (context) => const LabelPrintingScreen(),
             ),
-          ],
-          if (_userRol == 'administrador' ||
-              _userRol == 'admin' ||
-              _userRol == 'superadmin') ...[
+            _buildDrawerItem(
+              context,
+              icon: Icons.payments_rounded,
+              title: 'Formas de Pago',
+              color: Colors.indigo,
+              route: (context) => const PaymentMethodsScreen(),
+            ),
             const Divider(),
             _buildSectionHeader('CRÉDITOS Y FIADOS'),
             _buildDrawerItem(

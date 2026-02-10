@@ -50,17 +50,41 @@ try {
     $stmtDetalle->execute([$negocio_id, $fecha]);
     $productos = $stmtDetalle->fetchAll(PDO::FETCH_ASSOC);
 
-    // Listado de ventas individuales
-    $stmtVentas = $db->prepare("SELECT id, total_usd, total_bs, fecha FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ? ORDER BY fecha DESC");
+    // Listado de ventas individuales con su método de pago
+    $stmtVentas = $db->prepare("
+        SELECT 
+            v.id, v.total_usd, v.total_bs, v.fecha, 
+            COALESCE(m.nombre, 'Efectivo') as metodo_pago
+        FROM ventas v
+        LEFT JOIN metodos_pago m ON v.metodo_pago_id = m.id
+        WHERE v.negocio_id = ? AND DATE(v.fecha) = ? 
+        ORDER BY v.fecha DESC
+    ");
     $stmtVentas->execute([$negocio_id, $fecha]);
     $ventas = $stmtVentas->fetchAll(PDO::FETCH_ASSOC);
+
+    // Resumen por método de pago
+    $stmtMetodos = $db->prepare("
+        SELECT 
+            COALESCE(m.nombre, 'Efectivo') as metodo,
+            COUNT(*) as cantidad,
+            COALESCE(SUM(v.total_bs), 0) as total_bs,
+            COALESCE(SUM(v.total_usd), 0) as total_usd
+        FROM ventas v
+        LEFT JOIN metodos_pago m ON v.metodo_pago_id = m.id
+        WHERE v.negocio_id = ? AND DATE(v.fecha) = ?
+        GROUP BY COALESCE(m.nombre, 'Efectivo')
+    ");
+    $stmtMetodos->execute([$negocio_id, $fecha]);
+    $metodos = $stmtMetodos->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode([
         'ok' => true,
         'fecha' => $fecha,
         'resumen' => $resumen,
         'productos' => $productos,
-        'ventas' => $ventas
+        'ventas' => $ventas,
+        'resumen_metodos' => $metodos
     ]);
 
 } catch (Exception $e) {

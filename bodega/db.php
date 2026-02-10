@@ -155,43 +155,62 @@ function getProducto($id, $negocio_id)
 }
 
 // --- Ventas ---
-function registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles)
+function registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles, $metodo_pago_id = null, $cliente_id = null, $referencia = null)
 {
     global $db;
     try {
         $db->beginTransaction();
 
-        $stmt = $db->prepare("INSERT INTO ventas (negocio_id, total_bs, total_usd, tasa) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$negocio_id, $total_bs, $total_usd, $tasa]);
+        // 1. Insertar la venta
+        $stmt = $db->prepare("INSERT INTO ventas (negocio_id, total_bs, total_usd, tasa, metodo_pago_id, cliente_id, referencia) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$negocio_id, $total_bs, $total_usd, $tasa, $metodo_pago_id, $cliente_id, $referencia]);
         $venta_id = $db->lastInsertId();
 
+        // 2. Procesar detalles y stock
         $stmtDetalle = $db->prepare("INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, es_paquete, precio_unitario_bs) VALUES (?, ?, ?, ?, ?)");
         $stmtUpdateStock = $db->prepare("UPDATE productos SET stock = stock - ? WHERE id = ? AND negocio_id = ?");
 
         foreach ($detalles as $item) {
-            // Si el item tiene un multiplicador (ej: venta por paquete), usarlo para el stock
             $multiplicador = isset($item['multiplicador']) ? floatval($item['multiplicador']) : 1.0;
-            
-            // Determinar si es venta de paquete (multiplicador > 1 indica que es paquete)
             $esPaquete = $multiplicador > 1 ? 1 : 0;
-            
-            // Guardar la cantidad real vendida (1 paquete = 1, no 20)
             $cantidadVendida = floatval($item['cantidad']);
-            
-            // El precio_bs que viene del frontend es el precio TOTAL por unidad/paquete
-            // Lo guardamos tal cual como precio_unitario_bs
-            $precioUnitarioBs = floatval($item['precio_bs']);
+            $precioUnitarioBs = floatval($item['precio_bs'] ?? 0);
             
             $stmtDetalle->execute([$venta_id, $item['id'], $cantidadVendida, $esPaquete, $precioUnitarioBs]);
-            
-            // Para el stock, multiplicamos por el multiplicador (1 paquete = 20 unidades de stock)
             $stmtUpdateStock->execute([$cantidadVendida * $multiplicador, $item['id'], $negocio_id]);
+        }
+
+        // 3. Si el método de pago es 'Crédito', registrar en fiados
+        if ($metodo_pago_id && $cliente_id) {
+            $stmtMetodo = $db->prepare("SELECT nombre FROM metodos_pago WHERE id = ?");
+            $stmtMetodo->execute([$metodo_pago_id]);
+            $metodoNombre = $stmtMetodo->fetchColumn();
+
+            if ($metodoNombre === 'Crédito') {
+                $stmtFiado = $db->prepare("INSERT INTO fiados (negocio_id, cliente_id, total_bs, total_usd, saldo_pendiente, tasa, estado) VALUES (?, ?, ?, ?, ?, ?, 'pendiente')");
+                $stmtFiado->execute([$negocio_id, $cliente_id, $total_bs, $total_usd, $total_usd, $tasa]);
+                $fiado_id = $db->lastInsertId();
+
+                // Registrar detalles del fiado
+                $stmtFiadoDet = $db->prepare("INSERT INTO fiado_detalles (fiado_id, producto_id, cantidad, precio_unitario_bs, precio_unitario_usd, subtotal_bs, subtotal_usd) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                foreach ($detalles as $item) {
+                    $cantidad = floatval($item['cantidad']);
+                    $precio_bs = floatval($item['precio_bs'] ?? 0);
+                    $precio_usd = $tasa > 0 ? $precio_bs / $tasa : 0;
+                    $stmtFiadoDet->execute([$fiado_id, $item['id'], $cantidad, $precio_bs, $precio_usd, $cantidad * $precio_bs, $cantidad * $precio_usd]);
+                }
+
+                // Actualizar deuda total del cliente
+                $stmtUpdateCliente = $db->prepare("UPDATE clientes SET deuda_total = deuda_total + ? WHERE id = ?");
+                $stmtUpdateCliente->execute([$total_usd, $cliente_id]);
+            }
         }
 
         $db->commit();
         return true;
     } catch (Exception $e) {
         if ($db->inTransaction()) $db->rollBack();
+        error_log("Error in registrarVenta: " . $e->getMessage());
         return false;
     }
 }

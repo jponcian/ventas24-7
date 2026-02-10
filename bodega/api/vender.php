@@ -17,8 +17,11 @@ $total_bs = floatval($body['total_bs'] ?? 0);
 $total_usd = floatval($body['total_usd'] ?? 0);
 $tasa = floatval($body['tasa'] ?? 0);
 $detalles = $body['detalles'];
+$metodo_pago_id = isset($body['metodo_pago_id']) ? intval($body['metodo_pago_id']) : null;
+$cliente_id = isset($body['cliente_id']) ? intval($body['cliente_id']) : null;
+$referencia = $body['referencia'] ?? null;
 
-if (registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles)) {
+if (registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles, $metodo_pago_id, $cliente_id, $referencia)) {
     echo json_encode(['ok' => true]);
 } else {
     http_response_code(500);

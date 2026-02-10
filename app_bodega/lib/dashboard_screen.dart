@@ -451,6 +451,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                       const SizedBox(height: 30),
+                      if (_data?['payment_methods_summary'] != null &&
+                          (_data!['payment_methods_summary'] as List)
+                              .isNotEmpty) ...[
+                        Text(
+                          'Detalle por Método',
+                          style: GoogleFonts.outfit(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 100,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount:
+                                (_data!['payment_methods_summary'] as List)
+                                    .length,
+                            itemBuilder: (context, i) {
+                              final m = _data!['payment_methods_summary'][i];
+                              return Container(
+                                width: 150,
+                                margin: const EdgeInsets.only(right: 12),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.grey[100]!),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      m['metodo'],
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '\$${(double.tryParse(m['total_usd'].toString()) ?? 0).toStringAsFixed(2)}',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF1E3A8A),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${(double.tryParse(m['total_bs'].toString()) ?? 0).toStringAsFixed(2)} Bs',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 11,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+                      ],
                       Text(
                         'Últimas Ventas',
                         style: GoogleFonts.outfit(

@@ -131,6 +131,20 @@ try {
     $ganancia_neta = $total_ventas_usd - $total_costos_usd;
     $margen_porcentaje = $total_ventas_usd > 0 ? ($ganancia_neta / $total_ventas_usd) * 100 : 0;
 
+    // --- 7. Ventas por método de pago ---
+    $stmtMetodos = $db->prepare("
+        SELECT 
+            COALESCE(m.nombre, 'Efectivo') as metodo,
+            COALESCE(SUM(v.total_bs), 0) as total_bs,
+            COALESCE(SUM(v.total_usd), 0) as total_usd
+        FROM ventas v
+        LEFT JOIN metodos_pago m ON v.metodo_pago_id = m.id
+        WHERE v.negocio_id = ? AND DATE(v.fecha) = ?
+        GROUP BY COALESCE(m.nombre, 'Efectivo')
+    ");
+    $stmtMetodos->execute([$negocio_id, $fecha]);
+    $ventas_por_metodo = $stmtMetodos->fetchAll(PDO::FETCH_ASSOC);
+
     echo json_encode([
         'ok' => true,
         'total_ventas_usd' => $total_ventas_usd,
@@ -142,7 +156,8 @@ try {
         'inversion_total_usd' => $inversion_total_usd,
         'recaudacion_potencial_usd' => $recaudacion_potencial_usd,
         'ventas_por_hora' => $ventas_por_hora,
-        'top_productos' => $top_productos
+        'top_productos' => $top_productos,
+        'ventas_por_metodo' => $ventas_por_metodo
     ]);
 
 } catch (Exception $e) {

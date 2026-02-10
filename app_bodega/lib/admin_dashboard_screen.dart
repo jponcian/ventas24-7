@@ -195,6 +195,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       _buildTopProducts(),
                       const SizedBox(height: 24),
 
+                      // Detalle por Formas de Pago
+                      _buildPaymentMethodsSummary(),
+                      const SizedBox(height: 24),
+
                       // Botones de acción rápida
                       _buildQuickActions(),
                     ],
@@ -493,6 +497,75 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPaymentMethodsSummary() {
+    final metodos = _data?['ventas_por_metodo'] as List<dynamic>? ?? [];
+
+    if (metodos.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ventas por Forma de Pago',
+          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: metodos.length,
+            itemBuilder: (context, i) {
+              final m = metodos[i];
+              return Container(
+                width: 150,
+                margin: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      m['metodo'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF1E3A8A),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '\$${_formatCurrency(double.tryParse(m['total_usd'].toString()) ?? 0)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      '${_formatCurrency(double.tryParse(m['total_bs'].toString()) ?? 0)} Bs',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

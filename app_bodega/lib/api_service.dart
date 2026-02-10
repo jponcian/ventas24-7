@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'product_model.dart';
 import 'fiado_model.dart';
+import 'metodo_pago_model.dart';
 
 class ApiService {
   static const String baseUrl = 'https://ponciano.zz.com.ve/bodega/api';
@@ -152,6 +153,61 @@ class ApiService {
     );
     return response.statusCode == 200 &&
         jsonDecode(response.body)['ok'] == true;
+  }
+
+  // --- Métodos de Pago ---
+  Future<List<MetodoPago>> getMetodosPago() async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse('$baseUrl/metodos_pago.php?negocio_id=$nid'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          final List<dynamic> list = data['metodos'] ?? [];
+          return list.map((e) => MetodoPago.fromJson(e)).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> saveMetodoPago(Map<String, dynamic> data) async {
+    try {
+      data['negocio_id'] = await getNegocioId();
+      final http.Response response;
+      if (data['id'] != null) {
+        response = await http.put(
+          Uri.parse('$baseUrl/metodos_pago.php'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(data),
+        );
+      } else {
+        response = await http.post(
+          Uri.parse('$baseUrl/metodos_pago.php'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(data),
+        );
+      }
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'ok': false, 'error': e.toString()};
+    }
+  }
+
+  Future<bool> deleteMetodoPago(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/metodos_pago.php?id=$id'),
+      );
+      return response.statusCode == 200 &&
+          jsonDecode(response.body)['ok'] == true;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getVentaDetalle(int ventaId) async {

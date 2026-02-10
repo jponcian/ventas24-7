@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _biometricAvailable = false;
   bool _biometricEnabled = false;
+  bool _isAlreadyLoggedIn = false;
 
   @override
   void initState() {
@@ -27,12 +28,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _checkBiometricAvailability() async {
+    final prefs = await SharedPreferences.getInstance();
     final available = await _biometricService.isBiometricAvailable();
     final enabled = await _biometricService.isBiometricEnabled();
+    final doubleLoggedIn = prefs.getBool('is_logged_in') ?? false;
 
     setState(() {
       _biometricAvailable = available;
       _biometricEnabled = enabled;
+      _isAlreadyLoggedIn = doubleLoggedIn;
     });
 
     // Si está habilitado, intentar login automático
@@ -269,7 +273,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Bienvenido de nuevo',
+                    _isAlreadyLoggedIn
+                        ? 'Sesión activa'
+                        : 'Bienvenido de nuevo',
                     style: GoogleFonts.outfit(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -278,7 +284,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Ingresa tus credenciales para continuar',
+                    _isAlreadyLoggedIn
+                        ? 'Desbloquea para continuar operando'
+                        : 'Ingresa tus credenciales para continuar',
                     style: GoogleFonts.outfit(
                       color: Colors.grey[500],
                       fontSize: 16,
@@ -357,6 +365,48 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                   ),
+                  if (_biometricAvailable && _biometricEnabled) ...[
+                    const SizedBox(height: 20),
+                    Center(
+                      child: InkWell(
+                        onTap: _handleBiometricLogin,
+                        borderRadius: BorderRadius.circular(15),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.5),
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.fingerprint,
+                                color: Color(0xFF10B981),
+                                size: 28,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'DESBLOQUEAR CON HUELLA',
+                                style: GoogleFonts.outfit(
+                                  color: const Color(0xFF10B981),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
