@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'biometric_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,7 +15,67 @@ class _LoginScreenState extends State<LoginScreen> {
   final _cedulaCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _apiService = ApiService();
+  final _biometricService = BiometricAuthService();
   bool _isLoading = false;
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometricAvailability();
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    final available = await _biometricService.isBiometricAvailable();
+    final enabled = await _biometricService.isBiometricEnabled();
+
+    setState(() {
+      _biometricAvailable = available;
+      _biometricEnabled = enabled;
+    });
+
+    // Si está habilitado, intentar login automático
+    if (_biometricEnabled && mounted) {
+      await _handleBiometricLogin();
+    }
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    try {
+      final authenticated = await _biometricService.authenticate(
+        reason: 'Autentícate para acceder a Ventas 24/7',
+      );
+
+      if (authenticated) {
+        // Obtener credenciales guardadas
+        final prefs = await SharedPreferences.getInstance();
+        final savedCedula = prefs.getString('saved_cedula');
+        final savedPassword = prefs.getString('saved_password');
+
+        if (savedCedula != null && savedPassword != null) {
+          setState(() => _isLoading = true);
+          final result = await _apiService.login(savedCedula, savedPassword);
+          setState(() => _isLoading = false);
+
+          if (result['ok'] == true) {
+            _navigateAfterLogin(result);
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error al autenticar. Usa tu contraseña.'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Silenciosamente fallar si el usuario cancela
+    }
+  }
 
   Future<void> _handleLogin() async {
     if (_cedulaCtrl.text.isEmpty || _passCtrl.text.isEmpty) {
@@ -29,55 +90,15 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (result['ok'] == true) {
-      if (!mounted) return;
-      final negocios = result['negocios'] as List<dynamic>?;
-
-      if (negocios != null && negocios.length > 1) {
-        // Mostrar diálogo de selección
-        final selected = await showDialog<Map<String, dynamic>>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: const Text('Seleccionar Negocio'),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: negocios.length,
-                itemBuilder: (context, i) {
-                  return ListTile(
-                    leading: const Icon(Icons.business),
-                    title: Text(negocios[i]['nombre']),
-                    onTap: () => Navigator.pop(context, negocios[i]),
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-
-        if (selected != null) {
-          await _apiService.setNegocio(selected['id'], selected['nombre']);
-          final prefs = await SharedPreferences.getInstance();
-          final String rol = prefs.getString('user_rol') ?? 'vendedor';
-          if (mounted) {
-            Navigator.pushReplacementNamed(
-              context,
-              rol == 'admin' ? '/admin' : '/home',
-            );
-          }
-        } else {
-          // Si cancela (aunque pusimos barrierDismissible: false), no hacemos nada
-        }
-      } else {
-        // Ya se guardó en ApiService si era solo 1
+      // Guardar credenciales si biométrico está disponible
+      if (_biometricAvailable) {
         final prefs = await SharedPreferences.getInstance();
-        final String rol = prefs.getString('user_rol') ?? 'vendedor';
-        Navigator.pushReplacementNamed(
-          context,
-          rol == 'admin' ? '/admin' : '/home',
-        );
+        await prefs.setString('saved_cedula', _cedulaCtrl.text);
+        await prefs.setString('saved_password', _passCtrl.text);
+        await _biometricService.setBiometricEnabled(true);
       }
+
+      _navigateAfterLogin(result);
     } else {
       if (mounted) {
         final String errorMessage =
@@ -86,6 +107,56 @@ class _LoginScreenState extends State<LoginScreen> {
           SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
+    }
+  }
+
+  Future<void> _navigateAfterLogin(Map<String, dynamic> result) async {
+    if (!mounted) return;
+    final negocios = result['negocios'] as List<dynamic>?;
+
+    if (negocios != null && negocios.length > 1) {
+      // Mostrar diálogo de selección
+      final selected = await showDialog<Map<String, dynamic>>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Seleccionar Negocio'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: negocios.length,
+              itemBuilder: (context, i) {
+                return ListTile(
+                  leading: const Icon(Icons.business),
+                  title: Text(negocios[i]['nombre']),
+                  onTap: () => Navigator.pop(context, negocios[i]),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (selected != null) {
+        await _apiService.setNegocio(selected['id'], selected['nombre']);
+        final prefs = await SharedPreferences.getInstance();
+        final String rol = prefs.getString('user_rol') ?? 'vendedor';
+        if (mounted) {
+          Navigator.pushReplacementNamed(
+            context,
+            rol == 'admin' ? '/admin' : '/home',
+          );
+        }
+      }
+    } else {
+      // Ya se guardó en ApiService si era solo 1
+      final prefs = await SharedPreferences.getInstance();
+      final String rol = prefs.getString('user_rol') ?? 'vendedor';
+      Navigator.pushReplacementNamed(
+        context,
+        rol == 'admin' ? '/admin' : '/home',
+      );
     }
   }
 

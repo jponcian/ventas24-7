@@ -220,6 +220,54 @@ class ApiService {
     }
   }
 
+  /// Obtiene el historial de ventas de un producto específico
+  Future<List<Map<String, dynamic>>> getProductSalesHistory(
+    int productId, {
+    int days = 30,
+  }) async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/product_sales_history.php?negocio_id=$nid&producto_id=$productId&days=$days',
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return List<Map<String, dynamic>>.from(data['ventas'] ?? []);
+        }
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Obtiene el historial de ventas de TODOS los productos (optimizado)
+  Future<List<Map<String, dynamic>>> getAllProductsSalesHistory({
+    int days = 30,
+  }) async {
+    try {
+      final nid = await getNegocioId();
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/all_products_sales_history.php?negocio_id=$nid&days=$days',
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['ok'] == true) {
+          return List<Map<String, dynamic>>.from(data['productos'] ?? []);
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error en getAllProductsSalesHistory: $e');
+      return [];
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getProveedoresList() async {
     try {
       final nid = await getNegocioId();

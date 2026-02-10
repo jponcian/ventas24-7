@@ -1,6 +1,7 @@
 // Disparo de compilación para nueva versión v1.1.1+3 - Optimus
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
 import 'user_management_screen.dart';
 import 'business_management_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -31,17 +32,38 @@ import 'label_printing_screen.dart';
 import 'sales_charts_screen.dart';
 import 'product_management_screen.dart';
 import 'offline_service.dart';
+import 'theme_provider.dart';
+import 'expiration_alerts_screen.dart';
+import 'reorder_prediction_screen.dart';
+import 'background_sync_service.dart';
 import 'dart:async';
 import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es_ES', null);
+
+  // Inicializar sincronización en segundo plano
+  try {
+    await BackgroundSyncService.initialize();
+    final autoSyncEnabled = await BackgroundSyncService.isAutoSyncEnabled();
+    if (autoSyncEnabled) {
+      await BackgroundSyncService.registerPeriodicSync();
+    }
+  } catch (e) {
+    print('Error al inicializar sync: $e');
+  }
+
   final prefs = await SharedPreferences.getInstance();
   final bool isLoggedIn = prefs.getBool('is_logged_in') ?? false;
   final String userRol = prefs.getString('user_rol') ?? 'vendedor';
 
-  runApp(MyApp(isLoggedIn: isLoggedIn, userRol: userRol));
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: MyApp(isLoggedIn: isLoggedIn, userRol: userRol),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -51,33 +73,39 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Ventas 24/7',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E3A8A),
-          primary: const Color(0xFF1E3A8A),
-          secondary: const Color(0xFF10B981),
-        ),
-        textTheme: GoogleFonts.outfitTextTheme(),
-      ),
-      initialRoute: isLoggedIn
-          ? (userRol == 'admin' ? '/admin' : '/home')
-          : '/login',
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const DashboardScreen(),
-        '/admin': (context) => const AdminDashboardScreen(),
-        '/sales': (context) => const ProductListScreen(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Ventas 24/7',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeProvider.lightTheme.copyWith(
+            textTheme: GoogleFonts.outfitTextTheme(
+              ThemeProvider.lightTheme.textTheme,
+            ),
+          ),
+          darkTheme: ThemeProvider.darkTheme.copyWith(
+            textTheme: GoogleFonts.outfitTextTheme(
+              ThemeProvider.darkTheme.textTheme,
+            ),
+          ),
+          themeMode: themeProvider.themeMode,
+          initialRoute: isLoggedIn
+              ? (userRol == 'admin' ? '/admin' : '/home')
+              : '/login',
+          routes: {
+            '/login': (context) => const LoginScreen(),
+            '/home': (context) => const DashboardScreen(),
+            '/admin': (context) => const AdminDashboardScreen(),
+            '/sales': (context) => const ProductListScreen(),
+          },
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('es', 'ES'), Locale('en', 'US')],
+        );
       },
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('es', 'ES'), Locale('en', 'US')],
     );
   }
 }
@@ -1770,6 +1798,20 @@ class _MainDrawerState extends State<MainDrawer> {
               color: Colors.orange,
               route: (context) => const LowStockScreen(),
             ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.event_busy_rounded,
+              title: 'Alertas de Vencimiento',
+              color: Colors.red,
+              route: (context) => const ExpirationAlertsScreen(),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.analytics_outlined,
+              title: 'Predicción de Reabastecimiento',
+              color: Colors.purple,
+              route: (context) => const ReorderPredictionScreen(),
+            ),
           ],
           if (_userRol == 'administrador' ||
               _userRol == 'admin' ||
@@ -1796,6 +1838,34 @@ class _MainDrawerState extends State<MainDrawer> {
             ),
           ],
           const Divider(),
+          // TODO: Descomentar cuando se termine el modo oscuro
+          /* Consumer<ThemeProvider>(
+            builder: (context, themeProvider, child) {
+              return SwitchListTile(
+                secondary: Icon(
+                  themeProvider.isDarkMode
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  color: themeProvider.isDarkMode
+                      ? Colors.amber
+                      : const Color(0xFF1E3A8A),
+                ),
+                title: const Text(
+                  'Modo Oscuro',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  themeProvider.isDarkMode ? 'Activado' : 'Desactivado',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+                value: themeProvider.isDarkMode,
+                onChanged: (value) {
+                  themeProvider.toggleTheme();
+                },
+              );
+            },
+          ),
+          const Divider(), */
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text(
