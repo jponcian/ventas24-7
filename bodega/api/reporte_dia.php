@@ -34,6 +34,7 @@ try {
     $stmtDetalle = $db->prepare("
         SELECT 
             p.nombre,
+            p.codigo_interno,
             p.unidad_medida, 
             COALESCE(pr.nombre, 'Sin Proveedor') as proveedor,
             SUM(d.cantidad) as total_cantidad,
@@ -43,7 +44,7 @@ try {
         JOIN productos p ON p.id = d.producto_id
         LEFT JOIN proveedores pr ON pr.id = p.proveedor_id
         WHERE v.negocio_id = ? AND DATE(v.fecha) = ?
-        GROUP BY pr.nombre, p.id, p.nombre, p.unidad_medida
+        GROUP BY pr.nombre, p.id, p.nombre, p.codigo_interno, p.unidad_medida
         ORDER BY proveedor, nombre
     ");
     $stmtDetalle->execute([$negocio_id, $fecha]);

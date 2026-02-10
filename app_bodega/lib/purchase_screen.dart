@@ -64,7 +64,9 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
       } else {
         _filteredProducts = _allProducts.where((p) {
           return p.nombre.toLowerCase().contains(query) ||
-              (p.codigoBarras != null && p.codigoBarras!.contains(query));
+              (p.codigoBarras != null && p.codigoBarras!.contains(query)) ||
+              (p.codigoInterno != null &&
+                  p.codigoInterno!.toLowerCase().contains(query));
         }).toList();
       }
     });

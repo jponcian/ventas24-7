@@ -15,6 +15,7 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
   DateTime _selectedDate = DateTime.now();
   Map<String, dynamic>? _reportData;
   bool _loading = false;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -68,19 +69,37 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.white,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
-                Text(
-                  DateFormat.yMMMMEEEEd('es_ES').format(_selectedDate),
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      DateFormat.yMMMMEEEEd('es_ES').format(_selectedDate),
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _pickDate,
+                      child: const Text('Cambiar Fecha'),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: _pickDate,
-                  child: const Text('Cambiar Fecha'),
+                const SizedBox(height: 8),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por nombre o código interno...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  onChanged: (val) =>
+                      setState(() => _searchQuery = val.toLowerCase()),
                 ),
               ],
             ),
@@ -288,9 +307,18 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
       );
     }
 
-    // Agrupar por proveedor
+    // Agrupar por proveedor y aplicar filtro
     Map<String, List<dynamic>> grouped = {};
     for (var item in productos) {
+      final nombre = (item['nombre'] ?? '').toString().toLowerCase();
+      final code = (item['codigo_interno'] ?? '').toString().toLowerCase();
+
+      if (_searchQuery.isNotEmpty &&
+          !nombre.contains(_searchQuery) &&
+          !code.contains(_searchQuery)) {
+        continue;
+      }
+
       String prov = item['proveedor'] ?? 'Sin Proveedor';
       if (!grouped.containsKey(prov)) grouped[prov] = [];
       grouped[prov]!.add(item);
@@ -386,6 +414,16 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+                              if (p['codigo_interno'] != null &&
+                                  p['codigo_interno'].toString().isNotEmpty)
+                                Text(
+                                  'Cod: ${p['codigo_interno']}',
+                                  style: TextStyle(
+                                    color: Colors.blue[700],
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               Text(
                                 '$unidad',
                                 style: TextStyle(

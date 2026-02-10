@@ -176,6 +176,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
             id: p.id,
             nombre: p.nombre,
             descripcion: p.descripcion,
+            marca: p.marca,
+            codigoInterno: p.codigoInterno,
             unidadMedida: p.unidadMedida,
             precioVenta: p.precioReal,
             precioCompra: p.precioCompra,
@@ -190,6 +192,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             updatedAt: p.updatedAt,
             monedaBase: p.monedaBase,
             vendePorPeso: p.vendePorPeso,
+            fechaVencimiento: p.fechaVencimiento,
             qty: 0,
           ),
         );
@@ -250,6 +253,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
           final query = _searchQuery.toLowerCase();
           return p.nombre.toLowerCase().contains(query) ||
               (p.codigoBarras != null && p.codigoBarras!.contains(query)) ||
+              (p.codigoInterno != null &&
+                  p.codigoInterno!.toLowerCase().contains(query)) ||
               (p.descripcion != null &&
                   p.descripcion!.toLowerCase().contains(query)) ||
               (p.proveedor != null &&
@@ -1437,7 +1442,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     bool esDolar = p.monedaCompra != 'BS';
     double precioBs = esDolar ? precio * _tasa : precio;
     double precioUsd = esDolar ? precio : (precio / (_tasa > 0 ? _tasa : 1));
-    String precioStr = '${precioBs.toStringAsFixed(2)} Bs\n(\$${precioUsd.toStringAsFixed(2)})';
+    String precioStr =
+        '${precioBs.toStringAsFixed(2)} Bs\n(\$${precioUsd.toStringAsFixed(2)})';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
