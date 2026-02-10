@@ -86,7 +86,7 @@ class BackgroundSyncService {
         networkType: NetworkType.connected,
         requiresBatteryNotLow: true,
       ),
-      existingWorkPolicy: ExistingWorkPolicy.replace,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
     );
     print('✅ Sincronización periódica registrada (cada ${frequency.inHours}h)');
   }
