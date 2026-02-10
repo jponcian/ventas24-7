@@ -167,16 +167,9 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text(
-                              'Unidad',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            value: 'unidad',
-                            groupValue: modoCarga,
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (v) {
-                              if (modoCarga != v) {
+                          child: InkWell(
+                            onTap: () {
+                              if (modoCarga != 'unidad') {
                                 double? currentVal = double.tryParse(
                                   costCtrl.text,
                                 );
@@ -185,23 +178,42 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                                   costCtrl.text = (currentVal / tamPaquete)
                                       .toStringAsFixed(2);
                                 }
-                                setDialogState(() => modoCarga = v!);
+                                setDialogState(() => modoCarga = 'unidad');
                                 updateSuggestion();
                               }
                             },
+                            child: Row(
+                              children: [
+                                Radio<String>(
+                                  value: 'unidad',
+                                  groupValue: modoCarga,
+                                  onChanged: (v) {
+                                    if (modoCarga != v) {
+                                      double? currentVal = double.tryParse(
+                                        costCtrl.text,
+                                      );
+                                      if (currentVal != null) {
+                                        costCtrl.text =
+                                            (currentVal / tamPaquete)
+                                                .toStringAsFixed(2);
+                                      }
+                                      setDialogState(() => modoCarga = v!);
+                                      updateSuggestion();
+                                    }
+                                  },
+                                ),
+                                const Text(
+                                  'Unidad',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         Expanded(
-                          child: RadioListTile<String>(
-                            title: Text(
-                              'Paquete ($tamPaquete)',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            value: 'paquete',
-                            groupValue: modoCarga,
-                            contentPadding: EdgeInsets.zero,
-                            onChanged: (v) {
-                              if (modoCarga != v) {
+                          child: InkWell(
+                            onTap: () {
+                              if (modoCarga != 'paquete') {
                                 double? currentVal = double.tryParse(
                                   costCtrl.text,
                                 );
@@ -210,10 +222,36 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
                                   costCtrl.text = (currentVal * tamPaquete)
                                       .toStringAsFixed(2);
                                 }
-                                setDialogState(() => modoCarga = v!);
+                                setDialogState(() => modoCarga = 'paquete');
                                 updateSuggestion();
                               }
                             },
+                            child: Row(
+                              children: [
+                                Radio<String>(
+                                  value: 'paquete',
+                                  groupValue: modoCarga,
+                                  onChanged: (v) {
+                                    if (modoCarga != v) {
+                                      double? currentVal = double.tryParse(
+                                        costCtrl.text,
+                                      );
+                                      if (currentVal != null) {
+                                        costCtrl.text =
+                                            (currentVal * tamPaquete)
+                                                .toStringAsFixed(2);
+                                      }
+                                      setDialogState(() => modoCarga = v!);
+                                      updateSuggestion();
+                                    }
+                                  },
+                                ),
+                                Text(
+                                  'Paquete ($tamPaquete)',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],

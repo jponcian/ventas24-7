@@ -265,7 +265,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _loading = false;
         });
       }
     }

@@ -109,7 +109,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         _providers = list;
       });
     } catch (e) {
-      print('Error al cargar proveedores: $e');
+      // Error silencioso - los proveedores son opcionales
     }
   }
 

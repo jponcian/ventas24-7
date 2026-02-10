@@ -35,14 +35,10 @@ class BiometricAuthService {
     try {
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: reason,
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: false,
-        ),
+        persistAcrossBackgrounding: true,
       );
       return didAuthenticate;
-    } on PlatformException catch (e) {
-      print('Error en autenticación biométrica: $e');
+    } on PlatformException catch (_) {
       return false;
     }
   }
