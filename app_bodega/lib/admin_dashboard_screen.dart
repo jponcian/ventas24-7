@@ -9,6 +9,7 @@ import 'calc_screen.dart';
 import 'report_sales_screen.dart';
 import 'inventory_report_screen.dart';
 import 'low_stock_screen.dart';
+import 'product_management_screen.dart';
 
 import 'update_helper.dart';
 
@@ -529,6 +530,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          ListTile(
+                            leading: const Icon(Icons.inventory_2),
+                            title: const Text('Catálogo de Productos'),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ProductManagementScreen(),
+                                ),
+                              );
+                            },
+                          ),
                           ListTile(
                             leading: const Icon(Icons.bar_chart),
                             title: const Text('Reporte de Ventas'),

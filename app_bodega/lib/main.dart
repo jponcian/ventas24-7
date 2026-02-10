@@ -1671,26 +1671,32 @@ class _MainDrawerState extends State<MainDrawer> {
               Icons.shopping_cart_outlined,
               color: Color(0xFF1E3A8A),
             ),
-            title: const Text('Panel de Ventas'),
+            title: const Text('Panel de Ventas (Facturación)'),
             onTap: () {
               Navigator.pop(context);
               Navigator.pushNamed(context, '/sales');
             },
           ),
-          _buildDrawerItem(
-            context,
-            icon: Icons.bar_chart_rounded,
-            title: 'Mis Ventas',
-            color: Colors.blue,
-            route: (context) => const ReportSalesScreen(),
-          ),
-          _buildDrawerItem(
-            context,
-            icon: Icons.insights,
-            title: 'Análisis de Ventas',
-            color: Colors.indigo,
-            route: (context) => const SalesChartsScreen(),
-          ),
+          if (_userRol == 'administrador' ||
+              _userRol == 'admin' ||
+              _userRol == 'superadmin') ...[
+            const Divider(),
+            _buildSectionHeader('CATÁLOGO Y MAESTROS'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.inventory_2_rounded,
+              title: 'Catálogo de Productos',
+              color: Colors.teal,
+              route: (context) => const ProductManagementScreen(),
+            ),
+            _buildDrawerItem(
+              context,
+              icon: Icons.print_rounded,
+              title: 'Diseño e Impresión de Etiquetas',
+              color: Colors.blueGrey,
+              route: (context) => const LabelPrintingScreen(),
+            ),
+          ],
           if (_userRol == 'administrador' ||
               _userRol == 'admin' ||
               _userRol == 'superadmin') ...[
@@ -1708,43 +1714,47 @@ class _MainDrawerState extends State<MainDrawer> {
               _userRol == 'admin' ||
               _userRol == 'superadmin') ...[
             const Divider(),
-            _buildSectionHeader('INVENTARIO Y PRODUCTOS'),
-            _buildDrawerItem(
-              context,
-              icon: Icons.edit_note,
-              title: 'Gestión de Productos',
-              color: Colors.teal,
-              route: (context) => const ProductManagementScreen(),
-            ),
+            _buildSectionHeader('COMPRAS E INVENTARIO'),
             _buildDrawerItem(
               context,
               icon: Icons.add_shopping_cart,
-              title: 'Cargar Compras',
+              title: 'Cargar Compra (Entrada)',
               color: Colors.green,
               route: (context) => PurchaseScreen(),
             ),
             _buildDrawerItem(
               context,
               icon: Icons.history,
-              title: 'Historial Cargas',
+              title: 'Historial de Compras',
               color: Colors.blueGrey,
               route: (context) => const HistoryScreen(),
             ),
+          ],
+          const Divider(),
+          _buildSectionHeader('REPORTES'),
+          _buildDrawerItem(
+            context,
+            icon: Icons.assessment_rounded,
+            title: 'Mis Ventas del Día',
+            color: Colors.blue,
+            route: (context) => const ReportSalesScreen(),
+          ),
+          _buildDrawerItem(
+            context,
+            icon: Icons.insights_rounded,
+            title: 'Análisis de Ventas',
+            color: Colors.indigo,
+            route: (context) => const SalesChartsScreen(),
+          ),
+          if (_userRol == 'administrador' ||
+              _userRol == 'admin' ||
+              _userRol == 'superadmin') ...[
             _buildDrawerItem(
               context,
-              icon: Icons.receipt_long,
+              icon: Icons.receipt_long_rounded,
               title: 'Reporte de Compras',
-              color: Colors.purple,
+              color: Colors.deepPurple,
               route: (context) => const ReportPurchasesScreen(),
-            ),
-            const Divider(),
-            _buildSectionHeader('REPORTES'),
-            _buildDrawerItem(
-              context,
-              icon: Icons.warning_amber_rounded,
-              title: 'Stock Bajo',
-              color: Colors.orange,
-              route: (context) => const LowStockScreen(),
             ),
             _buildDrawerItem(
               context,
@@ -1755,13 +1765,17 @@ class _MainDrawerState extends State<MainDrawer> {
             ),
             _buildDrawerItem(
               context,
-              icon: Icons.print_outlined,
-              title: 'Imprimir Etiquetas',
-              color: Colors.redAccent,
-              route: (context) => const LabelPrintingScreen(),
+              icon: Icons.warning_amber_rounded,
+              title: 'Alerta de Stock Bajo',
+              color: Colors.orange,
+              route: (context) => const LowStockScreen(),
             ),
+          ],
+          if (_userRol == 'administrador' ||
+              _userRol == 'admin' ||
+              _userRol == 'superadmin') ...[
             const Divider(),
-            _buildSectionHeader('CONFIGURACIÓN'),
+            _buildSectionHeader('SISTEMA'),
             _buildDrawerItem(
               context,
               icon: Icons.people_outline,
