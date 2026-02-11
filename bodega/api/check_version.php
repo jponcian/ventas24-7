@@ -9,9 +9,9 @@ header('Access-Control-Allow-Origin: *');
 
 echo json_encode([
     "ok" => true,
-    "latest_version" => "1.1.2",
-    "latest_version_code" => 4,
+    "latest_version" => "1.2.1",
+    "latest_version_code" => 6,
     "download_url" => "https://ponciano.zz.com.ve/ventas247.apk",
-    "release_notes" => "Versión Actual ✅\n\n- Menú reorganizado con Catálogo de Productos.\n- Búsqueda por código interno mejorada.\n- Interfaz premium del catálogo.\n- Corrección de visualización de precios.",
+    "release_notes" => "Nuevas Mejoras ✅\n\n- Pagos múltiples por venta (Efectivo, Zelle, Pago Móvil, etc).\n- Cambio rápido entre negocios en el menú lateral.\n- Opción de método de pago predeterminado (Favorito ⭐).\n- Diseño de reportes más compacto y eficiente.\n- Mejoras de rendimiento y seguridad.",
     "force_update" => false
 ]);
