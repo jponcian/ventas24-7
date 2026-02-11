@@ -193,7 +193,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    final detalles = await _apiService.getVentaDetalle(ventaId);
+    final res = await _apiService.getVentaDetalle(ventaId);
+    final detalles = res['detalles'] as List;
+    final pagos = res['pagos'] as List;
 
     if (mounted) Navigator.pop(context); // Close loading
 
@@ -213,80 +215,102 @@ class _DashboardScreenState extends State<DashboardScreen> {
           title: Text('Detalle Venta #$ventaId'),
           content: SizedBox(
             width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: detalles.length,
-              itemBuilder: (context, i) {
-                final d = detalles[i];
-                double cant = double.tryParse(d['cantidad'].toString()) ?? 0;
-                double precioBs =
-                    double.tryParse(d['precio_unitario_bs'].toString()) ?? 0;
-                double tasa = double.tryParse(d['tasa'].toString()) ?? 0;
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PRODUCTOS',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const Divider(),
+                  ...detalles.map((d) {
+                    double cant =
+                        double.tryParse(d['cantidad'].toString()) ?? 0;
+                    double precioBs =
+                        double.tryParse(d['precio_unitario_bs'].toString()) ??
+                        0;
+                    bool esPaquete =
+                        (d['es_paquete'] == 1 || d['es_paquete'] == true);
+                    String unidad = esPaquete ? 'paq' : 'und';
+                    double subtotalBs = cant * precioBs;
+                    String cantidadStr = cant % 1 == 0
+                        ? cant.toInt().toString()
+                        : cant.toStringAsFixed(3);
 
-                // Verificar si es venta de paquete
-                bool esPaquete =
-                    (d['es_paquete'] == 1 || d['es_paquete'] == true);
-                String unidad = esPaquete ? 'paq' : 'und';
-
-                // Calcular totales (la cantidad ya es la correcta)
-                double subtotalBs = cant * precioBs;
-                double precioUsd = (tasa > 0) ? precioBs / tasa : 0;
-                double subtotalUsd = (tasa > 0) ? subtotalBs / tasa : 0;
-
-                // Formatear la cantidad para mostrar
-                String cantidadStr = cant % 1 == 0
-                    ? cant.toInt().toString()
-                    : cant.toStringAsFixed(3);
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '$cantidadStr $unidad x ${d['nombre']}',
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                          Text(
+                            '${subtotalBs.toStringAsFixed(2)} Bs',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 20),
+                  Text(
+                    'FORMAS DE PAGO',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const Divider(),
+                  ...pagos.map((p) {
+                    double mBs = double.tryParse(p['monto_bs'].toString()) ?? 0;
+                    double mUsd =
+                        double.tryParse(p['monto_usd'].toString()) ?? 0;
+                    String ref = p['referencia'] ?? '';
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: Text(
+                        p['metodo_nombre'] ?? 'Otro',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: ref.isNotEmpty ? Text('Ref: $ref') : null,
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (mUsd > 0)
                             Text(
-                              d['nombre'] ?? 'Producto',
+                              '\$${mUsd.toStringAsFixed(2)}',
                               style: const TextStyle(
+                                color: Colors.green,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                          if (mBs > 0)
                             Text(
-                              '$cantidadStr $unidad x ${precioBs.toStringAsFixed(2)} Bs' +
-                                  (tasa > 0
-                                      ? ' (\$${precioUsd.toStringAsFixed(2)})'
-                                      : ''),
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${subtotalBs.toStringAsFixed(2)} Bs',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          if (tasa > 0)
-                            Text(
-                              '\$${subtotalUsd.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                color: Color(0xFF1E3A8A),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              '${mBs.toStringAsFixed(2)} Bs',
+                              style: const TextStyle(fontSize: 11),
                             ),
                         ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  }),
+                ],
+              ),
             ),
           ),
           actions: [

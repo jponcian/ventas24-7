@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -117,6 +118,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _navigateAfterLogin(Map<String, dynamic> result) async {
     if (!mounted) return;
     final negocios = result['negocios'] as List<dynamic>?;
+    final prefs = await SharedPreferences.getInstance();
+
+    // Guardar lista de negocios para cambio rápido
+    if (negocios != null) {
+      await prefs.setString('user_negocios', jsonEncode(negocios));
+    }
 
     if (negocios != null && negocios.length > 1) {
       // Mostrar diálogo de selección
@@ -144,22 +151,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (selected != null) {
         await _apiService.setNegocio(selected['id'], selected['nombre']);
-        final prefs = await SharedPreferences.getInstance();
         final String rol = prefs.getString('user_rol') ?? 'vendedor';
         if (mounted) {
           Navigator.pushReplacementNamed(
             context,
-            rol == 'admin' ? '/admin' : '/home',
+            (rol == 'admin' || rol == 'superadmin') ? '/admin' : '/home',
           );
         }
       }
     } else {
       // Ya se guardó en ApiService si era solo 1
-      final prefs = await SharedPreferences.getInstance();
       final String rol = prefs.getString('user_rol') ?? 'vendedor';
       Navigator.pushReplacementNamed(
         context,
-        rol == 'admin' ? '/admin' : '/home',
+        (rol == 'admin' || rol == 'superadmin') ? '/admin' : '/home',
       );
     }
   }

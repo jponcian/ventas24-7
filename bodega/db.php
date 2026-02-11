@@ -155,16 +155,34 @@ function getProducto($id, $negocio_id)
 }
 
 // --- Ventas ---
-function registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles, $metodo_pago_id = null, $cliente_id = null, $referencia = null)
+function registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles, $metodo_pago_id = null, $cliente_id = null, $referencia = null, $pagos = [])
 {
     global $db;
     try {
         $db->beginTransaction();
 
         // 1. Insertar la venta
-        $stmt = $db->prepare("INSERT INTO ventas (negocio_id, total_bs, total_usd, tasa, metodo_pago_id, cliente_id, referencia) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $db->prepare("INSERT INTO ventas (negocio_id, total_bs, total_usd, tasa, metodo_pago_id, cliente_id, referencia, estado) VALUES (?, ?, ?, ?, ?, ?, ?, 'completada')");
         $stmt->execute([$negocio_id, $total_bs, $total_usd, $tasa, $metodo_pago_id, $cliente_id, $referencia]);
         $venta_id = $db->lastInsertId();
+
+        // 2. Registrar los pagos si existen
+        if (!empty($pagos)) {
+            $stmtPago = $db->prepare("INSERT INTO ventas_pagos (venta_id, metodo_pago_id, monto_bs, monto_usd, referencia) VALUES (?, ?, ?, ?, ?)");
+            foreach ($pagos as $p) {
+                $stmtPago->execute([
+                    $venta_id,
+                    $p['metodo_pago_id'],
+                    $p['monto_bs'] ?? 0,
+                    $p['monto_usd'] ?? 0,
+                    $p['referencia'] ?? null
+                ]);
+            }
+        } else if ($metodo_pago_id) {
+            // Caso legado: un solo pago
+            $stmtPago = $db->prepare("INSERT INTO ventas_pagos (venta_id, metodo_pago_id, monto_bs, monto_usd, referencia) VALUES (?, ?, ?, ?, ?)");
+            $stmtPago->execute([$venta_id, $metodo_pago_id, $total_bs, $total_usd, $referencia]);
+        }
 
         // 2. Procesar detalles y stock
         $stmtDetalle = $db->prepare("INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, es_paquete, precio_unitario_bs) VALUES (?, ?, ?, ?, ?)");
@@ -180,30 +198,49 @@ function registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles, $m
             $stmtUpdateStock->execute([$cantidadVendida * $multiplicador, $item['id'], $negocio_id]);
         }
 
-        // 3. Si el método de pago es 'Crédito', registrar en fiados
-        if ($metodo_pago_id && $cliente_id) {
+        // 3. Si algún método de pago es 'Crédito', registrar en fiados
+        // Buscamos si hay un pago con método 'Crédito' o si el método legacy es 'Crédito'
+        $esCredito = false;
+        $montoCreditoUsd = 0;
+        $montoCreditoBs = 0;
+
+        if (!empty($pagos)) {
+            foreach ($pagos as $p) {
+                $stmtMetodo = $db->prepare("SELECT nombre FROM metodos_pago WHERE id = ?");
+                $stmtMetodo->execute([$p['metodo_pago_id']]);
+                if ($stmtMetodo->fetchColumn() === 'Crédito') {
+                    $esCredito = true;
+                    $montoCreditoUsd += $p['monto_usd'] ?? 0;
+                    $montoCreditoBs += $p['monto_bs'] ?? 0;
+                }
+            }
+        } else if ($metodo_pago_id) {
             $stmtMetodo = $db->prepare("SELECT nombre FROM metodos_pago WHERE id = ?");
             $stmtMetodo->execute([$metodo_pago_id]);
-            $metodoNombre = $stmtMetodo->fetchColumn();
-
-            if ($metodoNombre === 'Crédito') {
-                $stmtFiado = $db->prepare("INSERT INTO fiados (negocio_id, cliente_id, total_bs, total_usd, saldo_pendiente, tasa, estado) VALUES (?, ?, ?, ?, ?, ?, 'pendiente')");
-                $stmtFiado->execute([$negocio_id, $cliente_id, $total_bs, $total_usd, $total_usd, $tasa]);
-                $fiado_id = $db->lastInsertId();
-
-                // Registrar detalles del fiado
-                $stmtFiadoDet = $db->prepare("INSERT INTO fiado_detalles (fiado_id, producto_id, cantidad, precio_unitario_bs, precio_unitario_usd, subtotal_bs, subtotal_usd) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                foreach ($detalles as $item) {
-                    $cantidad = floatval($item['cantidad']);
-                    $precio_bs = floatval($item['precio_bs'] ?? 0);
-                    $precio_usd = $tasa > 0 ? $precio_bs / $tasa : 0;
-                    $stmtFiadoDet->execute([$fiado_id, $item['id'], $cantidad, $precio_bs, $precio_usd, $cantidad * $precio_bs, $cantidad * $precio_usd]);
-                }
-
-                // Actualizar deuda total del cliente
-                $stmtUpdateCliente = $db->prepare("UPDATE clientes SET deuda_total = deuda_total + ? WHERE id = ?");
-                $stmtUpdateCliente->execute([$total_usd, $cliente_id]);
+            if ($stmtMetodo->fetchColumn() === 'Crédito') {
+                $esCredito = true;
+                $montoCreditoUsd = $total_usd;
+                $montoCreditoBs = $total_bs;
             }
+        }
+
+        if ($esCredito && $cliente_id) {
+            $stmtFiado = $db->prepare("INSERT INTO fiados (negocio_id, cliente_id, total_bs, total_usd, saldo_pendiente, tasa, estado, venta_id) VALUES (?, ?, ?, ?, ?, ?, 'pendiente', ?)");
+            $stmtFiado->execute([$negocio_id, $cliente_id, $montoCreditoBs, $montoCreditoUsd, $montoCreditoUsd, $tasa, $venta_id]);
+            $fiado_id = $db->lastInsertId();
+
+            // Registrar detalles del fiado (proporcional o completo según se prefiera, aquí pondremos todos los productos de la venta)
+            $stmtFiadoDet = $db->prepare("INSERT INTO fiado_detalles (fiado_id, producto_id, cantidad, precio_unitario_bs, precio_unitario_usd, subtotal_bs, subtotal_usd) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            foreach ($detalles as $item) {
+                $cantidad = floatval($item['cantidad']);
+                $precio_bs = floatval($item['precio_bs'] ?? 0);
+                $precio_usd = $tasa > 0 ? $precio_bs / $tasa : 0;
+                $stmtFiadoDet->execute([$fiado_id, $item['id'], $cantidad, $precio_bs, $precio_usd, $cantidad * $precio_bs, $cantidad * $precio_usd]);
+            }
+
+            // Actualizar deuda total del cliente
+            $stmtUpdateCliente = $db->prepare("UPDATE clientes SET deuda_total = deuda_total + ? WHERE id = ?");
+            $stmtUpdateCliente->execute([$montoCreditoUsd, $cliente_id]);
         }
 
         $db->commit();
@@ -224,6 +261,19 @@ function obtenerVentaDetalle($venta_id)
         JOIN productos p ON dv.producto_id = p.id
         JOIN ventas v ON dv.venta_id = v.id
         WHERE dv.venta_id = ?
+    ");
+    $stmt->execute([$venta_id]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function obtenerVentaPagos($venta_id)
+{
+    global $db;
+    $stmt = $db->prepare("
+        SELECT vp.*, m.nombre as metodo_nombre
+        FROM ventas_pagos vp
+        JOIN metodos_pago m ON vp.metodo_pago_id = m.id
+        WHERE vp.venta_id = ?
     ");
     $stmt->execute([$venta_id]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);

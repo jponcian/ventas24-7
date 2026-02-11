@@ -21,7 +21,7 @@ try {
     $hoy = date('Y-m-d');
     
     // Obtenemos todas las ventas de hoy para procesar los totales con fallback
-    $stmtVentas = $db->prepare("SELECT total_usd, total_bs, tasa FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ?");
+    $stmtVentas = $db->prepare("SELECT total_usd, total_bs, tasa FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ? AND (estado IS NULL OR estado != 'anulada')");
     $stmtVentas->execute([$nid, $hoy]);
     $ventasHoy = $stmtVentas->fetchAll(PDO::FETCH_ASSOC);
 
@@ -50,7 +50,7 @@ try {
     $totalProd = $stmtTotal->fetchColumn();
 
     // 4. Últimas 5 ventas (con procesamiento de total_bs)
-    $stmtLast = $db->prepare("SELECT id, total_usd, total_bs, tasa, fecha FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ? ORDER BY fecha DESC LIMIT 5");
+    $stmtLast = $db->prepare("SELECT id, total_usd, total_bs, tasa, fecha FROM ventas WHERE negocio_id = ? AND DATE(fecha) = ? AND (estado IS NULL OR estado != 'anulada') ORDER BY fecha DESC LIMIT 5");
     $stmtLast->execute([$nid, $hoy]);
     $ultimasRaw = $stmtLast->fetchAll(PDO::FETCH_ASSOC);
     
@@ -64,17 +64,18 @@ try {
         $ultimas[] = $u;
     }
 
-    // 5. Ventas por método de pago (Hoy)
+    // 5. Ventas por método de pago (Hoy, sumando desde ventas_pagos)
     $stmtMetodos = $db->prepare("
         SELECT 
-            COALESCE(m.nombre, 'Sin Definir') as metodo,
-            COUNT(*) as cantidad,
-            COALESCE(SUM(v.total_bs), 0) as total_bs,
-            COALESCE(SUM(v.total_usd), 0) as total_usd
-        FROM ventas v
-        LEFT JOIN metodos_pago m ON v.metodo_pago_id = m.id
-        WHERE v.negocio_id = ? AND DATE(v.fecha) = ?
-        GROUP BY COALESCE(m.nombre, 'Sin Definir')
+            m.nombre as metodo,
+            COUNT(DISTINCT vp.venta_id) as cantidad,
+            COALESCE(SUM(vp.monto_bs), 0) as total_bs,
+            COALESCE(SUM(vp.monto_usd), 0) as total_usd
+        FROM ventas_pagos vp
+        JOIN ventas v ON vp.venta_id = v.id
+        JOIN metodos_pago m ON vp.metodo_pago_id = m.id
+        WHERE v.negocio_id = ? AND DATE(v.fecha) = ? AND (v.estado IS NULL OR v.estado != 'anulada')
+        GROUP BY m.nombre
     ");
     $stmtMetodos->execute([$nid, $hoy]);
     $ventasPorMetodo = $stmtMetodos->fetchAll(PDO::FETCH_ASSOC);

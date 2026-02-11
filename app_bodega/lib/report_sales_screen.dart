@@ -157,7 +157,9 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    final detalles = await _apiService.getVentaDetalle(ventaId);
+    final res = await _apiService.getVentaDetalle(ventaId);
+    final detalles = res['detalles'] as List;
+    final pagos = res['pagos'] as List;
 
     if (mounted) Navigator.pop(context); // Cerrar loading
 
@@ -177,32 +179,149 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
           title: Text('Detalle Venta #$ventaId'),
           content: SizedBox(
             width: double.maxFinite,
-            child: ListView.builder(
-              padding: EdgeInsets.only(bottom: 90),
-              shrinkWrap: true,
-              itemCount: detalles.length,
-              itemBuilder: (context, i) {
-                final d = detalles[i];
-                double cant = double.tryParse(d['cantidad'].toString()) ?? 0;
-                double precio =
-                    double.tryParse(d['precio_unitario_bs'].toString()) ?? 0;
-                return ListTile(
-                  title: Text(d['nombre'] ?? 'Producto'),
-                  subtitle: Text(
-                    '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x ${precio.toStringAsFixed(2)} Bs',
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PRODUCTOS',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
                   ),
-                  trailing: Text(
-                    '${(cant * precio).toStringAsFixed(2)} Bs',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  const Divider(),
+                  ...detalles.map((d) {
+                    double cant =
+                        double.tryParse(d['cantidad'].toString()) ?? 0;
+                    double precio =
+                        double.tryParse(d['precio_unitario_bs'].toString()) ??
+                        0;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x ${d['nombre']}',
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                          Text(
+                            '${(cant * precio).toStringAsFixed(2)} Bs',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 20),
+                  Text(
+                    'FORMAS DE PAGO',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
                   ),
-                );
-              },
+                  const Divider(),
+                  ...pagos.map((p) {
+                    double mBs = double.tryParse(p['monto_bs'].toString()) ?? 0;
+                    double mUsd =
+                        double.tryParse(p['monto_usd'].toString()) ?? 0;
+                    String ref = p['referencia'] ?? '';
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: Text(
+                        p['metodo_nombre'] ?? 'Otro',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: ref.isNotEmpty ? Text('Ref: $ref') : null,
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (mUsd > 0)
+                            Text(
+                              '\$${mUsd.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          if (mBs > 0)
+                            Text(
+                              '${mBs.toStringAsFixed(2)} Bs',
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('CERRAR'),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Anular Venta'),
+                    content: const Text(
+                      '¿Estás seguro de anular esta venta? El stock se devolverá al inventario.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('CANCELAR'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('ANULAR'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  if (mounted) Navigator.pop(context); // Cerrar detalle
+                  setState(() => _loading = true);
+                  final ok = await _apiService.anularVenta(ventaId);
+                  if (mounted) {
+                    setState(() => _loading = false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          ok
+                              ? 'Venta anulada correctamente'
+                              : 'Error al anular la venta',
+                        ),
+                        backgroundColor: ok ? Colors.green : Colors.red,
+                      ),
+                    );
+                    if (ok) _loadReport();
+                  }
+                }
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('ANULAR VENTA'),
             ),
           ],
         ),
@@ -418,10 +537,10 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
     return Column(
       children: grouped.entries.map((entry) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 24),
+          margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey[200]!),
           ),
           child: Column(
@@ -431,27 +550,27 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+                  horizontal: 12,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
+                    top: Radius.circular(12),
                   ),
                 ),
                 child: Text(
                   entry.key.toUpperCase(),
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.bold,
+                    fontSize: 13,
                     color: const Color(0xFF1E3A8A),
-                    letterSpacing: 1.2,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
               // Lista de productos de ese proveedor
               ListView.builder(
-                padding: EdgeInsets.only(bottom: 90),
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: entry.value.length,
@@ -464,7 +583,10 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                   final unidad = p['unidad_medida'] ?? '';
 
                   return Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
@@ -477,24 +599,25 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                     child: Row(
                       children: [
                         Container(
-                          width: 40,
-                          height: 40,
+                          width: 32,
+                          height: 32,
                           decoration: BoxDecoration(
                             color: const Color(
                               0xFF1E3A8A,
                             ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            '${qty.toInt()}',
+                            '${qty % 1 == 0 ? qty.toInt() : qty.toStringAsFixed(1)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
+                              fontSize: 12,
                               color: Color(0xFF1E3A8A),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,24 +626,32 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                                 nombre,
                                 style: GoogleFonts.outfit(
                                   fontWeight: FontWeight.w600,
+                                  fontSize: 13,
                                 ),
                               ),
-                              if (p['codigo_interno'] != null &&
-                                  p['codigo_interno'].toString().isNotEmpty)
-                                Text(
-                                  'Cod: ${p['codigo_interno']}',
-                                  style: TextStyle(
-                                    color: Colors.blue[700],
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+                              Row(
+                                children: [
+                                  if (p['codigo_interno'] != null &&
+                                      p['codigo_interno'].toString().isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: Text(
+                                        '#${p['codigo_interno']}',
+                                        style: TextStyle(
+                                          color: Colors.blue[700],
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  Text(
+                                    unidad,
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 10,
+                                    ),
                                   ),
-                                ),
-                              Text(
-                                '$unidad',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 12,
-                                ),
+                                ],
                               ),
                             ],
                           ),
@@ -529,7 +660,7 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                           '${total.toStringAsFixed(2)} Bs',
                           style: GoogleFonts.outfit(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 13,
                           ),
                         ),
                       ],

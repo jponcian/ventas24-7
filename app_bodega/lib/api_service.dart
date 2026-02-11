@@ -210,7 +210,7 @@ class ApiService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getVentaDetalle(int ventaId) async {
+  Future<Map<String, dynamic>> getVentaDetalle(int ventaId) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/venta_detalle.php?id=$ventaId'),
@@ -218,12 +218,15 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['ok'] == true) {
-          return List<Map<String, dynamic>>.from(data['detalles']);
+          return {
+            'detalles': List<Map<String, dynamic>>.from(data['detalles']),
+            'pagos': List<Map<String, dynamic>>.from(data['pagos'] ?? []),
+          };
         }
       }
-      return [];
+      return {'detalles': [], 'pagos': []};
     } catch (e) {
-      return [];
+      return {'detalles': [], 'pagos': []};
     }
   }
 
@@ -429,6 +432,20 @@ class ApiService {
         Uri.parse('$baseUrl/anular_compra.php'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'compra_id': compraId}),
+      );
+      return response.statusCode == 200 &&
+          jsonDecode(response.body)['ok'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> anularVenta(int ventaId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/anular_venta.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'venta_id': ventaId}),
       );
       return response.statusCode == 200 &&
           jsonDecode(response.body)['ok'] == true;

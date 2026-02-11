@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'metodo_pago_model.dart';
 
@@ -14,11 +15,38 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   final ApiService _apiService = ApiService();
   List<MetodoPago> _metodos = [];
   bool _loading = true;
+  int? _defaultMetodoId;
 
   @override
   void initState() {
     super.initState();
     _loadMetodos();
+    _loadDefaultMetodo();
+  }
+
+  Future<void> _loadDefaultMetodo() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _defaultMetodoId = prefs.getInt('default_metodo_id');
+      });
+    }
+  }
+
+  Future<void> _setDefaultMetodo(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('default_metodo_id', id);
+    setState(() {
+      _defaultMetodoId = id;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Método de pago predeterminado actualizado'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   Future<void> _loadMetodos() async {
@@ -115,54 +143,58 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           ? 'Requiere referencia'
                           : 'No requiere referencia',
                     ),
-                    trailing: isDefault
-                        ? const Icon(
-                            Icons.lock_outline,
-                            size: 18,
-                            color: Colors.grey,
-                          )
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () => _showForm(m),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: const Text('Eliminar'),
-                                      content: const Text(
-                                        '¿Desea eliminar esta forma de pago?',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(ctx, false),
-                                          child: const Text('NO'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(ctx, true),
-                                          child: const Text('SÍ'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    await _apiService.deleteMetodoPago(m.id);
-                                    _loadMetodos();
-                                  }
-                                },
-                              ),
-                            ],
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            _defaultMetodoId == m.id
+                                ? Icons.star
+                                : Icons.star_border,
+                            color: _defaultMetodoId == m.id
+                                ? Colors.amber
+                                : Colors.grey,
                           ),
+                          tooltip: 'Establecer como predeterminado',
+                          onPressed: () => _setDefaultMetodo(m.id),
+                        ),
+                        if (!isDefault) ...[
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => _showForm(m),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Eliminar'),
+                                  content: const Text(
+                                    '¿Desea eliminar esta forma de pago?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(ctx, false),
+                                      child: const Text('NO'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      child: const Text('SÍ'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                await _apiService.deleteMetodoPago(m.id);
+                                _loadMetodos();
+                              }
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 );
               },

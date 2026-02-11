@@ -33,12 +33,13 @@ class BiometricAuthService {
     String reason = 'Por favor autentícate para continuar',
   }) async {
     try {
+      // Usamos la forma más básica para asegurar compatibilidad total
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: reason,
-        persistAcrossBackgrounding: true,
       );
       return didAuthenticate;
-    } on PlatformException catch (_) {
+    } on PlatformException catch (e) {
+      print('Error de autenticación biométrica: $e');
       return false;
     }
   }

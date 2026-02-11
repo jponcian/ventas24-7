@@ -24,7 +24,7 @@ try {
             COALESCE(SUM(total_bs), 0) as total_bs,
             COALESCE(SUM(total_usd), 0) as total_usd
         FROM ventas 
-        WHERE negocio_id = ? AND DATE(fecha) = ?
+        WHERE negocio_id = ? AND DATE(fecha) = ? AND (estado IS NULL OR estado != 'anulada')
     ");
     $stmt->execute([$negocio_id, $fecha]);
     $resumen = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -43,37 +43,37 @@ try {
         JOIN ventas v ON v.id = d.venta_id
         JOIN productos p ON p.id = d.producto_id
         LEFT JOIN proveedores pr ON pr.id = p.proveedor_id
-        WHERE v.negocio_id = ? AND DATE(v.fecha) = ?
+        WHERE v.negocio_id = ? AND DATE(v.fecha) = ? AND (v.estado IS NULL OR v.estado != 'anulada')
         GROUP BY pr.nombre, p.id, p.nombre, p.codigo_interno, p.unidad_medida
         ORDER BY proveedor, nombre
     ");
     $stmtDetalle->execute([$negocio_id, $fecha]);
     $productos = $stmtDetalle->fetchAll(PDO::FETCH_ASSOC);
 
-    // Listado de ventas individuales con su método de pago
+    // Listado de ventas individuales con su método de pago principal (o el primero que aparezca)
     $stmtVentas = $db->prepare("
         SELECT 
             v.id, v.total_usd, v.total_bs, v.fecha, 
-            COALESCE(m.nombre, 'Efectivo') as metodo_pago
+            (SELECT m.nombre FROM ventas_pagos vp JOIN metodos_pago m ON vp.metodo_pago_id = m.id WHERE vp.venta_id = v.id LIMIT 1) as metodo_pago
         FROM ventas v
-        LEFT JOIN metodos_pago m ON v.metodo_pago_id = m.id
-        WHERE v.negocio_id = ? AND DATE(v.fecha) = ? 
+        WHERE v.negocio_id = ? AND DATE(v.fecha) = ? AND (v.estado IS NULL OR v.estado != 'anulada')
         ORDER BY v.fecha DESC
     ");
     $stmtVentas->execute([$negocio_id, $fecha]);
     $ventas = $stmtVentas->fetchAll(PDO::FETCH_ASSOC);
 
-    // Resumen por método de pago
+    // Resumen por método de pago (sumando desde ventas_pagos)
     $stmtMetodos = $db->prepare("
         SELECT 
-            COALESCE(m.nombre, 'Efectivo') as metodo,
-            COUNT(*) as cantidad,
-            COALESCE(SUM(v.total_bs), 0) as total_bs,
-            COALESCE(SUM(v.total_usd), 0) as total_usd
-        FROM ventas v
-        LEFT JOIN metodos_pago m ON v.metodo_pago_id = m.id
-        WHERE v.negocio_id = ? AND DATE(v.fecha) = ?
-        GROUP BY COALESCE(m.nombre, 'Efectivo')
+            m.nombre as metodo,
+            COUNT(DISTINCT vp.venta_id) as cantidad,
+            COALESCE(SUM(vp.monto_bs), 0) as total_bs,
+            COALESCE(SUM(vp.monto_usd), 0) as total_usd
+        FROM ventas_pagos vp
+        JOIN ventas v ON vp.venta_id = v.id
+        JOIN metodos_pago m ON vp.metodo_pago_id = m.id
+        WHERE v.negocio_id = ? AND DATE(v.fecha) = ? AND (v.estado IS NULL OR v.estado != 'anulada')
+        GROUP BY m.nombre
     ");
     $stmtMetodos->execute([$negocio_id, $fecha]);
     $metodos = $stmtMetodos->fetchAll(PDO::FETCH_ASSOC);

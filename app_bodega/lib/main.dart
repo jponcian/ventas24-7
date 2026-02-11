@@ -1,5 +1,6 @@
 // Disparo de compilación para nueva versión v1.1.1+3 - Optimus
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'user_management_screen.dart';
@@ -45,15 +46,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es_ES', null);
 
-  // Inicializar sincronización en segundo plano
-  try {
-    await BackgroundSyncService.initialize();
-    final autoSyncEnabled = await BackgroundSyncService.isAutoSyncEnabled();
-    if (autoSyncEnabled) {
-      await BackgroundSyncService.registerPeriodicSync();
+  // Inicializar sincronización en segundo plano (Solo fuera de Web)
+  if (!kIsWeb) {
+    try {
+      await BackgroundSyncService.initialize();
+      final autoSyncEnabled = await BackgroundSyncService.isAutoSyncEnabled();
+      if (autoSyncEnabled) {
+        await BackgroundSyncService.registerPeriodicSync();
+      }
+    } catch (e) {
+      print('Error al inicializar sync: $e');
     }
-  } catch (e) {
-    print('Error al inicializar sync: $e');
   }
 
   final prefs = await SharedPreferences.getInstance();
@@ -153,6 +156,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
   final TextEditingController _referenciaController = TextEditingController();
   final ApiService _apiService = ApiService();
   final TextEditingController _searchCtrl = TextEditingController();
+  List<Map<String, dynamic>> _pagosRealizados = [];
+  int? _defaultMetodoId;
 
   @override
   void initState() {
@@ -161,6 +166,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     _loadData();
     _loadMetodos();
     _loadClientes();
+    _loadDefaultMetodoPreference();
     _startSyncTimer();
   }
 
@@ -193,6 +199,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
     _syncTimer?.cancel();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadDefaultMetodoPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _defaultMetodoId = prefs.getInt('default_metodo_id');
+      });
+    }
   }
 
   Future<void> _loadUserInfo() async {
@@ -395,13 +410,40 @@ class _ProductListScreenState extends State<ProductListScreen> {
   void _showTicket() {
     _referenciaController.clear();
 
-    // Asegurar selección por defecto cada vez que se abre
-    if (_metodosPago.isNotEmpty) {
-      _selectedMetodo = _metodosPago.firstWhere(
-        (m) => m.nombre == 'Efectivo',
-        orElse: () => _metodosPago.first,
-      );
+    // Inicializar con un pago por defecto si está vacío
+    if (_pagosRealizados.isEmpty) {
+      MetodoPago? prefMetodo;
+      if (_defaultMetodoId != null) {
+        try {
+          prefMetodo = _metodosPago.firstWhere((m) => m.id == _defaultMetodoId);
+        } catch (_) {}
+      }
+
+      MetodoPago defaultMetodo =
+          prefMetodo ??
+          _metodosPago.firstWhere(
+            (m) => m.nombre == 'Efectivo',
+            orElse: () => _metodosPago.isNotEmpty
+                ? _metodosPago.first
+                : MetodoPago(
+                    id: 1,
+                    negocioId: 1,
+                    nombre: 'Efectivo',
+                    requiereReferencia: false,
+                  ),
+          );
+
+      _pagosRealizados.add({
+        'metodo': defaultMetodo,
+        'monto_usd': 0.0,
+        'monto_bs': 0.0,
+        'referencia': '',
+        'ctrl_usd': TextEditingController(text: '0.00'),
+        'ctrl_bs': TextEditingController(text: '0.00'),
+        'ctrl_ref': TextEditingController(),
+      });
     }
+
     _selectedCliente = null;
 
     showModalBottomSheet(
@@ -417,9 +459,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
             if (selected.isEmpty) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
+                if (Navigator.canPop(context)) Navigator.pop(context);
               });
               return const Center(child: Text('Carrito Vacío'));
             }
@@ -432,7 +472,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
               bool esDolar = p.monedaCompra != 'BS';
               double precioBs = esDolar ? precio * _tasa : precio;
               totalBs += precioBs * p.qty;
-              totalUsd += (esDolar ? precio : precio / _tasa) * p.qty;
+              totalUsd +=
+                  (esDolar ? precio : precio / (_tasa > 0 ? _tasa : 1)) * p.qty;
+            }
+
+            // Si es la primera vez que abrimos con items, seteamos el primer pago al total
+            if (_pagosRealizados.length == 1 &&
+                _pagosRealizados[0]['monto_usd'] == 0) {
+              _pagosRealizados[0]['monto_usd'] = totalUsd;
+              _pagosRealizados[0]['monto_bs'] = totalBs;
+              _pagosRealizados[0]['ctrl_usd'].text = totalUsd.toStringAsFixed(
+                2,
+              );
+              _pagosRealizados[0]['ctrl_bs'].text = totalBs.toStringAsFixed(2);
             }
 
             return Container(
@@ -467,9 +519,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         IconButton(
                           onPressed: () {
                             setState(() {
-                              for (var p in _allProducts) {
-                                p.qty = 0;
-                              }
+                              for (var p in _allProducts) p.qty = 0;
+                              _pagosRealizados.clear();
                             });
                             Navigator.pop(context);
                           },
@@ -499,7 +550,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
                             children: [
-                              // Selector de cantidad horizontal
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
@@ -510,13 +560,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    // Botón decrementar
                                     InkWell(
                                       onTap: () {
                                         setState(() {
-                                          if (p.qty > 1) {
-                                            p.qty--;
-                                          }
+                                          if (p.qty > 1) p.qty--;
                                         });
                                         setModalState(() {});
                                       },
@@ -534,7 +581,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                                 alpha: 0.05,
                                               ),
                                               blurRadius: 2,
-                                              offset: const Offset(0, 1),
                                             ),
                                           ],
                                         ),
@@ -546,7 +592,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-                                    // Cantidad
                                     Text(
                                       p.qty % 1 == 0
                                           ? p.qty.toInt().toString()
@@ -558,7 +603,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-                                    // Botón incrementar
                                     InkWell(
                                       onTap: () {
                                         setState(() {
@@ -580,7 +624,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                                 alpha: 0.05,
                                               ),
                                               blurRadius: 2,
-                                              offset: const Offset(0, 1),
                                             ),
                                           ],
                                         ),
@@ -616,55 +659,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   ],
                                 ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '${subtotalBs.toStringAsFixed(2)} Bs',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  // Botón eliminar
-                                  InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        p.qty = 0;
-                                      });
-                                      setModalState(() {});
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red[50],
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.delete_outline,
-                                            size: 14,
-                                            color: Colors.red[700],
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            'Eliminar',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.red[700],
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                '${subtotalBs.toStringAsFixed(2)} Bs',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -682,6 +681,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     ),
                     child: SafeArea(
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -718,7 +718,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // FORMA DE PAGO
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -729,87 +728,204 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'FORMA DE PAGO',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[600],
-                                    letterSpacing: 1.1,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                DropdownButtonFormField<MetodoPago>(
-                                  value: _selectedMetodo,
-                                  decoration: InputDecoration(
-                                    prefixIcon: const Icon(
-                                      Icons.payments_outlined,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                  items: _metodosPago.map((m) {
-                                    return DropdownMenuItem(
-                                      value: m,
-                                      child: Text(
-                                        m.nombre,
-                                        style: const TextStyle(fontSize: 14),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'FORMA DE PAGO',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[600],
+                                        letterSpacing: 1.1,
                                       ),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: () {
+                                        setModalState(() {
+                                          _pagosRealizados.add({
+                                            'metodo': _metodosPago.first,
+                                            'monto_usd': 0.0,
+                                            'monto_bs': 0.0,
+                                            'referencia': '',
+                                            'ctrl_usd': TextEditingController(
+                                              text: '0.00',
+                                            ),
+                                            'ctrl_bs': TextEditingController(
+                                              text: '0.00',
+                                            ),
+                                            'ctrl_ref': TextEditingController(),
+                                          });
+                                        });
+                                      },
+                                      icon: const Icon(Icons.add, size: 16),
+                                      label: const Text('Dividir Pago'),
+                                    ),
+                                  ],
+                                ),
+                                ..._pagosRealizados.asMap().entries.map((
+                                  entry,
+                                ) {
+                                  int idx = entry.key;
+                                  var pago = entry.value;
+                                  return Column(
+                                    children: [
+                                      if (idx > 0) const Divider(),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 2,
+                                            child:
+                                                DropdownButtonFormField<
+                                                  MetodoPago
+                                                >(
+                                                  value: pago['metodo'],
+                                                  isExpanded: true,
+                                                  items: _metodosPago
+                                                      .map(
+                                                        (m) => DropdownMenuItem(
+                                                          value: m,
+                                                          child: Text(
+                                                            m.nombre,
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontSize: 13,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      )
+                                                      .toList(),
+                                                  onChanged: (val) {
+                                                    setModalState(() {
+                                                      pago['metodo'] = val;
+                                                    });
+                                                  },
+                                                ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            flex: 1,
+                                            child: TextField(
+                                              controller: pago['ctrl_usd'],
+                                              keyboardType:
+                                                  const TextInputType.numberWithOptions(
+                                                    decimal: true,
+                                                  ),
+                                              decoration: const InputDecoration(
+                                                labelText: 'USD \$',
+                                              ),
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                              ),
+                                              onChanged: (val) {
+                                                double? valUsd =
+                                                    double.tryParse(val);
+                                                if (valUsd != null) {
+                                                  pago['monto_usd'] = valUsd;
+                                                  pago['monto_bs'] =
+                                                      valUsd * _tasa;
+                                                  pago['ctrl_bs'].text =
+                                                      pago['monto_bs']
+                                                          .toStringAsFixed(2);
+                                                  setModalState(() {});
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                          if (_pagosRealizados.length > 1)
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.remove_circle_outline,
+                                                color: Colors.red,
+                                                size: 20,
+                                              ),
+                                              onPressed: () {
+                                                setModalState(() {
+                                                  _pagosRealizados.removeAt(
+                                                    idx,
+                                                  );
+                                                });
+                                              },
+                                            ),
+                                        ],
+                                      ),
+                                      if (pago['metodo']?.requiereReferencia ==
+                                          true)
+                                        TextField(
+                                          controller: pago['ctrl_ref'],
+                                          decoration: const InputDecoration(
+                                            labelText: 'Referencia',
+                                          ),
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                      if (pago['metodo']?.nombre == 'Crédito')
+                                        DropdownButtonFormField<Cliente>(
+                                          value: _selectedCliente,
+                                          isExpanded: true,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Cliente Crédito',
+                                          ),
+                                          items: _clientes
+                                              .map(
+                                                (c) => DropdownMenuItem(
+                                                  value: c,
+                                                  child: Text(
+                                                    c.nombre,
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
+                                          onChanged: (val) {
+                                            setModalState(() {
+                                              _selectedCliente = val;
+                                            });
+                                          },
+                                        ),
+                                    ],
+                                  );
+                                }),
+                                const SizedBox(height: 12),
+                                Builder(
+                                  builder: (context) {
+                                    double pagado = _pagosRealizados.fold(
+                                      0.0,
+                                      (sum, p) => sum + p['monto_usd'],
                                     );
-                                  }).toList(),
-                                  onChanged: (val) {
-                                    setModalState(() {
-                                      _selectedMetodo = val;
-                                    });
-                                    setState(() {});
+                                    double restante = totalUsd - pagado;
+                                    bool pendiente = restante > 0.01;
+                                    return Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          pendiente
+                                              ? 'Resta p/ pagar:'
+                                              : 'Completo',
+                                          style: TextStyle(
+                                            color: pendiente
+                                                ? Colors.red
+                                                : Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${restante.abs().toStringAsFixed(2)} USD',
+                                          style: TextStyle(
+                                            color: pendiente
+                                                ? Colors.red
+                                                : Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    );
                                   },
                                 ),
-                                if (_selectedMetodo?.nombre == 'Crédito') ...[
-                                  const SizedBox(height: 12),
-                                  DropdownButtonFormField<Cliente>(
-                                    value: _selectedCliente,
-                                    decoration: InputDecoration(
-                                      labelText: 'Seleccionar Cliente',
-                                      prefixIcon: const Icon(
-                                        Icons.person_outline,
-                                      ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    items: _clientes.map((c) {
-                                      return DropdownMenuItem(
-                                        value: c,
-                                        child: Text(c.nombre),
-                                      );
-                                    }).toList(),
-                                    onChanged: (val) {
-                                      setModalState(() {
-                                        _selectedCliente = val;
-                                      });
-                                      setState(() {});
-                                    },
-                                  ),
-                                ],
-                                if (_selectedMetodo?.requiereReferencia ??
-                                    false) ...[
-                                  const SizedBox(height: 12),
-                                  TextField(
-                                    controller: _referenciaController,
-                                    decoration: InputDecoration(
-                                      labelText: 'Número de Referencia',
-                                      prefixIcon: const Icon(Icons.numbers),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           ),
@@ -819,6 +935,22 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             height: 60,
                             child: ElevatedButton(
                               onPressed: () async {
+                                double pagado = _pagosRealizados.fold(
+                                  0.0,
+                                  (sum, p) => sum + p['monto_usd'],
+                                );
+                                if ((totalUsd - pagado).abs() > 0.01) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'El total pagado debe coincidir con el total de la venta',
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 final bool? confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
@@ -848,8 +980,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
                                 if (confirm != true) return;
 
-                                if (_selectedMetodo?.nombre == 'Crédito' &&
-                                    _selectedCliente == null) {
+                                // Validar créditos si existen
+                                bool hasCredito = _pagosRealizados.any(
+                                  (p) => p['metodo'].nombre == 'Crédito',
+                                );
+                                if (hasCredito && _selectedCliente == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
@@ -861,83 +996,56 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   return;
                                 }
 
-                                if (_selectedMetodo?.requiereReferencia ==
-                                        true &&
-                                    _referenciaController.text.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Debes ingresar el número de referencia',
-                                      ),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                  return;
-                                }
-
                                 final items = selected.map((p) {
                                   double precio = p.precioVenta ?? 0;
                                   bool esDolar = p.monedaCompra != 'BS';
-                                  double precioBs = esDolar
-                                      ? precio * _tasa
-                                      : precio;
-                                  double precioUsd = esDolar
-                                      ? precio
-                                      : precio / _tasa;
-
-                                  // El multiplicador es el tamaño del paquete si es un item de paquete (ID negativo)
-                                  double multiplicador = (p.id < 0)
-                                      ? (p.tamPaquete ?? 1.0)
-                                      : 1.0;
-
-                                  final isCredito =
-                                      _selectedMetodo?.nombre == 'Crédito';
-
-                                  if (isCredito) {
-                                    return {
-                                      'producto_id': p.id.abs(),
-                                      'cantidad': p.qty,
-                                      'multiplicador': multiplicador,
-                                      'precio_unitario_bs': precioBs,
-                                      'precio_unitario_usd': precioUsd,
-                                    };
-                                  }
-
                                   return {
                                     'id': p.id.abs(),
                                     'cantidad': p.qty,
-                                    'multiplicador': multiplicador,
-                                    'precio_bs': precioBs,
+                                    'multiplicador': (p.id < 0)
+                                        ? (p.tamPaquete ?? 1.0)
+                                        : 1.0,
+                                    'precio_bs': esDolar
+                                        ? precio * _tasa
+                                        : precio,
                                   };
                                 }).toList();
+
+                                final pagosData = _pagosRealizados
+                                    .map(
+                                      (p) => {
+                                        'metodo_pago_id': p['metodo'].id,
+                                        'monto_bs': p['monto_bs'],
+                                        'monto_usd': p['monto_usd'],
+                                        'referencia': p['ctrl_ref'].text,
+                                      },
+                                    )
+                                    .toList();
 
                                 final ventaData = {
                                   'total_bs': totalBs,
                                   'total_usd': totalUsd,
                                   'tasa': _tasa,
                                   'detalles': items,
-                                  'metodo_pago_id': _selectedMetodo?.id,
+                                  'metodo_pago_id':
+                                      _pagosRealizados.first['metodo'].id,
                                   'cliente_id': _selectedCliente?.id,
-                                  'referencia': _referenciaController.text,
+                                  'referencia':
+                                      _pagosRealizados.first['ctrl_ref'].text,
+                                  'pagos': pagosData,
                                 };
 
                                 Navigator.pop(context);
                                 setState(() => _loading = true);
 
-                                bool success = false;
-                                try {
-                                  success = await _apiService.registrarVenta(
-                                    ventaData,
-                                  );
-                                } catch (e) {
-                                  success = false;
-                                }
+                                bool success = await _apiService.registrarVenta(
+                                  ventaData,
+                                );
 
                                 if (success) {
                                   setState(() {
-                                    for (var p in _allProducts) {
-                                      p.qty = 0;
-                                    }
+                                    for (var p in _allProducts) p.qty = 0;
+                                    _pagosRealizados.clear();
                                   });
                                   _loadData();
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -949,15 +1057,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                     ),
                                   );
                                 } else {
-                                  // MODO OFFLINE: Guardar localmente
-                                  if (_selectedMetodo?.nombre != 'Crédito') {
+                                  if (!hasCredito) {
                                     await OfflineService.savePendingVenta(
                                       ventaData,
                                     );
                                     setState(() {
-                                      for (var p in _allProducts) {
-                                        p.qty = 0;
-                                      }
+                                      for (var p in _allProducts) p.qty = 0;
+                                      _pagosRealizados.clear();
                                       _pendingCount++;
                                     });
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -973,7 +1079,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
-                                          'Error al procesar. Verifique su conexión.',
+                                          'Error al procesar crédito. Verifique su conexión.',
                                         ),
                                         backgroundColor: Colors.red,
                                       ),
@@ -1696,6 +1802,7 @@ class _MainDrawerState extends State<MainDrawer> {
   String _negocioName = '';
   String _userRol = 'vendedor';
   final ApiService _apiService = ApiService();
+  List<dynamic> _negocios = [];
 
   @override
   void initState() {
@@ -1705,11 +1812,71 @@ class _MainDrawerState extends State<MainDrawer> {
 
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
+    final String? negsJson = prefs.getString('user_negocios');
+    if (negsJson != null) {
+      try {
+        _negocios = jsonDecode(negsJson);
+      } catch (_) {}
+    }
     setState(() {
       _userName = prefs.getString('user_name') ?? 'Usuario';
       _negocioName = prefs.getString('negocio_nombre') ?? 'Ventas 24/7';
       _userRol = prefs.getString('user_rol') ?? 'vendedor';
     });
+  }
+
+  void _switchNegocio() async {
+    if (_negocios.length < 2) return;
+
+    final Map<String, dynamic>? selected = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cambiar de Negocio'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _negocios.length,
+            itemBuilder: (context, i) {
+              final n = _negocios[i];
+              final bool isCurrent = n['nombre'] == _negocioName;
+              return ListTile(
+                leading: Icon(
+                  Icons.business,
+                  color: isCurrent ? Colors.green : Colors.blue,
+                ),
+                title: Text(
+                  n['nombre'],
+                  style: TextStyle(
+                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                    color: isCurrent ? Colors.green : Colors.black87,
+                  ),
+                ),
+                trailing: isCurrent
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
+                onTap: isCurrent ? null : () => Navigator.pop(context, n),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (selected != null) {
+      await _apiService.setNegocio(
+        selected['id'] as int,
+        selected['nombre'] as String,
+      );
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          (_userRol == 'admin' || _userRol == 'superadmin')
+              ? '/admin'
+              : '/home',
+          (route) => false,
+        );
+      }
+    }
   }
 
   @override
@@ -1738,6 +1905,19 @@ class _MainDrawerState extends State<MainDrawer> {
             ),
           ),
           _buildSectionHeader('GENERAL'),
+          if (_negocios.length > 1)
+            ListTile(
+              leading: const Icon(Icons.swap_horiz, color: Colors.blue),
+              title: const Text(
+                'Cambiar Negocio',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+              subtitle: Text('Estás en: $_negocioName'),
+              onTap: _switchNegocio,
+            ),
           ListTile(
             leading: const Icon(
               Icons.dashboard_outlined,

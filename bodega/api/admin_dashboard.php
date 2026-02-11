@@ -25,6 +25,7 @@ try {
         FROM ventas 
         WHERE negocio_id = ? 
         AND DATE(fecha) = ?
+        AND (estado IS NULL OR estado != 'anulada')
     ");
     $stmt->execute([$negocio_id, $fecha]);
     $ventas = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -43,6 +44,7 @@ try {
         INNER JOIN productos p ON dv.producto_id = p.id
         WHERE v.negocio_id = ? 
         AND DATE(v.fecha) = ?
+        AND (v.estado IS NULL OR v.estado != 'anulada')
     ");
     $stmtCostos->execute([$negocio_id, $fecha]);
     $costosRow = $stmtCostos->fetch(PDO::FETCH_ASSOC);
@@ -95,6 +97,7 @@ try {
         FROM ventas 
         WHERE negocio_id = ? 
         AND DATE(fecha) = ?
+        AND (estado IS NULL OR estado != 'anulada')
         GROUP BY HOUR(fecha)
         ORDER BY hora
     ");
@@ -112,6 +115,7 @@ try {
         INNER JOIN productos p ON dv.producto_id = p.id
         WHERE v.negocio_id = ? 
         AND DATE(v.fecha) = ?
+        AND (v.estado IS NULL OR v.estado != 'anulada')
         GROUP BY p.id, p.nombre
         ORDER BY cantidad_vendida DESC
         LIMIT 5
@@ -131,16 +135,17 @@ try {
     $ganancia_neta = $total_ventas_usd - $total_costos_usd;
     $margen_porcentaje = $total_ventas_usd > 0 ? ($ganancia_neta / $total_ventas_usd) * 100 : 0;
 
-    // --- 7. Ventas por método de pago ---
+    // --- 7. Ventas por método de pago (sumando desde ventas_pagos) ---
     $stmtMetodos = $db->prepare("
         SELECT 
-            COALESCE(m.nombre, 'Efectivo') as metodo,
-            COALESCE(SUM(v.total_bs), 0) as total_bs,
-            COALESCE(SUM(v.total_usd), 0) as total_usd
-        FROM ventas v
-        LEFT JOIN metodos_pago m ON v.metodo_pago_id = m.id
-        WHERE v.negocio_id = ? AND DATE(v.fecha) = ?
-        GROUP BY COALESCE(m.nombre, 'Efectivo')
+            m.nombre as metodo,
+            COALESCE(SUM(vp.monto_bs), 0) as total_bs,
+            COALESCE(SUM(vp.monto_usd), 0) as total_usd
+        FROM ventas_pagos vp
+        JOIN ventas v ON vp.venta_id = v.id
+        JOIN metodos_pago m ON vp.metodo_pago_id = m.id
+        WHERE v.negocio_id = ? AND DATE(v.fecha) = ? AND (v.estado IS NULL OR v.estado != 'anulada')
+        GROUP BY m.nombre
     ");
     $stmtMetodos->execute([$negocio_id, $fecha]);
     $ventas_por_metodo = $stmtMetodos->fetchAll(PDO::FETCH_ASSOC);

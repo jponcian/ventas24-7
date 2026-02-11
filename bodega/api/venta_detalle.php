@@ -13,7 +13,8 @@ if (!$vid) {
 
 try {
     $detalles = obtenerVentaDetalle($vid);
-    echo json_encode(['ok' => true, 'detalles' => $detalles]);
+    $pagos = obtenerVentaPagos($vid);
+    echo json_encode(['ok' => true, 'detalles' => $detalles, 'pagos' => $pagos]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => $e->getMessage()]);

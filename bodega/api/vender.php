@@ -20,8 +20,9 @@ $detalles = $body['detalles'];
 $metodo_pago_id = isset($body['metodo_pago_id']) ? intval($body['metodo_pago_id']) : null;
 $cliente_id = isset($body['cliente_id']) ? intval($body['cliente_id']) : null;
 $referencia = $body['referencia'] ?? null;
+$pagos = $body['pagos'] ?? [];
 
-if (registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles, $metodo_pago_id, $cliente_id, $referencia)) {
+if (registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles, $metodo_pago_id, $cliente_id, $referencia, $pagos)) {
     echo json_encode(['ok' => true]);
 } else {
     http_response_code(500);
