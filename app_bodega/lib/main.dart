@@ -1,5 +1,6 @@
 // Disparo de compilación para nueva versión v1.1.1+3 - Optimus
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -487,628 +488,876 @@ class _ProductListScreenState extends State<ProductListScreen> {
               _pagosRealizados[0]['ctrl_bs'].text = totalBs.toStringAsFixed(2);
             }
 
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.85,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Detalle de Venta',
-                          style: GoogleFonts.outfit(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            setState(() {
-                              for (var p in _allProducts) p.qty = 0;
-                              _pagosRealizados.clear();
-                            });
-                            Navigator.pop(context);
-                          },
-                          icon: const Icon(
-                            Icons.delete_sweep,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: selected.length,
-                      separatorBuilder: (_, __) =>
-                          Divider(color: Colors.grey[100]),
-                      itemBuilder: (context, index) {
-                        final p = selected[index];
-                        double precio = p.precioVenta ?? 0;
-                        bool esDolar = p.monedaCompra != 'BS';
-                        double precioBs = esDolar ? precio * _tasa : precio;
-                        double subtotalBs = precioBs * p.qty;
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey[200]!),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          if (p.qty > 1) p.qty--;
-                                        });
-                                        setModalState(() {});
-                                      },
-                                      child: Container(
-                                        width: 28,
-                                        height: 28,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.05,
-                                              ),
-                                              blurRadius: 2,
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Icon(
-                                          Icons.remove,
-                                          size: 16,
-                                          color: Colors.orange,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      p.qty % 1 == 0
-                                          ? p.qty.toInt().toString()
-                                          : p.qty.toStringAsFixed(3),
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: const Color(0xFF1E3A8A),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    InkWell(
-                                      onTap: () {
-                                        setState(() {
-                                          p.qty++;
-                                        });
-                                        setModalState(() {});
-                                      },
-                                      child: Container(
-                                        width: 28,
-                                        height: 28,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.05,
-                                              ),
-                                              blurRadius: 2,
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Icon(
-                                          Icons.add,
-                                          size: 16,
-                                          color: Colors.green,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      p.nombre,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${precioBs.toStringAsFixed(2)} Bs (\$${(esDolar ? precio : precio / (_tasa > 0 ? _tasa : 1)).toStringAsFixed(2)}) c/u',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                '${subtotalBs.toStringAsFixed(2)} Bs',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(32),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.85,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    child: SafeArea(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'TOTAL',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '${totalBs.toStringAsFixed(2)} Bs',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF1E3A8A),
-                                    ),
-                                  ),
-                                  Text(
-                                    '${totalUsd.toStringAsFixed(2)} USD',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey[600],
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey[200]!),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'FORMA DE PAGO',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey[600],
-                                        letterSpacing: 1.1,
-                                      ),
-                                    ),
-                                    TextButton.icon(
-                                      onPressed: () {
-                                        setModalState(() {
-                                          _pagosRealizados.add({
-                                            'metodo': _metodosPago.first,
-                                            'monto_usd': 0.0,
-                                            'monto_bs': 0.0,
-                                            'referencia': '',
-                                            'ctrl_usd': TextEditingController(
-                                              text: '0.00',
-                                            ),
-                                            'ctrl_bs': TextEditingController(
-                                              text: '0.00',
-                                            ),
-                                            'ctrl_ref': TextEditingController(),
-                                          });
-                                        });
-                                      },
-                                      icon: const Icon(Icons.add, size: 16),
-                                      label: const Text('Dividir Pago'),
-                                    ),
-                                  ],
-                                ),
-                                ..._pagosRealizados.asMap().entries.map((
-                                  entry,
-                                ) {
-                                  int idx = entry.key;
-                                  var pago = entry.value;
-                                  return Column(
-                                    children: [
-                                      if (idx > 0) const Divider(),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 2,
-                                            child:
-                                                DropdownButtonFormField<
-                                                  MetodoPago
-                                                >(
-                                                  value: pago['metodo'],
-                                                  isExpanded: true,
-                                                  items: _metodosPago
-                                                      .map(
-                                                        (m) => DropdownMenuItem(
-                                                          value: m,
-                                                          child: Text(
-                                                            m.nombre,
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontSize: 13,
-                                                                ),
-                                                          ),
-                                                        ),
-                                                      )
-                                                      .toList(),
-                                                  onChanged: (val) {
-                                                    setModalState(() {
-                                                      pago['metodo'] = val;
-                                                    });
-                                                  },
-                                                ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            flex: 1,
-                                            child: TextField(
-                                              controller: pago['ctrl_usd'],
-                                              keyboardType:
-                                                  const TextInputType.numberWithOptions(
-                                                    decimal: true,
-                                                  ),
-                                              decoration: const InputDecoration(
-                                                labelText: 'USD \$',
-                                              ),
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                              ),
-                                              onChanged: (val) {
-                                                double? valUsd =
-                                                    double.tryParse(val);
-                                                if (valUsd != null) {
-                                                  pago['monto_usd'] = valUsd;
-                                                  pago['monto_bs'] =
-                                                      valUsd * _tasa;
-                                                  pago['ctrl_bs'].text =
-                                                      pago['monto_bs']
-                                                          .toStringAsFixed(2);
-                                                  setModalState(() {});
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                          if (_pagosRealizados.length > 1)
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.remove_circle_outline,
-                                                color: Colors.red,
-                                                size: 20,
-                                              ),
-                                              onPressed: () {
-                                                setModalState(() {
-                                                  _pagosRealizados.removeAt(
-                                                    idx,
-                                                  );
-                                                });
-                                              },
-                                            ),
-                                        ],
-                                      ),
-                                      if (pago['metodo']?.requiereReferencia ==
-                                          true)
-                                        TextField(
-                                          controller: pago['ctrl_ref'],
-                                          decoration: const InputDecoration(
-                                            labelText: 'Referencia',
-                                          ),
-                                          style: const TextStyle(fontSize: 13),
-                                        ),
-                                      if (pago['metodo']?.nombre == 'Crédito')
-                                        DropdownButtonFormField<Cliente>(
-                                          value: _selectedCliente,
-                                          isExpanded: true,
-                                          decoration: const InputDecoration(
-                                            labelText: 'Cliente Crédito',
-                                          ),
-                                          items: _clientes
-                                              .map(
-                                                (c) => DropdownMenuItem(
-                                                  value: c,
-                                                  child: Text(
-                                                    c.nombre,
-                                                    style: const TextStyle(
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ),
-                                              )
-                                              .toList(),
-                                          onChanged: (val) {
-                                            setModalState(() {
-                                              _selectedCliente = val;
-                                            });
-                                          },
-                                        ),
-                                    ],
-                                  );
-                                }),
-                                const SizedBox(height: 12),
-                                Builder(
-                                  builder: (context) {
-                                    double pagado = _pagosRealizados.fold(
-                                      0.0,
-                                      (sum, p) => sum + p['monto_usd'],
-                                    );
-                                    double restante = totalUsd - pagado;
-                                    bool pendiente = restante > 0.01;
-                                    return Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          pendiente
-                                              ? 'Resta p/ pagar:'
-                                              : 'Completo',
-                                          style: TextStyle(
-                                            color: pendiente
-                                                ? Colors.red
-                                                : Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        Text(
-                                          '${restante.abs().toStringAsFixed(2)} USD',
-                                          style: TextStyle(
-                                            color: pendiente
-                                                ? Colors.red
-                                                : Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ],
+                          Text(
+                            'Detalle de Venta',
+                            style: GoogleFonts.outfit(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 60,
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                double pagado = _pagosRealizados.fold(
-                                  0.0,
-                                  (sum, p) => sum + p['monto_usd'],
-                                );
-                                if ((totalUsd - pagado).abs() > 0.01) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'El total pagado debe coincidir con el total de la venta',
-                                      ),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final bool? confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Confirmar Venta'),
-                                    content: const Text(
-                                      '¿Estás seguro de que deseas finalizar esta venta?',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, false),
-                                        child: const Text('Cancelar'),
-                                      ),
-                                      FilledButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, true),
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: const Color(
-                                            0xFF1E3A8A,
-                                          ),
-                                        ),
-                                        child: const Text('Confirmar'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-
-                                if (confirm != true) return;
-
-                                // Validar créditos si existen
-                                bool hasCredito = _pagosRealizados.any(
-                                  (p) => p['metodo'].nombre == 'Crédito',
-                                );
-                                if (hasCredito && _selectedCliente == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Debes seleccionar un cliente para el crédito',
-                                      ),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final items = selected.map((p) {
-                                  double precio = p.precioVenta ?? 0;
-                                  bool esDolar = p.monedaCompra != 'BS';
-                                  return {
-                                    'id': p.id.abs(),
-                                    'cantidad': p.qty,
-                                    'multiplicador': (p.id < 0)
-                                        ? (p.tamPaquete ?? 1.0)
-                                        : 1.0,
-                                    'precio_bs': esDolar
-                                        ? precio * _tasa
-                                        : precio,
-                                  };
-                                }).toList();
-
-                                final pagosData = _pagosRealizados
-                                    .map(
-                                      (p) => {
-                                        'metodo_pago_id': p['metodo'].id,
-                                        'monto_bs': p['monto_bs'],
-                                        'monto_usd': p['monto_usd'],
-                                        'referencia': p['ctrl_ref'].text,
-                                      },
-                                    )
-                                    .toList();
-
-                                final ventaData = {
-                                  'total_bs': totalBs,
-                                  'total_usd': totalUsd,
-                                  'tasa': _tasa,
-                                  'detalles': items,
-                                  'metodo_pago_id':
-                                      _pagosRealizados.first['metodo'].id,
-                                  'cliente_id': _selectedCliente?.id,
-                                  'referencia':
-                                      _pagosRealizados.first['ctrl_ref'].text,
-                                  'pagos': pagosData,
-                                };
-
-                                Navigator.pop(context);
-                                setState(() => _loading = true);
-
-                                bool success = await _apiService.registrarVenta(
-                                  ventaData,
-                                );
-
-                                if (success) {
-                                  setState(() {
-                                    for (var p in _allProducts) p.qty = 0;
-                                    _pagosRealizados.clear();
-                                  });
-                                  _loadData();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Venta registrada con éxito',
-                                      ),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                } else {
-                                  if (!hasCredito) {
-                                    await OfflineService.savePendingVenta(
-                                      ventaData,
-                                    );
-                                    setState(() {
-                                      for (var p in _allProducts) p.qty = 0;
-                                      _pagosRealizados.clear();
-                                      _pendingCount++;
-                                    });
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Sin conexión. Venta guardada localmente.',
-                                        ),
-                                        backgroundColor: Colors.orange,
-                                      ),
-                                    );
-                                  } else {
-                                    setState(() => _loading = false);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Error al procesar crédito. Verifique su conexión.',
-                                        ),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1E3A8A),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: const Text(
-                                'FINALIZAR VENTA',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                for (var p in _allProducts) p.qty = 0;
+                                _pagosRealizados.clear();
+                              });
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(
+                              Icons.delete_sweep,
+                              color: Colors.red,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: selected.length,
+                        separatorBuilder: (_, __) =>
+                            Divider(color: Colors.grey[100]),
+                        itemBuilder: (context, index) {
+                          final p = selected[index];
+                          double precio = p.precioVenta ?? 0;
+                          bool esDolar = p.monedaCompra != 'BS';
+                          double precioBs = esDolar ? precio * _tasa : precio;
+                          double subtotalBs = precioBs * p.qty;
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[50],
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey[200]!,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            if (p.qty > 1) p.qty--;
+                                          });
+                                          setModalState(() {});
+                                        },
+                                        child: Container(
+                                          width: 28,
+                                          height: 28,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(
+                                                  0.05,
+                                                ),
+                                                blurRadius: 2,
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(
+                                            Icons.remove,
+                                            size: 16,
+                                            color: Colors.orange,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        p.qty % 1 == 0
+                                            ? p.qty.toInt().toString()
+                                            : p.qty.toStringAsFixed(3),
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: const Color(0xFF1E3A8A),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            p.qty++;
+                                          });
+                                          setModalState(() {});
+                                        },
+                                        child: Container(
+                                          width: 28,
+                                          height: 28,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(
+                                                  0.05,
+                                                ),
+                                                blurRadius: 2,
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(
+                                            Icons.add,
+                                            size: 16,
+                                            color: Colors.green,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        p.nombre,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${precioBs.toStringAsFixed(2)} Bs (\$${(esDolar ? precio : precio / (_tasa > 0 ? _tasa : 1)).toStringAsFixed(2)}) c/u',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '${subtotalBs.toStringAsFixed(2)} Bs',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(32, 24, 32, 32),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(32),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            offset: const Offset(0, -4),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'TOTAL',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${totalBs.toStringAsFixed(2)} Bs',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF1E3A8A),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${totalUsd.toStringAsFixed(2)} USD',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey[200]!),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'FORMA DE PAGO',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.grey[600],
+                                          letterSpacing: 1.1,
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          setModalState(() {
+                                            _pagosRealizados.add({
+                                              'metodo': _metodosPago.first,
+                                              'monto_usd': 0.0,
+                                              'monto_bs': 0.0,
+                                              'referencia': '',
+                                              'ctrl_usd': TextEditingController(
+                                                text: '0.00',
+                                              ),
+                                              'ctrl_bs': TextEditingController(
+                                                text: '0.00',
+                                              ),
+                                              'ctrl_ref':
+                                                  TextEditingController(),
+                                            });
+                                          });
+                                        },
+                                        icon: const Icon(Icons.add, size: 16),
+                                        label: const Text('Dividir Pago'),
+                                      ),
+                                    ],
+                                  ),
+                                  ..._pagosRealizados.asMap().entries.map((
+                                    entry,
+                                  ) {
+                                    int idx = entry.key;
+                                    var pago = entry.value;
+
+                                    double pagadoOtros = _pagosRealizados
+                                        .asMap()
+                                        .entries
+                                        .where((e) => e.key != idx)
+                                        .fold(
+                                          0.0,
+                                          (sum, e) =>
+                                              sum + e.value['monto_usd'],
+                                        );
+                                    double restanteItem =
+                                        totalUsd - pagadoOtros;
+
+                                    return Column(
+                                      children: [
+                                        if (idx > 0) const Divider(),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              flex: 2,
+                                              child:
+                                                  DropdownButtonFormField<
+                                                    MetodoPago
+                                                  >(
+                                                    value: pago['metodo'],
+                                                    isExpanded: true,
+                                                    items: _metodosPago
+                                                        .map(
+                                                          (
+                                                            m,
+                                                          ) => DropdownMenuItem(
+                                                            value: m,
+                                                            child: Text(
+                                                              m.nombre,
+                                                              style:
+                                                                  const TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                        )
+                                                        .toList(),
+                                                    onChanged: (val) {
+                                                      if (val != null) {
+                                                        setModalState(
+                                                          () => pago['metodo'] =
+                                                              val,
+                                                        );
+                                                      }
+                                                    },
+                                                    decoration:
+                                                        const InputDecoration(
+                                                          labelText: 'Método',
+                                                          contentPadding:
+                                                              EdgeInsets.symmetric(
+                                                                horizontal: 12,
+                                                              ),
+                                                        ),
+                                                  ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              flex: 1,
+                                              child: InkWell(
+                                                onTap: () async {
+                                                  bool isUsd = false;
+                                                  double startingVal =
+                                                      pago['monto_bs'];
+
+                                                  TextEditingController
+                                                  amountCtrl =
+                                                      TextEditingController(
+                                                        text: startingVal > 0
+                                                            ? startingVal
+                                                                  .toStringAsFixed(
+                                                                    2,
+                                                                  )
+                                                            : '',
+                                                      );
+
+                                                  await showDialog(
+                                                    context: context,
+                                                    builder: (context) {
+                                                      return StatefulBuilder(
+                                                        builder: (context, setDialogState) {
+                                                          return AlertDialog(
+                                                            title: const Text(
+                                                              'Ingresar Monto',
+                                                            ),
+                                                            content: Column(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Text(
+                                                                      isUsd
+                                                                          ? "Dólares (USD)"
+                                                                          : "Bolivianos (Bs)",
+                                                                      style: const TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                      ),
+                                                                    ),
+                                                                    Switch(
+                                                                      value:
+                                                                          isUsd,
+                                                                      activeColor:
+                                                                          Colors
+                                                                              .green,
+                                                                      onChanged: (val) {
+                                                                        setDialogState(() {
+                                                                          double?
+                                                                          current = double.tryParse(
+                                                                            amountCtrl.text,
+                                                                          );
+                                                                          isUsd =
+                                                                              val;
+                                                                          if (current !=
+                                                                              null) {
+                                                                            if (isUsd) {
+                                                                              // De Bs a USD
+                                                                              amountCtrl.text =
+                                                                                  (current /
+                                                                                          (_tasa >
+                                                                                                  0
+                                                                                              ? _tasa
+                                                                                              : 1))
+                                                                                      .toStringAsFixed(
+                                                                                        2,
+                                                                                      );
+                                                                            } else {
+                                                                              // De USD a Bs
+                                                                              amountCtrl.text =
+                                                                                  (current *
+                                                                                          _tasa)
+                                                                                      .toStringAsFixed(
+                                                                                        2,
+                                                                                      );
+                                                                            }
+                                                                          }
+                                                                        });
+                                                                      },
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                TextField(
+                                                                  controller:
+                                                                      amountCtrl,
+                                                                  keyboardType:
+                                                                      const TextInputType.numberWithOptions(
+                                                                        decimal:
+                                                                            true,
+                                                                      ),
+                                                                  autofocus:
+                                                                      true,
+                                                                  inputFormatters: [
+                                                                    SlidingDecimalFormatter(),
+                                                                  ],
+                                                                  decoration: InputDecoration(
+                                                                    labelText:
+                                                                        'Monto',
+                                                                    suffixText:
+                                                                        isUsd
+                                                                        ? '\$'
+                                                                        : 'Bs',
+                                                                    border:
+                                                                        const OutlineInputBorder(),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .end,
+                                                                  children: [
+                                                                    TextButton(
+                                                                      onPressed: () {
+                                                                        double
+                                                                        sugerido =
+                                                                            isUsd
+                                                                            ? restanteItem
+                                                                            : restanteItem *
+                                                                                  _tasa;
+                                                                        amountCtrl
+                                                                            .text = sugerido
+                                                                            .toStringAsFixed(
+                                                                              2,
+                                                                            );
+                                                                      },
+                                                                      child: const Text(
+                                                                        'Completar',
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                    ),
+                                                                child:
+                                                                    const Text(
+                                                                      'CANCELAR',
+                                                                    ),
+                                                              ),
+                                                              FilledButton(
+                                                                onPressed: () {
+                                                                  double?
+                                                                  val = double.tryParse(
+                                                                    amountCtrl
+                                                                        .text,
+                                                                  );
+                                                                  if (val !=
+                                                                      null) {
+                                                                    double
+                                                                    valUsd =
+                                                                        isUsd
+                                                                        ? val
+                                                                        : (val /
+                                                                              (_tasa > 0
+                                                                                  ? _tasa
+                                                                                  : 1));
+                                                                    pago['monto_usd'] =
+                                                                        valUsd;
+                                                                    pago['monto_bs'] =
+                                                                        valUsd *
+                                                                        _tasa;
+                                                                    pago['ctrl_usd']
+                                                                            .text =
+                                                                        pago['monto_usd']
+                                                                            .toStringAsFixed(
+                                                                              2,
+                                                                            );
+                                                                    pago['ctrl_bs']
+                                                                            .text =
+                                                                        pago['monto_bs']
+                                                                            .toStringAsFixed(
+                                                                              2,
+                                                                            );
+                                                                    setModalState(
+                                                                      () {},
+                                                                    );
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                    );
+                                                                  }
+                                                                },
+                                                                child:
+                                                                    const Text(
+                                                                      'ACEPTAR',
+                                                                    ),
+                                                              ),
+                                                            ],
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: IgnorePointer(
+                                                  child: TextField(
+                                                    controller:
+                                                        pago['ctrl_usd'],
+                                                    decoration:
+                                                        const InputDecoration(
+                                                          labelText: 'Monto \$',
+                                                          hintText:
+                                                              'Toca p/ ingresar',
+                                                        ),
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            if (_pagosRealizados.length > 1)
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.remove_circle_outline,
+                                                  color: Colors.red,
+                                                  size: 20,
+                                                ),
+                                                onPressed: () {
+                                                  setModalState(() {
+                                                    _pagosRealizados.removeAt(
+                                                      idx,
+                                                    );
+                                                  });
+                                                },
+                                              ),
+                                          ],
+                                        ),
+                                        if (pago['metodo']
+                                                ?.requiereReferencia ==
+                                            true)
+                                          TextField(
+                                            controller: pago['ctrl_ref'],
+                                            decoration: const InputDecoration(
+                                              labelText:
+                                                  'Referencia / Depósito',
+                                            ),
+                                            onChanged: (val) =>
+                                                pago['referencia'] = val,
+                                          ),
+                                        if (pago['metodo']?.nombre == 'Crédito')
+                                          DropdownButtonFormField<Cliente>(
+                                            value: _selectedCliente,
+                                            isExpanded: true,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Cliente Crédito',
+                                            ),
+                                            items: _clientes
+                                                .map(
+                                                  (c) => DropdownMenuItem(
+                                                    value: c,
+                                                    child: Text(
+                                                      c.nombre,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                            onChanged: (val) {
+                                              setModalState(() {
+                                                _selectedCliente = val;
+                                              });
+                                            },
+                                          ),
+                                      ],
+                                    );
+                                  }).toList(),
+                                  const SizedBox(height: 12),
+                                  Builder(
+                                    builder: (context) {
+                                      double pagado = _pagosRealizados.fold(
+                                        0.0,
+                                        (sum, p) => sum + p['monto_usd'],
+                                      );
+                                      double restante = totalUsd - pagado;
+                                      bool pendiente = restante > 0.01;
+                                      return Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            pendiente
+                                                ? 'Resta p/ pagar:'
+                                                : 'Completo',
+                                            style: TextStyle(
+                                              color: pendiente
+                                                  ? Colors.red
+                                                  : Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          Text(
+                                            '${restante.abs().toStringAsFixed(2)} USD (${(restante.abs() * _tasa).toStringAsFixed(2)} Bs)',
+                                            style: TextStyle(
+                                              color: pendiente
+                                                  ? Colors.red
+                                                  : Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 60,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  double pagado = _pagosRealizados.fold(
+                                    0.0,
+                                    (sum, p) => sum + p['monto_usd'],
+                                  );
+                                  if ((totalUsd - pagado).abs() > 0.01) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'El total pagado debe coincidir con el total de la venta',
+                                        ),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  final bool? confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Confirmar Venta'),
+                                      content: const Text(
+                                        '¿Estás seguro de que deseas finalizar esta venta?',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF1E3A8A,
+                                            ),
+                                          ),
+                                          child: const Text('Confirmar'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirm != true) return;
+
+                                  // Validar créditos si existen
+                                  bool hasCredito = _pagosRealizados.any(
+                                    (p) => p['metodo'].nombre == 'Crédito',
+                                  );
+                                  if (hasCredito && _selectedCliente == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Debes seleccionar un cliente para el crédito',
+                                        ),
+                                        backgroundColor: Colors.orange,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  final items = selected.map((p) {
+                                    double precio = p.precioVenta ?? 0;
+                                    bool esDolar = p.monedaCompra != 'BS';
+                                    return {
+                                      'id': p.id.abs(),
+                                      'cantidad': p.qty,
+                                      'multiplicador': (p.id < 0)
+                                          ? (p.tamPaquete ?? 1.0)
+                                          : 1.0,
+                                      'precio_bs': esDolar
+                                          ? precio * _tasa
+                                          : precio,
+                                    };
+                                  }).toList();
+
+                                  final pagosData = _pagosRealizados
+                                      .map(
+                                        (p) => {
+                                          'metodo_pago_id': p['metodo'].id,
+                                          'monto_bs': p['monto_bs'],
+                                          'monto_usd': p['monto_usd'],
+                                          'referencia': p['ctrl_ref'].text,
+                                        },
+                                      )
+                                      .toList();
+
+                                  final ventaData = {
+                                    'total_bs': totalBs,
+                                    'total_usd': totalUsd,
+                                    'tasa': _tasa,
+                                    'detalles': items,
+                                    'metodo_pago_id':
+                                        _pagosRealizados.first['metodo'].id,
+                                    'cliente_id': _selectedCliente?.id,
+                                    'referencia':
+                                        _pagosRealizados.first['ctrl_ref'].text,
+                                    'pagos': pagosData,
+                                  };
+
+                                  Navigator.pop(context);
+                                  setState(() => _loading = true);
+
+                                  bool success = await _apiService
+                                      .registrarVenta(ventaData);
+
+                                  if (success) {
+                                    setState(() {
+                                      for (var p in _allProducts) p.qty = 0;
+                                      _pagosRealizados.clear();
+                                    });
+                                    _loadData();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Venta registrada con éxito',
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  } else {
+                                    if (!hasCredito) {
+                                      await OfflineService.savePendingVenta(
+                                        ventaData,
+                                      );
+                                      setState(() {
+                                        for (var p in _allProducts) p.qty = 0;
+                                        _pagosRealizados.clear();
+                                        _pendingCount++;
+                                      });
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Sin conexión. Venta guardada localmente.',
+                                          ),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+                                    } else {
+                                      setState(() => _loading = false);
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Error al procesar crédito. Verifique su conexión.',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1E3A8A),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  'FINALIZAR VENTA',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },

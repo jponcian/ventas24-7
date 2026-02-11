@@ -405,7 +405,7 @@ POST /bodega/api/abonos.php                          # Registrar
 
 ## 🙏 AGRADECIMIENTOS
 
-Sistema desarrollado para **Clínica SaludSonrisa** / **Ventas 24/7**
+Sistema desarrollado para **Ventas 24/7**
 
 **Desarrollado por**: Antigravity AI  
 **Fecha de Entrega**: 03 de Febrero de 2026  

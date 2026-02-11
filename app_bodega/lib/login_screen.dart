@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
-import 'biometric_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,70 +15,21 @@ class _LoginScreenState extends State<LoginScreen> {
   final _cedulaCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _apiService = ApiService();
-  final _biometricService = BiometricAuthService();
   bool _isLoading = false;
-  bool _biometricAvailable = false;
-  bool _biometricEnabled = false;
   bool _isAlreadyLoggedIn = false;
-
   @override
   void initState() {
     super.initState();
-    _checkBiometricAvailability();
+    _checkInitialState();
   }
 
-  Future<void> _checkBiometricAvailability() async {
+  Future<void> _checkInitialState() async {
     final prefs = await SharedPreferences.getInstance();
-    final available = await _biometricService.isBiometricAvailable();
-    final enabled = await _biometricService.isBiometricEnabled();
     final doubleLoggedIn = prefs.getBool('is_logged_in') ?? false;
 
     setState(() {
-      _biometricAvailable = available;
-      _biometricEnabled = enabled;
       _isAlreadyLoggedIn = doubleLoggedIn;
     });
-
-    // Si está habilitado, intentar login automático
-    if (_biometricEnabled && mounted) {
-      await _handleBiometricLogin();
-    }
-  }
-
-  Future<void> _handleBiometricLogin() async {
-    try {
-      final authenticated = await _biometricService.authenticate(
-        reason: 'Autentícate para acceder a Ventas 24/7',
-      );
-
-      if (authenticated) {
-        // Obtener credenciales guardadas
-        final prefs = await SharedPreferences.getInstance();
-        final savedCedula = prefs.getString('saved_cedula');
-        final savedPassword = prefs.getString('saved_password');
-
-        if (savedCedula != null && savedPassword != null) {
-          setState(() => _isLoading = true);
-          final result = await _apiService.login(savedCedula, savedPassword);
-          setState(() => _isLoading = false);
-
-          if (result['ok'] == true) {
-            _navigateAfterLogin(result);
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Error al autenticar. Usa tu contraseña.'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-          }
-        }
-      }
-    } catch (e) {
-      // Silenciosamente fallar si el usuario cancela
-    }
   }
 
   Future<void> _handleLogin() async {
@@ -95,14 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (result['ok'] == true) {
-      // Guardar credenciales si biométrico está disponible
-      if (_biometricAvailable) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('saved_cedula', _cedulaCtrl.text);
-        await prefs.setString('saved_password', _passCtrl.text);
-        await _biometricService.setBiometricEnabled(true);
-      }
-
       _navigateAfterLogin(result);
     } else {
       if (mounted) {
@@ -182,12 +124,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 gradient: LinearGradient(
                   colors: [
                     Color(0xFF0F172A),
-                    Color(0xFF10B981).withValues(alpha: 0.1),
+                    const Color(0xFF10B981).withValues(alpha: 0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(60),
                   bottomRight: Radius.circular(60),
                 ),
@@ -258,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: GoogleFonts.outfit(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF10B981),
+                              color: const Color(0xFF10B981),
                               letterSpacing: 2,
                             ),
                           ),
@@ -290,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _isAlreadyLoggedIn
-                        ? 'Desbloquea para continuar operando'
+                        ? 'Ingresa tus credenciales para continuar'
                         : 'Ingresa tus credenciales para continuar',
                     style: GoogleFonts.outfit(
                       color: Colors.grey[500],
@@ -370,48 +312,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                   ),
-                  if (_biometricAvailable && _biometricEnabled) ...[
-                    const SizedBox(height: 20),
-                    Center(
-                      child: InkWell(
-                        onTap: _handleBiometricLogin,
-                        borderRadius: BorderRadius.circular(15),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: const Color(
-                                0xFF10B981,
-                              ).withValues(alpha: 0.5),
-                            ),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.fingerprint,
-                                color: Color(0xFF10B981),
-                                size: 28,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'DESBLOQUEAR CON HUELLA',
-                                style: GoogleFonts.outfit(
-                                  color: const Color(0xFF10B981),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
