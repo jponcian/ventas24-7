@@ -1,8 +1,8 @@
 <?php
 function enviarWhatsapp($numero, $cuerpo, $motivo = 'NOTIFICACION') {
     // Configuración de la API (Tomada de notificar_optimus.php)
-    $url = 'https://dropped-traveler-oliver-tiles.trycloudflare.com/api/sendText';
-    $api_key = 'Guarico2026!';
+    $url = 'http://167.71.190.19:3000/api/sendText';
+    $api_key = 'Ponciano016';
     $session = 'default';
 
     // Limpiar número: dejar solo dígitos
