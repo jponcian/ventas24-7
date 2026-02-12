@@ -230,6 +230,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Icons.monetization_on_rounded,
                 Colors.green,
                 subtitle: '${_data?['num_ventas'] ?? 0} transacciones',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ReportSalesScreen(initialDate: _selectedDate),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 15),
@@ -278,58 +285,69 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     IconData icon,
     Color color, {
     String? subtitle,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: color, size: 30),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.arrow_upward, color: color, size: 16),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            title,
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey[500]),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey[400]),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
-        ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: color, size: 30),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.arrow_upward, color: color, size: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Text(
+              value,
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              title,
+              style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey[500]),
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  color: Colors.grey[400],
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

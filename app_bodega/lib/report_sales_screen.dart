@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import 'api_service.dart';
 
 class ReportSalesScreen extends StatefulWidget {
-  const ReportSalesScreen({super.key});
+  final DateTime? initialDate;
+  const ReportSalesScreen({super.key, this.initialDate});
 
   @override
   State<ReportSalesScreen> createState() => _ReportSalesScreenState();
@@ -12,7 +13,7 @@ class ReportSalesScreen extends StatefulWidget {
 
 class _ReportSalesScreenState extends State<ReportSalesScreen> {
   final ApiService _apiService = ApiService();
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   Map<String, dynamic>? _reportData;
   bool _loading = false;
   String _searchQuery = '';
@@ -20,6 +21,7 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedDate = widget.initialDate ?? DateTime.now();
     _loadReport();
   }
 
