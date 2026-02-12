@@ -213,8 +213,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text('Detalle Venta #$ventaId'),
-          content: SizedBox(
+          content: Container(
             width: double.maxFinite,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
