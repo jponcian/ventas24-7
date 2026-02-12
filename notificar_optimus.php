@@ -1,35 +1,48 @@
 <?php
-// notificar_optimus.php - Nueva Versión vía Base de Datos
+// notificar_optimus.php - Usando Túnel Seguro Cloudflare
 header('Content-Type: application/json');
 
-$numero_cliente = $_GET['numero'];
-$sistema = "Ventas 24-7";
-$motivo = "PRUEBA_SISTEMA";
-$cuerpo = "🦾 Hola Javier, esta es una prueba de envío mediante base de datos. ¡El puente está funcionando!";
-
-// Datos de conexión al MySQL de Optimus (DigitalOcean)
-$host = '167.71.190.19';
-$db   = 'whatsapp';
-$user = 'whatsapp';
-$pass = 'Whatsapp016.';
-
-try {
-    $conn = new mysqli($host, $user, $pass, $db);
-    if ($conn->connect_error) { throw new Exception("Error de conexión: " . $conn->connect_error); }
-
-    $stmt = $conn->prepare("INSERT INTO whatsapp (sistema, fecha, destinatario, motivo, cuerpo) VALUES (?, NOW(), ?, ?, ?)");
-    $stmt->bind_param("ssss", $sistema, $numero_cliente, $motivo, $cuerpo);
-    
-    if ($stmt->execute()) {
-        echo json_encode(["exito" => true, "mensaje" => "Orden insertada en la base de datos de Optimus."]);
-    } else {
-        echo json_encode(["exito" => false, "error" => $stmt->error]);
-    }
-    
-    $stmt->close();
-    $conn->close();
-
-} catch (Exception $e) {
-    echo json_encode(["exito" => false, "error" => $e->getMessage()]);
+$numero_cliente = $_GET['numero'] ?? '584144679693';
+// Limpiar número: dejar solo dígitos
+$numero_limpio = preg_replace('/[^0-9]/', '', $numero_cliente);
+// Ajuste para Venezuela: Si empieza con 04.., quitar 0 y agregar 58
+if (substr($numero_limpio, 0, 1) === '0') {
+    $numero_limpio = '58' . substr($numero_limpio, 1);
 }
+$chatId = $numero_limpio . "@c.us";
+
+$mensaje = "🦾 ¡PRUEBA EXITOSA! Javier, este mensaje pasó por el túnel seguro de Cloudflare desde ZZ hasta DigitalOcean. ¡Conexión blindada! 🚀";
+
+// URL DEL TÚNEL SEGURO
+$url = 'https://dropped-traveler-oliver-tiles.trycloudflare.com/api/sendText';
+$api_key = 'Guarico2026!';
+
+$data = [
+    "chatId" => $chatId,
+    "text" => $mensaje,
+    "session" => "default"
+];
+
+$payload = json_encode($data);
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/json',
+    'X-Api-Key: ' . $api_key
+]);
+
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curl_error = curl_error($ch);
+curl_close($ch);
+
+echo json_encode([
+    "exito" => ($http_code == 201 || $http_code == 200),
+    "http_code" => $http_code,
+    "respuesta_waha" => json_decode($response),
+    "error_curl" => $curl_error
+]);
 ?>

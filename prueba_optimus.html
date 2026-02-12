@@ -12,13 +12,13 @@
         input:focus { border-color: #1E3A8A; }
         button { width: 100%; padding: 15px; font-size: 16px; font-weight: bold; cursor: pointer; background: #1E3A8A; color: white; border: none; border-radius: 12px; transition: 0.3s; }
         button:hover { background: #1a337a; transform: translateY(-2px); }
-        #status { margin-top: 20px; font-size: 14px; color: #666; font-weight: 500; }
+        #status { margin-top: 20px; font-size: 14px; color: #666; font-weight: 500; word-wrap: break-word; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>🦾 WhatsApp Command</h2>
-        <input type="tel" id="telefono" placeholder="Número (ej. 04243482744)" value="04243482744">
+        <input type="tel" id="telefono" placeholder="Número (ej. 04243087099)" value="04243087099">
         <button onclick="enviar()">🚀 ENVIAR PRUEBA</button>
         <p id="status">Esperando acción...</p>
     </div>
@@ -29,22 +29,29 @@
             const status = document.getElementById('status');
             if(!num) { alert('Ingresa un número'); return; }
 
-            status.innerText = '⏳ Conectando con DigitalOcean...';
+            status.innerText = '⏳ Conectando...';
             status.style.color = '#1E3A8A';
 
             fetch('notificar_optimus.php?numero=' + num)
-                .then(r => r.json())
-                .then(data => {
-                    if(data.exito) {
-                        status.innerText = '✅ ¡ÉXITO! Orden insertada en la base de datos.';
-                        status.style.color = 'green';
-                    } else {
-                        status.innerText = '❌ ERROR: ' + data.error;
+                .then(r => r.text())
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        if(data.exito) {
+                            status.innerText = '✅ ¡ÉXITO! Mensaje enviado.';
+                            status.style.color = 'green';
+                        } else {
+                            status.innerText = '❌ ERROR API: ' + (data.error_curl || JSON.stringify(data));
+                            status.style.color = 'red';
+                        }
+                    } catch (e) {
+                        status.innerText = '❌ ERROR CRUDO: ' + text;
                         status.style.color = 'red';
+                        console.log(text);
                     }
                 })
                 .catch(e => {
-                    status.innerText = '❌ Error de conexión.';
+                    status.innerText = '❌ Error de red: ' + e.message;
                     status.style.color = 'red';
                 });
         }
