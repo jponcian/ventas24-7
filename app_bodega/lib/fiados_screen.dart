@@ -68,6 +68,31 @@ class _FiadosScreenState extends State<FiadosScreen> {
       return;
     }
 
+    final bool? confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enviar Notificación'),
+        content: Text(
+          '¿Deseas enviar el estado de cuenta a ${cliente.nombre} por WhatsApp?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCELAR'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366), // Color WhatsApp
+            ),
+            child: const Text('ENVIAR'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
     String mensaje = '¡Hola ${cliente.nombre}! 👋\n\n';
     mensaje += '📋 *Estado de Cuenta*\n\n';
 
