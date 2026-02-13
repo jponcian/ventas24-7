@@ -190,140 +190,222 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _showVentaDetalle(int ventaId) async {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    final res = await _apiService.getVentaDetalle(ventaId);
-    final detalles = res['detalles'] as List;
-    final pagos = res['pagos'] as List;
+    try {
+      final res = await _apiService.getVentaDetalle(ventaId);
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading
 
-    if (mounted) Navigator.pop(context); // Close loading
+      final detalles = res['detalles'] as List;
+      final pagos = res['pagos'] as List;
 
-    if (detalles.isEmpty) {
-      if (mounted) {
+      if (detalles.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No hay detalles para esta venta')),
         );
+        return;
       }
-      return;
-    }
 
-    if (mounted) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Detalle Venta #$ventaId'),
-          content: Container(
-            width: double.maxFinite,
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.6,
+              maxWidth: 500,
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PRODUCTOS',
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Detalle Venta #$ventaId',
+                      style: GoogleFonts.outfit(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E3A8A),
+                      ),
                     ),
-                  ),
-                  const Divider(),
-                  ...detalles.map((d) {
-                    double cant =
-                        double.tryParse(d['cantidad'].toString()) ?? 0;
-                    double precioBs =
-                        double.tryParse(d['precio_unitario_bs'].toString()) ??
-                        0;
-                    bool esPaquete =
-                        (d['es_paquete'] == 1 || d['es_paquete'] == true);
-                    String unidad = esPaquete ? 'paq' : 'und';
-                    double subtotalBs = cant * precioBs;
-                    String cantidadStr = cant % 1 == 0
-                        ? cant.toInt().toString()
-                        : cant.toStringAsFixed(3);
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'CERRAR',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 32),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'PRODUCTOS',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[600],
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...detalles.map((d) {
+                          double cant =
+                              double.tryParse(
+                                d['cantidad']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          double precio =
+                              double.tryParse(
+                                d['precio_unitario_bs']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          String nombre = d['nombre']?.toString() ?? 'Producto';
+                          bool esPaquete =
+                              (d['es_paquete'] == 1 || d['es_paquete'] == true);
+                          String unidad = esPaquete ? 'paq' : 'und';
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '$cantidadStr $unidad x ${d['nombre']}',
-                              style: const TextStyle(fontSize: 13),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} $unidad x $nombre',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${(cant * precio).toStringAsFixed(2)} Bs',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF1E3A8A),
+                                  ),
+                                ),
+                              ],
                             ),
+                          );
+                        }),
+                        const SizedBox(height: 32),
+                        Text(
+                          'FORMAS DE PAGO',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[600],
+                            letterSpacing: 1.2,
                           ),
-                          Text(
-                            '${subtotalBs.toStringAsFixed(2)} Bs',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
+                        ),
+                        const SizedBox(height: 12),
+                        ...pagos.map((p) {
+                          double mBs =
+                              double.tryParse(
+                                p['monto_bs']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          double mUsd =
+                              double.tryParse(
+                                p['monto_usd']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          String ref = p['referencia']?.toString() ?? '';
+                          String metodo =
+                              p['metodo_nombre']?.toString() ?? 'Otro';
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[200]!),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 20),
-                  Text(
-                    'FORMAS DE PAGO',
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        metodo,
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      if (ref.isNotEmpty)
+                                        Text(
+                                          'Ref: $ref',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    if (mUsd > 0)
+                                      Text(
+                                        '\$${mUsd.toStringAsFixed(2)}',
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.green[700],
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    if (mBs > 0)
+                                      Text(
+                                        '${mBs.toStringAsFixed(2)} Bs',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
                     ),
                   ),
-                  const Divider(),
-                  ...pagos.map((p) {
-                    double mBs = double.tryParse(p['monto_bs'].toString()) ?? 0;
-                    double mUsd =
-                        double.tryParse(p['monto_usd'].toString()) ?? 0;
-                    String ref = p['referencia'] ?? '';
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      title: Text(
-                        p['metodo_nombre'] ?? 'Otro',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: ref.isNotEmpty ? Text('Ref: $ref') : null,
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (mUsd > 0)
-                            Text(
-                              '\$${mUsd.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          if (mBs > 0)
-                            Text(
-                              '${mBs.toStringAsFixed(2)} Bs',
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                        ],
-                      ),
-                    );
-                  }),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('CERRAR'),
-            ),
-          ],
         ),
       );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al cargar detalle: $e')));
+      }
     }
   }
 

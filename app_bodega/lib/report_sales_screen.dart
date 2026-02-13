@@ -156,178 +156,281 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
   Future<void> _showVentaDetalle(int ventaId) async {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    final res = await _apiService.getVentaDetalle(ventaId);
-    final detalles = res['detalles'] as List;
-    final pagos = res['pagos'] as List;
+    try {
+      final res = await _apiService.getVentaDetalle(ventaId);
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar loading
 
-    if (mounted) Navigator.pop(context); // Cerrar loading
+      final detalles = res['detalles'] as List;
+      final pagos = res['pagos'] as List;
 
-    if (detalles.isEmpty) {
-      if (mounted) {
+      if (detalles.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No hay detalles para esta venta')),
         );
+        return;
       }
-      return;
-    }
 
-    if (mounted) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Detalle Venta #$ventaId'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PRODUCTOS',
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            constraints: BoxConstraints(
+              maxWidth: 500,
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Detalle Venta #$ventaId',
+                      style: GoogleFonts.outfit(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E3A8A),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'CERRAR',
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 32),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'PRODUCTOS',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[600],
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...detalles.map((d) {
+                          double cant =
+                              double.tryParse(
+                                d['cantidad']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          double precio =
+                              double.tryParse(
+                                d['precio_unitario_bs']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          String nombre = d['nombre']?.toString() ?? 'Producto';
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x $nombre',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${(cant * precio).toStringAsFixed(2)} Bs',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF1E3A8A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 32),
+                        Text(
+                          'FORMAS DE PAGO',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[600],
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...pagos.map((p) {
+                          double mBs =
+                              double.tryParse(
+                                p['monto_bs']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          double mUsd =
+                              double.tryParse(
+                                p['monto_usd']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          String ref = p['referencia']?.toString() ?? '';
+                          String metodo =
+                              p['metodo_nombre']?.toString() ?? 'Otro';
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        metodo,
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      if (ref.isNotEmpty)
+                                        Text(
+                                          'Ref: $ref',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    if (mUsd > 0)
+                                      Text(
+                                        '$mUsd USD',
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.green[700],
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    if (mBs > 0)
+                                      Text(
+                                        '${mBs.toStringAsFixed(2)} Bs',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
                     ),
                   ),
-                  const Divider(),
-                  ...detalles.map((d) {
-                    double cant =
-                        double.tryParse(d['cantidad'].toString()) ?? 0;
-                    double precio =
-                        double.tryParse(d['precio_unitario_bs'].toString()) ??
-                        0;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x ${d['nombre']}',
-                              style: const TextStyle(fontSize: 13),
-                            ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Anular Venta'),
+                          content: const Text(
+                            '¿Estás seguro de anular esta venta? El stock se devolverá al inventario.',
                           ),
-                          Text(
-                            '${(cant * precio).toStringAsFixed(2)} Bs',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('CANCELAR'),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 20),
-                  Text(
-                    'FORMAS DE PAGO',
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const Divider(),
-                  ...pagos.map((p) {
-                    double mBs = double.tryParse(p['monto_bs'].toString()) ?? 0;
-                    double mUsd =
-                        double.tryParse(p['monto_usd'].toString()) ?? 0;
-                    String ref = p['referencia'] ?? '';
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      title: Text(
-                        p['metodo_nombre'] ?? 'Otro',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: ref.isNotEmpty ? Text('Ref: $ref') : null,
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (mUsd > 0)
-                            Text(
-                              '\$${mUsd.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
                               ),
+                              child: const Text('ANULAR'),
                             ),
-                          if (mBs > 0)
-                            Text(
-                              '${mBs.toStringAsFixed(2)} Bs',
-                              style: const TextStyle(fontSize: 11),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        Navigator.pop(context); // Cerrar detalle
+                        setState(() => _loading = true);
+                        final ok = await _apiService.anularVenta(ventaId);
+                        setState(() => _loading = false);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                ok
+                                    ? 'Venta anulada correctamente'
+                                    : 'Error al anular la venta',
+                              ),
+                              backgroundColor: ok ? Colors.green : Colors.red,
                             ),
-                        ],
+                          );
+                          if (ok) _loadReport();
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFEBEE),
+                      foregroundColor: Colors.red[700],
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-                  }),
-                ],
-              ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: Text(
+                      'ANULAR VENTA',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('CERRAR'),
-            ),
-            const Spacer(),
-            TextButton(
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Anular Venta'),
-                    content: const Text(
-                      '¿Estás seguro de anular esta venta? El stock se devolverá al inventario.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('CANCELAR'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red,
-                        ),
-                        child: const Text('ANULAR'),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirm == true) {
-                  if (mounted) Navigator.pop(context); // Cerrar detalle
-                  setState(() => _loading = true);
-                  final ok = await _apiService.anularVenta(ventaId);
-                  if (mounted) {
-                    setState(() => _loading = false);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          ok
-                              ? 'Venta anulada correctamente'
-                              : 'Error al anular la venta',
-                        ),
-                        backgroundColor: ok ? Colors.green : Colors.red,
-                      ),
-                    );
-                    if (ok) _loadReport();
-                  }
-                }
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('ANULAR VENTA'),
-            ),
-          ],
         ),
       );
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar loading si falló
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al cargar detalle: $e')));
+      }
     }
   }
 
