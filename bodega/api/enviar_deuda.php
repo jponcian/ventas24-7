@@ -36,7 +36,7 @@ if (strlen($telefono) > 0 && substr($telefono, 0, 2) !== '58') {
 if ($mensaje_custom) {
     $mensaje = $mensaje_custom;
 } else {
-    $mensaje = "Hola $cliente, te saluda la Bodega de Javier. Te informamos que tu saldo pendiente es de *$deuda USD*. ¡Feliz día!";
+    $mensaje = "🏪 *SuperBodega* 🏪\n\nEstimado(a) *$cliente*, le saludamos cordialmente. 😊\n\nLe informamos que presenta un saldo pendiente de *$deuda USD*.\n\nAgradecemos su puntualidad. ¡Que tenga un excelente día! ✨";
 }
 
 // Usar la nueva función de envío por base de datos
@@ -46,8 +46,8 @@ require_once __DIR__ . '/../whatsapp.php';
 $motivo = "COBRANZA";
 
 if (enviarWhatsapp($telefono, $mensaje, $motivo)) {
-    echo json_encode(['ok' => true, 'mensaje' => 'Enviado a la cola de Optimus']);
+    echo json_encode(['ok' => true, 'mensaje' => 'Notificación enviada con éxito']);
 } else {
-    echo json_encode(['ok' => false, 'error' => 'Error al insertar en DB externa']);
+    echo json_encode(['ok' => false, 'error' => 'El servicio de WhatsApp no está disponible en este momento']);
 }
 ?>
