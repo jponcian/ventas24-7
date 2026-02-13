@@ -4,6 +4,7 @@ import 'api_service.dart';
 import 'fiado_model.dart';
 import 'product_model.dart';
 import 'scanner_screen.dart';
+import 'utils.dart';
 
 class NuevoFiadoScreen extends StatefulWidget {
   const NuevoFiadoScreen({super.key});
@@ -398,6 +399,9 @@ class _NuevoFiadoScreenState extends State<NuevoFiadoScreen> {
         content: TextField(
           controller: qtyCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: product.isByWeight
+              ? [WeightDecimalFormatter()]
+              : null,
           decoration: const InputDecoration(
             labelText: 'Cantidad',
             border: OutlineInputBorder(),

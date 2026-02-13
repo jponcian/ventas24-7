@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'api_service.dart';
 import 'fiado_model.dart';
+import 'utils.dart';
 
 class FiadoDetailScreen extends StatefulWidget {
   final int fiadoId;
@@ -26,14 +27,21 @@ class _FiadoDetailScreenState extends State<FiadoDetailScreen> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() => _loading = true);
-    final fiado = await _apiService.getFiadoDetalle(widget.fiadoId);
-    final abonos = await _apiService.getAbonosFiado(widget.fiadoId);
-    setState(() {
-      _fiado = fiado;
-      _abonos = abonos;
-      _loading = false;
-    });
+    try {
+      final fiadoData = await _apiService.getFiadoDetalle(widget.fiadoId);
+      final abonosData = await _apiService.getAbonosFiado(widget.fiadoId);
+      if (mounted) {
+        setState(() {
+          _fiado = fiadoData;
+          _abonos = abonosData;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _registrarAbono() async {
@@ -56,6 +64,7 @@ class _FiadoDetailScreenState extends State<FiadoDetailScreen> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
+                inputFormatters: [SlidingDecimalFormatter()],
                 decoration: InputDecoration(
                   labelText: 'Monto',
                   prefixText: moneda == 'USD' ? '\$ ' : 'Bs ',
@@ -133,24 +142,45 @@ class _FiadoDetailScreenState extends State<FiadoDetailScreen> {
                 };
 
                 setState(() => _loading = true);
-                final res = await _apiService.registrarAbono(abonoData);
-                setState(() => _loading = false);
-
-                if (mounted) {
+                try {
+                  final res = await _apiService.registrarAbono(abonoData);
                   if (res['ok'] == true) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Abono registrado exitosamente'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    _loadData();
+                    await _loadData();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Abono registrado exitosamente'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      // Si se pagó completo, avisamos que se puede cerrar
+                      if (_fiado?.estado == 'pagado') {
+                        Future.delayed(const Duration(seconds: 1), () {
+                          if (mounted && Navigator.canPop(context)) {
+                            Navigator.pop(context, true);
+                          }
+                        });
+                      }
+                    }
                   } else {
+                    if (mounted) {
+                      setState(() => _loading = false);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            res['error'] ?? 'Error al registrar abono',
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    setState(() => _loading = false);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(
-                          res['error'] ?? 'Error al registrar abono',
-                        ),
+                        content: Text('Error de conexión: $e'),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -187,6 +217,7 @@ class _FiadoDetailScreenState extends State<FiadoDetailScreen> {
           : RefreshIndicator(
               onRefresh: _loadData,
               child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -947,11 +947,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                                                         decimal:
                                                                             true,
                                                                       ),
-                                                                  autofocus:
-                                                                      true,
                                                                   inputFormatters: [
                                                                     SlidingDecimalFormatter(),
                                                                   ],
+                                                                  autofocus:
+                                                                      true,
                                                                   decoration: InputDecoration(
                                                                     labelText:
                                                                         'Monto',
