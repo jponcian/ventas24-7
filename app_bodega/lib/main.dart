@@ -477,15 +477,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   (esDolar ? precio : precio / (_tasa > 0 ? _tasa : 1)) * p.qty;
             }
 
-            // Si es la primera vez que abrimos con items, seteamos el primer pago al total
-            if (_pagosRealizados.length == 1 &&
-                _pagosRealizados[0]['monto_usd'] == 0) {
+            // Si solo hay un método de pago, mantenerlo sincronizado con el total automáticamente
+            if (_pagosRealizados.length == 1) {
               _pagosRealizados[0]['monto_usd'] = totalUsd;
               _pagosRealizados[0]['monto_bs'] = totalBs;
-              _pagosRealizados[0]['ctrl_usd'].text = totalUsd.toStringAsFixed(
-                2,
-              );
-              _pagosRealizados[0]['ctrl_bs'].text = totalBs.toStringAsFixed(2);
+              String usdStr = totalUsd.toStringAsFixed(2);
+              String bsStr = totalBs.toStringAsFixed(2);
+              if (_pagosRealizados[0]['ctrl_usd'].text != usdStr) {
+                _pagosRealizados[0]['ctrl_usd'].text = usdStr;
+              }
+              if (_pagosRealizados[0]['ctrl_bs'].text != bsStr) {
+                _pagosRealizados[0]['ctrl_bs'].text = bsStr;
+              }
             }
 
             return Padding(
@@ -672,6 +675,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      p.qty = 0;
+                                    });
+                                    setModalState(() {});
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                  tooltip: 'Eliminar producto',
                                 ),
                               ],
                             ),
