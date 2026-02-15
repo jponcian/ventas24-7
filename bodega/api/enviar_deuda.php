@@ -32,11 +32,11 @@ if (strlen($telefono) > 0 && substr($telefono, 0, 2) !== '58') {
     $telefono = '58' . ltrim($telefono, '0');
 }
 
-// Si no hay mensaje personalizado, usar la plantilla del bot
+// Si no hay mensaje personalizado, usar la plantilla amigable
 if ($mensaje_custom) {
     $mensaje = $mensaje_custom;
 } else {
-    $mensaje = "🏪 *SuperBodega* 🏪\n\nEstimado(a) *$cliente*, le saludamos cordialmente. 😊\n\nLe informamos que presenta un saldo pendiente de *$deuda USD*.\n\nAgradecemos su puntualidad. ¡Que tenga un excelente día! ✨";
+    $mensaje = "🏪 *SuperBodega* 🏪\n\n¡Hola, *$cliente*! Esperamos que estés teniendo un excelente día. 😊\n\nTe escribimos para recordarte que mantienes un saldo pendiente de *$deuda USD*. \n\nRecuerda que puedes pasar por la tienda cuando gustes para ponerte al día. Valoramos mucho tu confianza en nosotros. 🙌\n\n¡Muchas gracias por tu preferencia! ✨";
 }
 
 // Usar la nueva función de envío por base de datos
