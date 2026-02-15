@@ -5,13 +5,18 @@ $mensajeEnviado = false;
 $error = null;
 
 if (isset($_POST['enviar'])) {
-    $numero = '04141476580';
-    $mensaje = "🧪 *Mensaje de Prueba*\n\nEste es un mensaje automático de prueba desde el entorno local de SuperBodega. ✨";
+    $numero = $_POST['numero'] ?? '';
+    $mensaje = $_POST['mensaje'] ?? "🧪 *Mensaje de Prueba*\n\nEste es un mensaje automático de prueba desde " . 'SuperBodega' . ". ✨";
     
-    if (enviarWhatsapp($numero, $mensaje, 'TEST')) {
-        $mensajeEnviado = true;
+    if (!empty($numero)) {
+        $resultado = enviarWhatsapp($numero, $mensaje, 'TEST');
+        if ($resultado['success']) {
+            $mensajeEnviado = true;
+        } else {
+            $error = $resultado['error'];
+        }
     } else {
-        $error = "No se pudo enviar el mensaje. Revisa la configuración en whatsapp.php o la conexión al servidor WAHA.";
+        $error = "El número de teléfono es obligatorio.";
     }
 }
 ?>
@@ -66,14 +71,27 @@ if (isset($_POST['enviar'])) {
         }
         .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>Prueba de Envío</h1>
-        <p>Presiona el botón para enviar un mensaje de prueba al número:<br><strong>04141476580</strong></p>
+        <p>Escribe el número y el mensaje para probar la integración con WAHA.</p>
         
         <form method="POST">
+            <input type="text" name="numero" placeholder="Ej: 04141234567" required value="04144679693">
+            <textarea name="mensaje" rows="4" placeholder="Escribe tu mensaje aquí...">🧪 *Mensaje de Prueba*
+
+Este es un mensaje automático de prueba desde SuperBodega. ✨</textarea>
             <button type="submit" name="enviar" class="btn">Enviar Mensaje</button>
         </form>
 

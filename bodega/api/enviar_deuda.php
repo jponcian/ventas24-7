@@ -45,9 +45,11 @@ require_once __DIR__ . '/../whatsapp.php';
 // El motivo para este tipo de mensajes
 $motivo = "COBRANZA";
 
-if (enviarWhatsapp($telefono, $mensaje, $motivo)) {
+$resultado = enviarWhatsapp($telefono, $mensaje, $motivo);
+
+if ($resultado['success']) {
     echo json_encode(['ok' => true, 'mensaje' => 'Notificación enviada con éxito']);
 } else {
-    echo json_encode(['ok' => false, 'error' => 'El servicio de WhatsApp no está disponible en este momento']);
+    echo json_encode(['ok' => false, 'error' => $resultado['error'] ?? 'El servicio de WhatsApp no está disponible']);
 }
 ?>
