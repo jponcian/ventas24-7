@@ -32,11 +32,18 @@ if (strlen($telefono) > 0 && substr($telefono, 0, 2) !== '58') {
     $telefono = '58' . ltrim($telefono, '0');
 }
 
+$negocio = $data['negocio'] ?? 'SuperBodega';
+
 // Si no hay mensaje personalizado, usar la plantilla amigable
 if ($mensaje_custom) {
-    $mensaje = $mensaje_custom;
+    // Asegurar que mensajes personalizados también lleven el nombre del negocio al inicio
+    $mensaje = "*$negocio*\n\n" . $mensaje_custom;
 } else {
-    $mensaje = "🏪 *SuperBodega* 🏪\n\n¡Hola, *$cliente*! Esperamos que estés teniendo un excelente día. 😊\n\nTe escribimos para recordarte que mantienes un saldo pendiente de *$deuda USD*. \n\nRecuerda que puedes pasar por la tienda cuando gustes para ponerte al día. Valoramos mucho tu confianza en nosotros. 🙌\n\n¡Muchas gracias por tu preferencia! ✨";
+    $mensaje = "*$negocio*\n\n"
+             . "¡Hola, *$cliente*! 😊\n\n"
+             . "Te escribimos de parte de *$negocio* para recordarte que mantienes un saldo pendiente de *$deuda USD*.\n\n"
+             . "Recuerda que puedes pasar por la tienda cuando gustes para ponerte al día. Valoramos mucho tu confianza en nosotros. 🙌\n\n"
+             . "¡Muchas gracias por tu preferencia! ✨";
 }
 
 // Usar la nueva función de envío por base de datos

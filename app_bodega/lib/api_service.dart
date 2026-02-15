@@ -14,6 +14,11 @@ class ApiService {
     return prefs.getInt('negocio_id') ?? 1;
   }
 
+  Future<String> getNegocioNombre() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('negocio_nombre') ?? 'SuperBodega';
+  }
+
   Future<Map<String, dynamic>> login(String cedula, String password) async {
     try {
       final response = await http.post(
@@ -751,6 +756,7 @@ class ApiService {
     String? mensaje,
   }) async {
     try {
+      final negocio = await getNegocioNombre();
       final response = await http.post(
         Uri.parse('$baseUrl/enviar_deuda.php'),
         headers: {'Content-Type': 'application/json'},
@@ -759,6 +765,7 @@ class ApiService {
           'cliente': cliente,
           'deuda': deuda,
           'mensaje': mensaje,
+          'negocio': negocio,
         }),
       );
       return jsonDecode(response.body);
