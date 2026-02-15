@@ -10,8 +10,8 @@ header('Access-Control-Allow-Origin: *');
 echo json_encode([
     "ok" => true,
     "latest_version" => "1.2.1",
-    "latest_version_code" => 6,
+    "latest_version_code" => 7,
     "download_url" => "https://ponciano.zz.com.ve/ventas247.apk",
-    "release_notes" => "Nuevas Mejoras ✅\n\n- Pagos múltiples por venta (Efectivo, Zelle, Pago Móvil, etc).\n- Cambio rápido entre negocios en el menú lateral.\n- Opción de método de pago predeterminado (Favorito ⭐).\n- Diseño de reportes más compacto y eficiente.\n- Mejoras de rendimiento y seguridad.",
+    "release_notes" => "Nuevas Mejoras ✅\n\n- WhatsApp: Nombre de negocio dinámico y mensajes más profesionales.\n- Pagos múltiples por venta (Efectivo, Zelle, Pago Móvil, etc).\n- Cambio rápido entre negocios en el menú lateral.\n- Opción de método de pago predeterminado (Favorito ⭐).\n- Diseño de reportes más compacto y eficiente.\n- Mejoras de rendimiento y seguridad.",
     "force_update" => false
 ]);
