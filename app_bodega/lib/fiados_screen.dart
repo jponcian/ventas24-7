@@ -94,21 +94,22 @@ class _FiadosScreenState extends State<FiadosScreen> {
 
     if (confirmar != true) return;
 
-    String mensaje = '¡Hola ${cliente.nombre}! 👋\n\n';
-    mensaje += '📋 *Estado de Cuenta*\n\n';
-
     double totalDeuda = 0;
-    for (var fiado in fiadosPendientes) {
-      mensaje += '📅 ${DateFormat('dd/MM/yyyy').format(fiado.fecha)}\n';
-      mensaje += '💵 Total: \$${fiado.totalUsd.toStringAsFixed(2)} USD\n';
-      mensaje +=
-          '💰 Saldo: \$${fiado.saldoPendiente.toStringAsFixed(2)} USD\n\n';
-      totalDeuda += fiado.saldoPendiente;
-    }
+    for (var f in fiadosPendientes) totalDeuda += f.saldoPendiente;
 
-    mensaje += '━━━━━━━━━━━━━━━━━\n';
-    mensaje += '*TOTAL ADEUDADO: \$${totalDeuda.toStringAsFixed(2)} USD*\n\n';
-    mensaje += '¡Gracias por tu preferencia! 🙏';
+    // Si tiene más de una deuda, construimos un desglose compacto.
+    // Si solo tiene una, enviamos 'null' y el servidor usará la plantilla "fina" por defecto.
+    String? mensaje;
+    if (fiadosPendientes.length > 1) {
+      String temporal = 'Te enviamos el desglose de tu saldo pendiente:\n\n';
+      for (var f in fiadosPendientes) {
+        temporal +=
+            '• ${DateFormat('dd/MM').format(f.fecha)}: \$${f.saldoPendiente.toStringAsFixed(2)} USD\n';
+      }
+      temporal +=
+          '\nValoramos mucho tu confianza en nosotros. 🙌\n\n¡Muchas gracias por tu preferencia! ✨';
+      mensaje = temporal;
+    }
 
     setState(() => _loading = true);
     final res = await _apiService.enviarNotificacionDeuda(
