@@ -1,7 +1,7 @@
 <?php
 function enviarWhatsapp($numero, $cuerpo, $motivo = 'NOTIFICACION') {
     // Configuración de la API (Tomada de notificar_optimus.php)
-    $url = 'http://164.90.145.35:3000/api/sendText';
+    $url = 'http://164.90.145.35/api/sendText';
     $api_key = 'optimus';
     $session = 'default';
 
