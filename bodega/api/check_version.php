@@ -9,8 +9,8 @@ header('Access-Control-Allow-Origin: *');
 
 echo json_encode([
     "ok" => true,
-    "latest_version" => "2.6.0",
-    "latest_version_code" => 8,
+    "latest_version" => "2.6.1",
+    "latest_version_code" => 9,
     "download_url" => "https://ponciano.zz.com.ve/ventas247.apk",
     "release_notes" => "Nueva Versión 🚀🦾\n\n- Notificaciones Multi-Admin: Ahora todos los administradores reciben alertas de stock.\n- Evolution API: Nuevo motor de mensajería más estable.\n- Mejoras en Fiados: Filtro inteligente de deuda y validación de teléfono.\n- Formateador de números: Validación automática para operadoras de Venezuela.",
     "force_update" => false
