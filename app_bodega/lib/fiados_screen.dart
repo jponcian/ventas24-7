@@ -97,19 +97,25 @@ class _FiadosScreenState extends State<FiadosScreen> {
     double totalDeuda = 0;
     for (var f in fiadosPendientes) totalDeuda += f.saldoPendiente;
 
-    // Si tiene más de una deuda, construimos un desglose compacto.
-    // Si solo tiene una, enviamos 'null' y el servidor usará la plantilla "fina" por defecto.
-    String? mensaje;
+    // Construimos el mensaje con un estilo más profesional y cercano.
+    String temporal = '¡Hola, *${cliente.nombre}*! 😊\n\n';
+    temporal += 'Te escribimos de parte de *Ventas 24/7* para enviarte el estado de cuenta actualizado.\n\n';
+    
+    temporal += '*Tu deuda total es:* ✅ *$totalDeuda USD*\n\n';
+    
     if (fiadosPendientes.length > 1) {
-      String temporal = 'Te enviamos el desglose de tu saldo pendiente:\n\n';
+      temporal += '*Desglose de pendientes:*\n';
       for (var f in fiadosPendientes) {
         temporal +=
             '• ${DateFormat('dd/MM').format(f.fecha)}: \$${f.saldoPendiente.toStringAsFixed(2)} USD\n';
       }
-      temporal +=
-          '\nValoramos mucho tu confianza en nosotros. 🙌\n\n¡Muchas gracias por tu preferencia! ✨';
-      mensaje = temporal;
+      temporal += '\n';
     }
+
+    temporal += 'Te invitamos a pasar por la tienda cuando gustes para ponerte al día. Valoramos mucho tu confianza en nosotros. 🙌\n\n';
+    temporal += '¡Que tengas un excelente día! ✨';
+    
+    String mensaje = temporal;
 
     setState(() => _loading = true);
     final res = await _apiService.enviarNotificacionDeuda(
