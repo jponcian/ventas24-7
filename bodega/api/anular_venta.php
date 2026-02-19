@@ -65,9 +65,14 @@ try {
         $stmtUpdateCliente = $db->prepare("UPDATE clientes SET deuda_total = deuda_total - ? WHERE id = ?");
         $stmtUpdateCliente->execute([floatval($venta['total_usd']), $venta['cliente_id']]);
         
-        // Intentar anular el fiado relacionado
-        $stmtAnularFiado = $db->prepare("UPDATE fiados SET estado = 'anulado' WHERE cliente_id = ? AND total_usd = ? AND ABS(TIMESTAMPDIFF(MINUTE, fecha, ?)) < 5 AND estado != 'anulado' LIMIT 1");
-        $stmtAnularFiado->execute([$venta['cliente_id'], $venta['total_usd'], $venta['fecha']]);
+        // Intentar anular el fiado relacionado usando venta_id si existe, o por coincidencia de datos
+        $stmtAnularFiado = $db->prepare("
+            UPDATE fiados 
+            SET estado = 'cancelado', saldo_pendiente = 0 
+            WHERE venta_id = ? 
+               OR (cliente_id = ? AND total_usd = ? AND ABS(TIMESTAMPDIFF(MINUTE, fecha, ?)) < 5 AND estado = 'pendiente')
+        ");
+        $stmtAnularFiado->execute([$venta_id, $venta['cliente_id'], $venta['total_usd'], $venta['fecha']]);
     }
 
     // 4. Marcar como anulada
