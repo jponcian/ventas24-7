@@ -196,6 +196,27 @@ function registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles, $m
             
             $stmtDetalle->execute([$venta_id, $item['id'], $cantidadVendida, $esPaquete, $precioUnitarioBs]);
             $stmtUpdateStock->execute([$cantidadVendida * $multiplicador, $item['id'], $negocio_id]);
+
+            // --- NOTIFICACIÓN DE STOCK BAJO ---
+            try {
+                $stmtCheck = $db->prepare("SELECT nombre, stock, bajo_inventario FROM productos WHERE id = ?");
+                $stmtCheck->execute([$item['id']]);
+                $prod = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+                if ($prod && $prod['stock'] <= $prod['bajo_inventario']) {
+                    require_once __DIR__ . '/whatsapp.php';
+                    $msg = "⚠️ *ALERTA DE STOCK BAJO*\n\n";
+                    $msg .= "📦 *Producto:* " . $prod['nombre'] . "\n";
+                    $msg .= "📉 *Stock Actual:* " . number_format($prod['stock'], 2) . "\n";
+                    $msg .= "🚩 *Límite:* " . $prod['bajo_inventario'] . "\n\n";
+                    $msg .= "Optimus 🦾";
+                    
+                    enviarWhatsapp('584144679693', $msg);
+                }
+            } catch (Exception $eNotif) {
+                error_log("Error notificar stock: " . $eNotif->getMessage());
+            }
+            // ----------------------------------
         }
 
         // 3. Si algún método de pago es 'Crédito', registrar en fiados
