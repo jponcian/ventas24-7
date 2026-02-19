@@ -94,6 +94,8 @@ class _FiadosScreenState extends State<FiadosScreen> {
 
     if (confirmar != true) return;
 
+    if (confirmar != true) return;
+
     double totalDeuda = 0;
     for (var f in fiadosPendientes) totalDeuda += f.saldoPendiente;
 
@@ -109,38 +111,41 @@ class _FiadosScreenState extends State<FiadosScreen> {
     String mensaje = temporal;
 
     setState(() => _loading = true);
-    final res = await _apiService.enviarNotificacionDeuda(
-      telefono: cliente.telefono!,
-      cliente: cliente.nombre,
-      deuda: totalDeuda.toStringAsFixed(2),
-      mensaje: mensaje,
-    );
-          const SnackBar(
-            content: Text('Notificación enviada por WhatsApp correctamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
+    try {
+      final res = await _apiService.enviarNotificacionDeuda(
+        telefono: cliente.telefono!,
+        cliente: cliente.nombre,
+        deuda: totalDeuda.toStringAsFixed(2),
+        mensaje: mensaje,
+      );
+      setState(() => _loading = false);
+
+      if (mounted) {
+        if (res['ok'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Notificación enviada por WhatsApp correctamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(res['error'] ?? 'Error al enviar notificación'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _loading = false);
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(res['error'] ?? 'Error al enviar notificación'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
   }
-
-  void _verCuentaCliente(Cliente cliente) async {
-    final fiadosCliente = _fiados
-        .where((f) => f.clienteId == cliente.id)
-        .toList();
-
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ClienteCuentaScreen(
-          cliente: cliente,
           fiados: fiadosCliente,
           onRefresh: _loadData,
         ),
