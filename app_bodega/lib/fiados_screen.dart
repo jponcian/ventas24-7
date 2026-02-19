@@ -97,23 +97,14 @@ class _FiadosScreenState extends State<FiadosScreen> {
     double totalDeuda = 0;
     for (var f in fiadosPendientes) totalDeuda += f.saldoPendiente;
 
-    // Construimos el mensaje con un estilo más profesional y cercano.
-    String temporal = '¡Hola, *${cliente.nombre}*! 😊\n\n';
-    temporal += 'Te escribimos de parte de *Ventas 24/7* para enviarte el estado de cuenta actualizado.\n\n';
+    // Construimos el mensaje simplificado: Saludo, Total, Invitación y Despedida.
+    String temporal = "¡Hola, *${cliente.nombre}*! 😊\n\n";
+    temporal += "Te escribimos de parte de *Ventas 24/7* para enviarte tu estado de cuenta actualizado.\n\n";
     
-    temporal += '*Tu deuda total es:* ✅ *$totalDeuda USD*\n\n';
+    temporal += "*Tu deuda total es:* ✅ *$totalDeuda USD*\n\n";
     
-    if (fiadosPendientes.length > 1) {
-      temporal += '*Desglose de pendientes:*\n';
-      for (var f in fiadosPendientes) {
-        temporal +=
-            '• ${DateFormat('dd/MM').format(f.fecha)}: \$${f.saldoPendiente.toStringAsFixed(2)} USD\n';
-      }
-      temporal += '\n';
-    }
-
-    temporal += 'Te invitamos a pasar por la tienda cuando gustes para ponerte al día. Valoramos mucho tu confianza en nosotros. 🙌\n\n';
-    temporal += '¡Que tengas un excelente día! ✨';
+    temporal += "Te invitamos a pasar por la tienda cuando gustes para ponerte al día. Valoramos mucho tu confianza en nosotros. 🙌\n\n";
+    temporal += "¡Que tengas un excelente día! ✨";
     
     String mensaje = temporal;
 
@@ -124,11 +115,6 @@ class _FiadosScreenState extends State<FiadosScreen> {
       deuda: totalDeuda.toStringAsFixed(2),
       mensaje: mensaje,
     );
-    setState(() => _loading = false);
-
-    if (mounted) {
-      if (res['ok'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Notificación enviada por WhatsApp correctamente'),
             backgroundColor: Colors.green,
