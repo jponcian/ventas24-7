@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'user_management_screen.dart';
 import 'business_management_screen.dart';
+import 'business_config_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -2336,6 +2337,13 @@ class _MainDrawerState extends State<MainDrawer> {
               _userRol == 'superadmin') ...[
             const Divider(),
             _buildSectionHeader('SISTEMA'),
+            _buildDrawerItem(
+              context,
+              icon: Icons.settings_applications,
+              title: 'Configuración del Negocio',
+              color: Colors.blueGrey,
+              route: (context) => const BusinessConfigScreen(),
+            ),
             _buildDrawerItem(
               context,
               icon: Icons.people_outline,

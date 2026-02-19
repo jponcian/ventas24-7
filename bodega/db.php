@@ -197,21 +197,38 @@ function registrarVenta($negocio_id, $total_bs, $total_usd, $tasa, $detalles, $m
             $stmtDetalle->execute([$venta_id, $item['id'], $cantidadVendida, $esPaquete, $precioUnitarioBs]);
             $stmtUpdateStock->execute([$cantidadVendida * $multiplicador, $item['id'], $negocio_id]);
 
-            // --- NOTIFICACIÓN DE STOCK BAJO ---
+            // --- NOTIFICACIÓN DE STOCK BAJO (A TODOS LOS ADMINS) ---
             try {
                 $stmtCheck = $db->prepare("SELECT nombre, stock, bajo_inventario FROM productos WHERE id = ?");
                 $stmtCheck->execute([$item['id']]);
                 $prod = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
                 if ($prod && $prod['stock'] <= $prod['bajo_inventario']) {
-                    require_once __DIR__ . '/whatsapp.php';
-                    $msg = "⚠️ *ALERTA DE STOCK BAJO*\n\n";
-                    $msg .= "📦 *Producto:* " . $prod['nombre'] . "\n";
-                    $msg .= "📉 *Stock Actual:* " . number_format($prod['stock'], 2) . "\n";
-                    $msg .= "🚩 *Límite:* " . $prod['bajo_inventario'] . "\n\n";
-                    $msg .= "Optimus 🦾";
-                    
-                    enviarWhatsapp('584144679693', $msg);
+                    // Obtener todos los administradores (admin, administrador, superadmin) de este negocio con teléfono
+                    $stmtAdmins = $db->prepare("
+                        SELECT u.telefono_notificaciones 
+                        FROM users u 
+                        INNER JOIN user_negocios un ON u.id = un.user_id 
+                        WHERE un.negocio_id = ? 
+                        AND (u.rol = 'admin' OR u.rol = 'administrador' OR u.rol = 'superadmin')
+                        AND u.telefono_notificaciones IS NOT NULL 
+                        AND u.telefono_notificaciones != ''
+                    ");
+                    $stmtAdmins->execute([$negocio_id]);
+                    $admins = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
+
+                    if (!empty($admins)) {
+                        require_once __DIR__ . '/whatsapp.php';
+                        $msg = "⚠️ *ALERTA DE STOCK BAJO*\n\n";
+                        $msg .= "📦 *Producto:* " . $prod['nombre'] . "\n";
+                        $msg .= "📉 *Stock Actual:* " . number_format($prod['stock'], 2) . "\n";
+                        $msg .= "🚩 *Límite:* " . $prod['bajo_inventario'] . "\n\n";
+                        $msg .= "Optimus 🦾";
+                        
+                        foreach ($admins as $adm) {
+                            enviarWhatsapp($adm['telefono_notificaciones'], $msg);
+                        }
+                    }
                 }
             } catch (Exception $eNotif) {
                 error_log("Error notificar stock: " . $eNotif->getMessage());

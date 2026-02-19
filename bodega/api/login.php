@@ -60,7 +60,8 @@ try {
             'id' => $user['id'],
             'cedula' => $user['cedula'],
             'nombre' => $user['nombre_completo'],
-            'rol' => $user['rol']
+            'rol' => $user['rol'],
+            'telefono_notificaciones' => $user['telefono_notificaciones']
         ],
         'negocios' => $negocios
     ]);

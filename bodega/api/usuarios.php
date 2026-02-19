@@ -15,10 +15,10 @@ try {
         // Si el solicitante es superadmin, vemos TODOS los usuarios del sistema.
         // Si es admin, solo los de su negocio actual y que no sean superadmins.
         if ($requester_rol === 'superadmin') {
-            $stmt = $db->query("SELECT id, cedula, nombre_completo, rol, activo, created_at FROM users ORDER BY nombre_completo ASC");
+            $stmt = $db->query("SELECT id, cedula, nombre_completo, rol, activo, telefono_notificaciones, created_at FROM users ORDER BY nombre_completo ASC");
         } else {
             $stmt = $db->prepare("
-                SELECT DISTINCT u.id, u.cedula, u.nombre_completo, u.rol, u.activo, u.created_at 
+                SELECT DISTINCT u.id, u.cedula, u.nombre_completo, u.rol, u.activo, u.telefono_notificaciones, u.created_at 
                 FROM users u
                 INNER JOIN user_negocios un ON u.id = un.user_id
                 WHERE un.negocio_id = ? AND u.rol != 'superadmin'
@@ -49,6 +49,7 @@ try {
         $rol = $body['rol'] ?? 'vendedor';
         $password = $body['password'] ?? '';
         $activo = isset($body['activo']) ? (int)$body['activo'] : 1;
+        $telefono_notificaciones = $body['telefono_notificaciones'] ?? null;
         $negocios_asignados = $body['negocios'] ?? [];
 
         if (empty($negocios_asignados) && $nid) {
@@ -62,8 +63,8 @@ try {
             }
             $hash = password_hash($password, PASSWORD_BCRYPT);
             
-            $stmt = $db->prepare("INSERT INTO users (cedula, nombre_completo, rol, password_hash, activo) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$cedula, $nombre, $rol, $hash, $activo]);
+            $stmt = $db->prepare("INSERT INTO users (cedula, nombre_completo, rol, password_hash, activo, telefono_notificaciones) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$cedula, $nombre, $rol, $hash, $activo, $telefono_notificaciones]);
             $new_uid = $db->lastInsertId();
 
             foreach ($negocios_asignados as $nbid) {
@@ -78,13 +79,13 @@ try {
                 exit;
             }
             
-            $sql = "UPDATE users SET cedula = ?, nombre_completo = ?, rol = ?, activo = ? WHERE id = ?";
-            $params = [$cedula, $nombre, $rol, $activo, $uid];
+            $sql = "UPDATE users SET cedula = ?, nombre_completo = ?, rol = ?, activo = ?, telefono_notificaciones = ? WHERE id = ?";
+            $params = [$cedula, $nombre, $rol, $activo, $telefono_notificaciones, $uid];
             
             if (!empty($password)) {
                 $hash = password_hash($password, PASSWORD_BCRYPT);
-                $sql = "UPDATE users SET cedula = ?, nombre_completo = ?, rol = ?, activo = ?, password_hash = ? WHERE id = ?";
-                $params = [$cedula, $nombre, $rol, $activo, $hash, $uid];
+                $sql = "UPDATE users SET cedula = ?, nombre_completo = ?, rol = ?, activo = ?, telefono_notificaciones = ?, password_hash = ? WHERE id = ?";
+                $params = [$cedula, $nombre, $rol, $activo, $telefono_notificaciones, $hash, $uid];
             }
             
             $stmt = $db->prepare($sql);

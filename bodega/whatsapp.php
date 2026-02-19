@@ -1,9 +1,9 @@
 <?php
 function enviarWhatsapp($numero, $cuerpo, $motivo = 'NOTIFICACION') {
-    // Configuración de la API (Tomada de notificar_optimus.php)
-    $url = 'http://164.90.145.35/api/sendText';
+    // Configuración de la API (Evolution API v2)
+    $instancia = "default";
+    $url = "http://164.90.145.35/evolution/message/sendText/" . $instancia;
     $api_key = 'optimus';
-    $session = 'default';
 
     // Limpiar número: dejar solo dígitos
     $numero_limpio = preg_replace('/[^0-9]/', '', $numero);
@@ -32,13 +32,10 @@ function enviarWhatsapp($numero, $cuerpo, $motivo = 'NOTIFICACION') {
         ];
     }
     
-    // Asegurar formato chatId para WAHA
-    $chatId = $numero_limpio . "@c.us";
-
+    // Payload para Evolution API
     $data = [
-        "chatId" => $chatId,
-        "text" => $cuerpo,
-        "session" => $session
+        "number" => $numero_limpio,
+        "text" => $cuerpo
     ];
 
     $payload = json_encode($data);
@@ -50,7 +47,7 @@ function enviarWhatsapp($numero, $cuerpo, $motivo = 'NOTIFICACION') {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
-            'X-Api-Key: ' . $api_key
+            'apikey: ' . $api_key
         ]);
         curl_setopt($ch, CURLOPT_TIMEOUT, 15); // Timeout de 15 segundos
 

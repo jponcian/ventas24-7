@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'utils.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -48,6 +49,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       text: user?['nombre_completo'] ?? '',
     );
     final passCtrl = TextEditingController();
+    final telCtrl = TextEditingController(
+      text: user?['telefono_notificaciones'] ?? '',
+    );
     String selectedRol = user?['rol'] ?? 'vendedor';
     bool isActive = (user?['activo']?.toString() == '1');
 
@@ -110,6 +114,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   ],
                   onChanged: (v) => setDialogState(() => selectedRol = v!),
                   decoration: const InputDecoration(labelText: 'Rol'),
+                ),
+                TextField(
+                  controller: telCtrl,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [VzlaPhoneFormatter()],
+                  decoration: const InputDecoration(
+                    labelText: 'Teléfono Notificaciones',
+                    helperText: 'Ej: 04141234567',
+                  ),
                 ),
                 if (_myRol == 'superadmin') ...[
                   const SizedBox(height: 16),
@@ -174,6 +187,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         'rol': selectedRol,
                         'password': passCtrl.text,
                         'activo': isActive ? 1 : 0,
+                        'telefono_notificaciones':
+                            VzlaPhoneFormatter.formatForApi(telCtrl.text),
                         'negocios': assignedNegocios,
                       };
                       final res = await _apiService.saveUser(userData);

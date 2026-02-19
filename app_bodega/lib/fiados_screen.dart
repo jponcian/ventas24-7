@@ -167,18 +167,15 @@ class _FiadosScreenState extends State<FiadosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredClientes =
-        (_searchQuery.isEmpty
-                ? _clientes
-                : _clientes.where(
-                    (c) =>
-                        c.nombre.toLowerCase().contains(
-                          _searchQuery.toLowerCase(),
-                        ) ||
-                        (c.cedula?.contains(_searchQuery) ?? false) ||
-                        (c.telefono?.contains(_searchQuery) ?? false),
-                  ))
-            .toList();
+    final filteredClientes = _clientes.where((c) {
+      final matchesSearch =
+          _searchQuery.isEmpty ||
+          c.nombre.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          (c.cedula?.contains(_searchQuery) ?? false) ||
+          (c.telefono?.contains(_searchQuery) ?? false);
+
+      return matchesSearch && c.deudaTotal > 0;
+    }).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -226,9 +223,16 @@ class _FiadosScreenState extends State<FiadosScreen> {
                 ),
                 Expanded(
                   child: filteredClientes.isEmpty
-                      ? const Center(child: Text('No se encontraron clientes'))
+                      ? const Center(
+                          child: Text('No se encontraron clientes con deuda'),
+                        )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            bottom:
+                                80, // Margen abajo para que se vea el último
+                          ),
                           itemCount: filteredClientes.length,
                           itemBuilder: (context, index) {
                             final cliente = filteredClientes[index];
@@ -266,11 +270,15 @@ class _FiadosScreenState extends State<FiadosScreen> {
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    if (cliente.deudaTotal > 0)
+                                    if (cliente.deudaTotal > 0 &&
+                                        cliente.telefono != null &&
+                                        cliente.telefono!.isNotEmpty)
                                       IconButton(
+                                        tooltip:
+                                            'Enviar estado de cuenta por WhatsApp',
                                         icon: const Icon(
-                                          Icons.send,
-                                          color: Colors.blue,
+                                          Icons.chat_bubble_outline,
+                                          color: Color(0xFF25D366),
                                         ),
                                         onPressed: () =>
                                             _enviarEstadoCuentaWhatsApp(
