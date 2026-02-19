@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 import 'api_service.dart';
-import 'cliente_form_screen.dart';
-import 'cliente_model.dart';
 import 'fiado_model.dart';
-import 'fiado_detail_screen.dart';
 import 'cliente_cuenta_screen.dart';
 
 class FiadosScreen extends StatefulWidget {
@@ -42,9 +37,9 @@ class _FiadosScreenState extends State<FiadosScreen> {
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar datos: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al cargar datos: $e')));
       }
     }
   }
@@ -52,7 +47,9 @@ class _FiadosScreenState extends State<FiadosScreen> {
   Future<void> _enviarEstadoCuentaWhatsApp(Cliente cliente) async {
     if (cliente.telefono == null || cliente.telefono!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El cliente no tiene teléfono registrado')),
+        const SnackBar(
+          content: Text('El cliente no tiene teléfono registrado'),
+        ),
       );
       return;
     }
@@ -105,9 +102,12 @@ class _FiadosScreenState extends State<FiadosScreen> {
     for (var f in fiadosPendientes) totalDeuda += f.saldoPendiente;
 
     String temporal = "¡Hola, *${cliente.nombre}*! 😊\n\n";
-    temporal += "Te escribimos de parte de *Ventas 24/7* para enviarte tu estado de cuenta actualizado.\n\n";
-    temporal += "*Tu deuda total es:* ✅ *\$${totalDeuda.toStringAsFixed(2)} USD*\n\n";
-    temporal += "Te invitamos a pasar por la tienda cuando gustes para ponerte al día. Valoramos mucho tu confianza en nosotros. 🙌\n\n";
+    temporal +=
+        "Te escribimos de parte de *Ventas 24/7* para enviarte tu estado de cuenta actualizado.\n\n";
+    temporal +=
+        "*Tu deuda total es:* ✅ *\$${totalDeuda.toStringAsFixed(2)} USD*\n\n";
+    temporal +=
+        "Te invitamos a pasar por la tienda cuando gustes para ponerte al día. Valoramos mucho tu confianza en nosotros. 🙌\n\n";
     temporal += "¡Que tengas un excelente día! ✨";
 
     setState(() => _loading = true);
@@ -148,7 +148,9 @@ class _FiadosScreenState extends State<FiadosScreen> {
   }
 
   void _verCuentaCliente(Cliente cliente) async {
-    final fiadosCliente = _fiados.where((f) => f.clienteId == cliente.id).toList();
+    final fiadosCliente = _fiados
+        .where((f) => f.clienteId == cliente.id)
+        .toList();
 
     await Navigator.push(
       context,
@@ -165,13 +167,18 @@ class _FiadosScreenState extends State<FiadosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredClientes = (_searchQuery.isEmpty
-            ? _clientes
-            : _clientes.where((c) =>
-                c.nombre.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                (c.cedula?.contains(_searchQuery) ?? false) ||
-                (c.telefono?.contains(_searchQuery) ?? false)))
-        .toList();
+    final filteredClientes =
+        (_searchQuery.isEmpty
+                ? _clientes
+                : _clientes.where(
+                    (c) =>
+                        c.nombre.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ) ||
+                        (c.cedula?.contains(_searchQuery) ?? false) ||
+                        (c.telefono?.contains(_searchQuery) ?? false),
+                  ))
+            .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -244,7 +251,9 @@ class _FiadosScreenState extends State<FiadosScreen> {
                                 ),
                                 title: Text(
                                   cliente.nombre,
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 subtitle: Text(
                                   'Deuda: \$${cliente.deudaTotal.toStringAsFixed(2)}',
@@ -259,8 +268,14 @@ class _FiadosScreenState extends State<FiadosScreen> {
                                   children: [
                                     if (cliente.deudaTotal > 0)
                                       IconButton(
-                                        icon: const Icon(Icons.send, color: Colors.blue),
-                                        onPressed: () => _enviarEstadoCuentaWhatsApp(cliente),
+                                        icon: const Icon(
+                                          Icons.send,
+                                          color: Colors.blue,
+                                        ),
+                                        onPressed: () =>
+                                            _enviarEstadoCuentaWhatsApp(
+                                              cliente,
+                                            ),
                                       ),
                                     const Icon(Icons.chevron_right),
                                   ],
