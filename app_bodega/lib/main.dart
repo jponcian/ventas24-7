@@ -2288,6 +2288,13 @@ class _MainDrawerState extends State<MainDrawer> {
           ),
           _buildDrawerItem(
             context,
+            icon: Icons.list_alt_rounded,
+            title: 'Ventas Diarias (Artículos)',
+            color: Colors.green,
+            route: (context) => const ReportSalesScreen(showProductsOnly: true),
+          ),
+          _buildDrawerItem(
+            context,
             icon: Icons.insights_rounded,
             title: 'Análisis de Ventas',
             color: Colors.indigo,

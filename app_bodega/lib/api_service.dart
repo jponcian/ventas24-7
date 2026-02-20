@@ -226,12 +226,13 @@ class ApiService {
           return {
             'detalles': List<Map<String, dynamic>>.from(data['detalles']),
             'pagos': List<Map<String, dynamic>>.from(data['pagos'] ?? []),
+            'info': data['info'],
           };
         }
       }
-      return {'detalles': [], 'pagos': []};
+      return {'detalles': [], 'pagos': [], 'info': null};
     } catch (e) {
-      return {'detalles': [], 'pagos': []};
+      return {'detalles': [], 'pagos': [], 'info': null};
     }
   }
 

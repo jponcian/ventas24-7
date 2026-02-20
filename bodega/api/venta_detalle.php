@@ -14,7 +14,14 @@ if (!$vid) {
 try {
     $detalles = obtenerVentaDetalle($vid);
     $pagos = obtenerVentaPagos($vid);
-    echo json_encode(['ok' => true, 'detalles' => $detalles, 'pagos' => $pagos]);
+    $info = null;
+    try {
+        $info = obtenerInfoVenta($vid);
+    } catch (Exception $ei) {
+        // Si falla la info del cliente, no bloqueamos el detalle
+        error_log('obtenerInfoVenta error: ' . $ei->getMessage());
+    }
+    echo json_encode(['ok' => true, 'detalles' => $detalles, 'pagos' => $pagos, 'info' => $info]);
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => $e->getMessage()]);

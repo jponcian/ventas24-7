@@ -294,15 +294,16 @@ function obtenerVentaDetalle($venta_id)
 {
     global $db;
     $stmt = $db->prepare("
-        SELECT dv.*, p.nombre, p.tam_paquete, p.unidad_medida, v.tasa
+        SELECT dv.*, COALESCE(p.nombre, 'Producto eliminado') as nombre, p.tam_paquete, p.unidad_medida, v.tasa
         FROM detalle_ventas dv
-        JOIN productos p ON dv.producto_id = p.id
+        LEFT JOIN productos p ON dv.producto_id = p.id
         JOIN ventas v ON dv.venta_id = v.id
         WHERE dv.venta_id = ?
     ");
     $stmt->execute([$venta_id]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
 
 function obtenerVentaPagos($venta_id)
 {
@@ -315,4 +316,17 @@ function obtenerVentaPagos($venta_id)
     ");
     $stmt->execute([$venta_id]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function obtenerInfoVenta($venta_id)
+{
+    global $db;
+    $stmt = $db->prepare("
+        SELECT v.*, c.nombre as cliente_nombre
+        FROM ventas v
+        LEFT JOIN clientes c ON v.cliente_id = c.id
+        WHERE v.id = ?
+    ");
+    $stmt->execute([$venta_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }

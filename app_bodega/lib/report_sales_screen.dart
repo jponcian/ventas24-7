@@ -5,7 +5,12 @@ import 'api_service.dart';
 
 class ReportSalesScreen extends StatefulWidget {
   final DateTime? initialDate;
-  const ReportSalesScreen({super.key, this.initialDate});
+  final bool showProductsOnly;
+  const ReportSalesScreen({
+    super.key,
+    this.initialDate,
+    this.showProductsOnly = false,
+  });
 
   @override
   State<ReportSalesScreen> createState() => _ReportSalesScreenState();
@@ -16,7 +21,6 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
   late DateTime _selectedDate;
   Map<String, dynamic>? _reportData;
   bool _loading = false;
-  String _searchQuery = '';
 
   @override
   void initState() {
@@ -56,7 +60,7 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
-          'Reporte de Ventas',
+          widget.showProductsOnly ? 'Artículos Vendidos' : 'Reporte de Ventas',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -89,20 +93,6 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Buscar por nombre o código interno...',
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                  onChanged: (val) =>
-                      setState(() => _searchQuery = val.toLowerCase()),
-                ),
               ],
             ),
           ),
@@ -121,35 +111,109 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
                   children: [
                     _buildSummaryCards(),
                     const SizedBox(height: 24),
-                    _buildPaymentMethodsSummary(),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Ventas por Proveedor',
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E3A8A),
+                    if (widget.showProductsOnly)
+                      _buildProductsList()
+                    else ...[
+                      _buildPaymentMethodsSummary(),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Ventas del Día',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E3A8A),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildGroupedProductList(),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Ventas del Día',
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E3A8A),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildIndividualSalesList(),
+                      const SizedBox(height: 12),
+                      _buildIndividualSalesList(),
+                    ],
                   ],
                 ),
               ),
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProductsList() {
+    final productos = _reportData!['productos'] as List? ?? [];
+    if (productos.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Text('No hay artículos vendidos hoy'),
+        ),
+      );
+    }
+
+    return Column(
+      children: productos.map((p) {
+        final nombre = p['nombre'] ?? 'Desconocido';
+        final qty = double.tryParse(p['total_cantidad'].toString()) ?? 0;
+        final total = double.tryParse(p['total_bs'].toString()) ?? 0;
+        final unidad = p['unidad_medida'] ?? '';
+        final codigo = p['codigo_interno'] ?? '';
+        final proveedor = p['proveedor'] ?? '';
+
+        return Card(
+          elevation: 0,
+          margin: const EdgeInsets.only(bottom: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey[200]!),
+          ),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Colors.blue[50],
+              child: Text(
+                '${qty % 1 == 0 ? qty.toInt() : qty.toStringAsFixed(1)}',
+                style: const TextStyle(
+                  color: Color(0xFF1E3A8A),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            title: Text(
+              nombre,
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (codigo.isNotEmpty)
+                  Text(
+                    'Código: $codigo',
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  ),
+                if (proveedor.isNotEmpty && proveedor != 'Sin Proveedor')
+                  Text(
+                    'Prov: $proveedor',
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  ),
+              ],
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${total.toStringAsFixed(2)} Bs',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  unidad,
+                  style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -167,6 +231,7 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
 
       final detalles = res['detalles'] as List;
       final pagos = res['pagos'] as List;
+      final info = res['info'] as Map<String, dynamic>?;
 
       if (detalles.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -181,245 +246,270 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: 500,
-              maxHeight: MediaQuery.of(context).size.height * 0.8,
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: IntrinsicHeight(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Detalle Venta #$ventaId',
-                      style: GoogleFonts.outfit(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E3A8A),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Detalle Venta #$ventaId',
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF1E3A8A),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            'CERRAR',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue[700],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (info != null && info['cliente_nombre'] != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Cliente: ${info['cliente_nombre']}',
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                    const Divider(height: 32),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PRODUCTOS',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[600],
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...detalles.map((d) {
+                              double cant =
+                                  double.tryParse(
+                                    d['cantidad']?.toString() ?? '0',
+                                  ) ??
+                                  0;
+                              double precio =
+                                  double.tryParse(
+                                    d['precio_unitario_bs']?.toString() ?? '0',
+                                  ) ??
+                                  0;
+                              String nombre =
+                                  d['nombre']?.toString() ?? 'Producto';
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 6.0,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x $nombre',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${(cant * precio).toStringAsFixed(2)} Bs',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF1E3A8A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                            const SizedBox(height: 32),
+                            Text(
+                              'FORMAS DE PAGO',
+                              style: GoogleFonts.outfit(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[600],
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ...pagos.map((p) {
+                              double mBs =
+                                  double.tryParse(
+                                    p['monto_bs']?.toString() ?? '0',
+                                  ) ??
+                                  0;
+                              double mUsd =
+                                  double.tryParse(
+                                    p['monto_usd']?.toString() ?? '0',
+                                  ) ??
+                                  0;
+                              String ref = p['referencia']?.toString() ?? '';
+                              String metodo =
+                                  p['metodo_nombre']?.toString() ?? 'Otro';
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            metodo,
+                                            style: GoogleFonts.outfit(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          if (ref.isNotEmpty)
+                                            Text(
+                                              'Ref: $ref',
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        if (mUsd > 0)
+                                          Text(
+                                            '$mUsd USD',
+                                            style: GoogleFonts.outfit(
+                                              color: Colors.green[700],
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        if (mBs > 0)
+                                          Text(
+                                            '${mBs.toStringAsFixed(2)} Bs',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        'CERRAR',
-                        style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[700],
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Anular Venta'),
+                              content: const Text(
+                                '¿Estás seguro de anular esta venta? El stock se devolverá al inventario.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('CANCELAR'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  child: const Text('ANULAR'),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm == true) {
+                            Navigator.pop(context); // Cerrar detalle
+                            setState(() => _loading = true);
+                            final ok = await _apiService.anularVenta(ventaId);
+                            setState(() => _loading = false);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    ok
+                                        ? 'Venta anulada correctamente'
+                                        : 'Error al anular la venta',
+                                  ),
+                                  backgroundColor: ok
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                              );
+                              if (ok) _loadReport();
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFEBEE),
+                          foregroundColor: Colors.red[700],
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: Text(
+                          'ANULAR VENTA',
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const Divider(height: 32),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PRODUCTOS',
-                          style: GoogleFonts.outfit(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[600],
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ...detalles.map((d) {
-                          double cant =
-                              double.tryParse(
-                                d['cantidad']?.toString() ?? '0',
-                              ) ??
-                              0;
-                          double precio =
-                              double.tryParse(
-                                d['precio_unitario_bs']?.toString() ?? '0',
-                              ) ??
-                              0;
-                          String nombre = d['nombre']?.toString() ?? 'Producto';
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '${cant % 1 == 0 ? cant.toInt() : cant.toStringAsFixed(3)} x $nombre',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  '${(cant * precio).toStringAsFixed(2)} Bs',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF1E3A8A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 32),
-                        Text(
-                          'FORMAS DE PAGO',
-                          style: GoogleFonts.outfit(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[600],
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ...pagos.map((p) {
-                          double mBs =
-                              double.tryParse(
-                                p['monto_bs']?.toString() ?? '0',
-                              ) ??
-                              0;
-                          double mUsd =
-                              double.tryParse(
-                                p['monto_usd']?.toString() ?? '0',
-                              ) ??
-                              0;
-                          String ref = p['referencia']?.toString() ?? '';
-                          String metodo =
-                              p['metodo_nombre']?.toString() ?? 'Otro';
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[50],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[200]!),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        metodo,
-                                        style: GoogleFonts.outfit(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      if (ref.isNotEmpty)
-                                        Text(
-                                          'Ref: $ref',
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 12,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    if (mUsd > 0)
-                                      Text(
-                                        '$mUsd USD',
-                                        style: GoogleFonts.outfit(
-                                          color: Colors.green[700],
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    if (mBs > 0)
-                                      Text(
-                                        '${mBs.toStringAsFixed(2)} Bs',
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Anular Venta'),
-                          content: const Text(
-                            '¿Estás seguro de anular esta venta? El stock se devolverá al inventario.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('CANCELAR'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                              child: const Text('ANULAR'),
-                            ),
-                          ],
-                        ),
-                      );
-
-                      if (confirm == true) {
-                        Navigator.pop(context); // Cerrar detalle
-                        setState(() => _loading = true);
-                        final ok = await _apiService.anularVenta(ventaId);
-                        setState(() => _loading = false);
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                ok
-                                    ? 'Venta anulada correctamente'
-                                    : 'Error al anular la venta',
-                              ),
-                              backgroundColor: ok ? Colors.green : Colors.red,
-                            ),
-                          );
-                          if (ok) _loadReport();
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFEBEE),
-                      foregroundColor: Colors.red[700],
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: Text(
-                      'ANULAR VENTA',
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -608,175 +698,6 @@ class _ReportSalesScreenState extends State<ReportSalesScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildGroupedProductList() {
-    final productos = _reportData!['productos'] as List? ?? [];
-    if (productos.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: Text('No hay ventas registradas'),
-        ),
-      );
-    }
-
-    // Agrupar por proveedor y aplicar filtro
-    Map<String, List<dynamic>> grouped = {};
-    for (var item in productos) {
-      final nombre = (item['nombre'] ?? '').toString().toLowerCase();
-      final code = (item['codigo_interno'] ?? '').toString().toLowerCase();
-
-      if (_searchQuery.isNotEmpty &&
-          !nombre.contains(_searchQuery) &&
-          !code.contains(_searchQuery)) {
-        continue;
-      }
-
-      String prov = item['proveedor'] ?? 'Sin Proveedor';
-      if (!grouped.containsKey(prov)) grouped[prov] = [];
-      grouped[prov]!.add(item);
-    }
-
-    return Column(
-      children: grouped.entries.map((entry) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header del Proveedor
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  entry.key.toUpperCase(),
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: const Color(0xFF1E3A8A),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              // Lista de productos de ese proveedor
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: entry.value.length,
-                itemBuilder: (context, index) {
-                  final p = entry.value[index];
-                  final nombre = p['nombre'] ?? 'Desconocido';
-                  final qty =
-                      double.tryParse(p['total_cantidad'].toString()) ?? 0;
-                  final total = double.tryParse(p['total_bs'].toString()) ?? 0;
-                  final unidad = p['unidad_medida'] ?? '';
-
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: index < entry.value.length - 1
-                              ? Colors.grey[100]!
-                              : Colors.transparent,
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF1E3A8A,
-                            ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            '${qty % 1 == 0 ? qty.toInt() : qty.toStringAsFixed(1)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: Color(0xFF1E3A8A),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                nombre,
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  if (p['codigo_interno'] != null &&
-                                      p['codigo_interno'].toString().isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 8),
-                                      child: Text(
-                                        '#${p['codigo_interno']}',
-                                        style: TextStyle(
-                                          color: Colors.blue[700],
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  Text(
-                                    unidad,
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '${total.toStringAsFixed(2)} Bs',
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      }).toList(),
     );
   }
 }
